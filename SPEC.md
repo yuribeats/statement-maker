@@ -42,11 +42,12 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 
 - Every setting is a DEFAULT that runs automatically; depositing accepts the defaults; card holders can change any of them by vote.
   - Name (≤ 60) and description (≤ 1,000), plain text.
-  - Arrangement: one auto-order preset (Deposit order, Number, Time, Rarity, Colors, Print, Weight, Eights, Ink, Random with a published seed) or Manual.
+  - Arrangement: one auto-order preset (Time = payment time, the DEFAULT; Deposit order, Number, Rarity, Colors, Print, Weight, Eights, Ink, Random with a published seed) or Manual (rare; the host states the ordering metric in the description).
   - Default price: goes live at assembly unless card holders already voted a price.
   - Default voting window.
 - Arranging: the host is the ONLY arranger. Arrangement is a party setting: an auto-order preset, or Manual (host orders by hand; flagged cyan in the UI). No arranger or arrangement votes.
-- Arranging and burning are ONE step: auto-order → any card holder burns and the preset is applied at that moment; Manual → only the host burns, sending the hand-made order in the same call. UI asks for a second confirmation.
+- Arranging and burning are ONE step: auto-order → once FULL any card holder burns and the preset is applied at that moment; Manual → only the host burns, sending the hand-made order in the same call, within 1 day of the party filling (`MANUAL_GRACE`, scaled by the time unit). After that the host has no say: any card holder may burn with the Time order, so a host cannot stall. UI asks for a second confirmation.
+- Host powers, complete list: the params at creation, the Manual order and burn inside that 1-day window, `transferHost`. Nothing else.
 - Buying opens 24 h after a price goes live (default or voted), so card holders can react before a sale.
 
 ## 4. Party governance (binding, on-chain) — Party-style
@@ -115,10 +116,10 @@ Design consequences:
 
 ## 5. Arrangement (the 8×10 order)
 Burn returns seeds in call order and the preview renders an ordered sheet. Order is likely part of the work (unverified until Statement contract ships).
-Flow:
-1. The first host is the arranger by default. Members may replace them with a NOMINATE_ARRANGER vote; the elected arranger then takes over.
-2. Arranger drags Credits in the 8×10 editor or starts from an auto-order preset, then submits.
-3. Group votes APPROVE_ARRANGEMENT. The approved 80-id array is stored in the vault; ASSEMBLE can only use that array.
+Flow (as implemented; no arranger or arrangement votes):
+1. The arrangement is chosen at creation: an auto-order preset (default Time: payment time ascending, token id breaks ties) or Manual.
+2. Preset: once FULL, any card holder burns; the contract verifies the order is exactly the preset's.
+3. Manual: the host burns with any order of exactly the 80 within 1 day of FULL. After that any card holder burns with the Time order (the host too, only as a card holder).
 Auto-order presets:
 - Token number (ascending / descending)
 - Payment time (timestampOf)

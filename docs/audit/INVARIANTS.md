@@ -71,7 +71,7 @@ Test status when written (2026-09-24 UTC). Other workstreams are adding tests co
 | I-33 | For an auto preset, exactly one order is accepted: the strictly ascending order of `CreditKeys.key`, or the stored order (Deposit), or `shuffle(_order, seed)` (Random). No caller can pick among orders. | `_checkPreset` L313-330; key uniqueness through the id in the low 32 bits | unit/Assemble `test_preset_*`, `test_preset_Number_reverseRejected`; halmos `check_key_packing`, `check_weight_inner_packing`, `check_key_*`, `check_shuffle_perm_*` |
 | I-34 | On-chain preset order equals the site's preset order (`server.mjs PRESETS`) for every Credit. | by construction; must stay in sync | diff/PresetsDiff `test_*`, diff/TraitsDiff `test_traitsParity` |
 | I-35 | Every Credit in the sealed supply has a key under every trait preset (no `revert("print"/"weight"/"eights")`). | `CreditKeys` rank tables | GAP: exhaustive sweep over all 122,154 ids (diff harness could do it off-chain) |
-| I-36 | Manual order: only `host` can assemble. Auto: only a current card holder. | `assemble` L257-261 | unit/Assemble `test_manual_hostOnly_anyPermutation`, `test_nonCardHolder_autoPreset`, `test_cardBuyer_canAssemble` |
+| I-36 | Manual order: only `host` can assemble, and only until `fullAt + MANUAL_GRACE` (1 day, time-unit scaled); after that any current card holder, with the Time order. Auto: only a current card holder. | `assemble` | unit/ManualGrace (all), unit/Assemble `test_manual_hostOnly_anyPermutation`, `test_nonCardHolder_autoPreset`; invariant Handler `assemble` model |
 
 ## G. Floor oracle
 

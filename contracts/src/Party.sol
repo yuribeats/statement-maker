@@ -27,8 +27,10 @@ interface IFactory {
 /// Rules (all enforced here):
 ///  - Each deposited Credit mints one Credit Card to the depositor. The card's current holder has its vote, can
 ///    redeem its Credit while OPEN or EXPIRED, and claims 1/80 of the net sale.
-///  - The host is the only arranger. Arrangement is fixed at creation. Auto presets: any card holder may burn with
-///    an order the contract verifies. Manual: only the host may burn, with any order of exactly the 80.
+///  - Arrangement is fixed at creation (the site defaults to Time). Auto presets: once FULL, any card holder may burn
+///    with the order the contract verifies. Manual: only the host may burn, with any order of exactly the 80, within
+///    MANUAL_GRACE (1 day) of filling; after that the host has no say and any card holder may burn in Time order.
+///  - Host powers: the params at creation, the Manual order and burn inside MANUAL_GRACE, transferHost. Nothing else.
 ///  - Only prices are voted on. A proposal passes with YES >= 41 of 80 and NO == 0; a price below the floor
 ///    needs 60. After 3 NO-blocked price proposals or 30 days without one executing, 54 YES passes and NO is
 ///    ignored (below-floor still needs 60). Weight = cards held at the block before the proposal. Windows are
@@ -49,6 +51,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint256 public constant EXECUTE_WINDOW = 7 days;
     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+    uint256 public constant MANUAL_GRACE = 1 days; // a Manual host's time to burn after FULL; then anyone, Time order
     /// @notice A signed floor reading is accepted for 10 minutes (real time), and never one older than the last used here.
     uint256 public constant FLOOR_MAX_AGE = 10 minutes;
     uint256 public constant ROYALTY_CAP_BPS = 1000;
@@ -289,15 +292,17 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
     // ------------------------------------------------------------------ arrange + burn (one step)
 
-    /// @notice Burn the 80 into one Statement with `order`. Manual: host only, any order of exactly the 80.
-    ///         Auto presets: any card holder; `order` must be exactly what the preset produces.
+    /// @notice Burn the 80 into one Statement with `order`. Auto presets: any card holder; `order` must be exactly what
+    ///         the preset produces. Manual: the host, any order of exactly the 80, until MANUAL_GRACE after FULL; from
+    ///         then on any card holder (the host too, only as a holder) with the Time order, so a host cannot stall.
     function assemble(uint256[] calldata order, Floor calldata floor) external nonReentrant {
         if (status() != Status.FULL) revert Bad("not full");
         CreditKeys.Preset p = _params.arrangement;
-        if (p == CreditKeys.Preset.Manual) {
+        if (p == CreditKeys.Preset.Manual && block.timestamp <= fullAt + _t(MANUAL_GRACE)) {
             if (msg.sender != host) revert Bad("host only");
-        } else if (cards.heldNow(address(this), msg.sender) == 0) {
-            revert Bad("card holders only");
+        } else {
+            if (p == CreditKeys.Preset.Manual) p = CreditKeys.Preset.Time;
+            if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
         }
         CreditKeys.verifyOrder(p, credits, _order, order, _params.seed);
 

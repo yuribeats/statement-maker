@@ -57,7 +57,7 @@ else                              -> OPEN
 | OPEN | OPEN | `deposit(ids, proofs)` below 80; `redeem(cardIds)` | Depositor: the Credit owner themselves. Redeem: the current card holder. |
 | OPEN | FULL | `deposit` that brings `_order.length` to 80 (sets `fullAt`) | Any Credit owner |
 | OPEN | EXPIRED | Time: `block.timestamp > deadline` | Nobody. Passive. |
-| FULL | ASSEMBLED | `assemble(order, floor)`: permutation and preset check, price resolved, `Statement.make`, burn verified | Manual preset: host only. Other presets: anyone holding ≥ 1 of this party's cards now. |
+| FULL | ASSEMBLED | `assemble(order, floor)`: permutation and preset check, price resolved, `Statement.make`, burn verified | Manual preset: host only for 1 day after FULL, then any card holder with the Time order. Other presets: anyone holding ≥ 1 of this party's cards now. |
 | FULL | EXPIRED | Time: `block.timestamp > deadline` before assembly | Passive |
 | ASSEMBLED | SOLD | `buy(maxPrice)` with `ask > 0`, `now ≥ askLiveAt + 24h`, `msg.value ≥ ask ≤ maxPrice` | Anyone |
 | EXPIRED | (terminal) | `redeem` (holder) / `redeemFor` (anyone, pays the holder) until every Credit is back | Card holders / anyone |
@@ -133,7 +133,7 @@ Arranging and burning happen in one call. `order` must be a permutation of the 8
 
 | Preset | Who may call | On-chain check |
 |---|---|---|
-| Manual | host only | Permutation only. The host chooses any order. |
+| Manual | host until `fullAt + MANUAL_GRACE` (1 day); then any card holder | Host: permutation only, any order. After the grace: exactly the Time order. |
 | Deposit | any current card holder | `order == _order` (deposit order after redemptions compacted it) |
 | Random | any current card holder | `order == CreditKeys.shuffle(_order, seed)`: keccak Fisher–Yates, `j = keccak256(abi.encodePacked(seed, i−1)) % i` |
 | Number, Time, Colors, Ink, Eights, Print, Weight, Rarity | any current card holder | Keys strictly increasing: `key(order[i]) > key(order[i−1])`. Every key packs the Credit id into its low 32 bits, so keys are unique and ties break by ascending id. |
@@ -197,7 +197,7 @@ Trust: the signer is fully trusted for floor values. See THREAT_MODEL.md §3 for
 | `deposit(ids, proofs)` | the Credit owner (`transferFrom(msg.sender, …)`), who has approved the party | OPEN. Count between min(minDeposit, remaining) and remaining. Merkle proof if a root is set. No duplicates. | yes |
 | `redeem(cardIds)` | holder of each card | OPEN or EXPIRED | yes |
 | `redeemFor(cardIds)` | anyone; Credit goes to the current card holder | EXPIRED | yes |
-| `assemble(order, floor)` | Manual: `host`. Others: card holder now. | FULL. Valid permutation and preset order. Price resolvable. | yes |
+| `assemble(order, floor)` | Manual within 1 day of FULL: `host`. Otherwise: card holder now (Manual falls back to the Time order). | FULL. Valid permutation and preset order. Price resolvable. | yes |
 | `onERC721Received` | the Statement contract only | only while `_assembling` | n/a (view) |
 | `propose(price, cancel, hours)` | card holder now, with weight at `block.number−1` | LIST: FULL or ASSEMBLED. CANCEL: ASSEMBLED and `ask > 0`. Fewer than 256 total. Fewer than 3 open by caller. | **no** |
 | `vote(id, support)` | anyone with weight at the proposal's snapshot | `now < endsAt` | **no** |

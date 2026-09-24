@@ -50,7 +50,7 @@ For https://go.code4rena.com/start, https://www.sherlock.xyz/contact, or https:/
 > **Chain:** Ethereum mainnet. **Compiler:** solc 0.8.28, via-IR, Cancun.
 > **In scope:** `contracts/src/Party.sol`, `PartyFactory.sol`, `CreditCards.sol`, `CreditKeys.sol`, `interfaces/IExternal.sol`. 752 code lines.
 > **Out of scope:** `src/mocks/`, `test/`, `script/`, `lib/`, the website and server, and the third-party Credits and Statement contracts.
-> **Trusted roles:** the floor signer (EIP-712, immutable), the artist's Statement contract, the fee recipient (receive-only), and the host (params at creation; Manual-arrangement burn).
+> **Trusted roles:** the floor signer (EIP-712, immutable), the artist's Statement contract, the fee recipient (receive-only), and the host (params at creation; Manual-arrangement burn within 1 day of FULL; `transferHost`).
 > **Known issues, not eligible for rewards:** THREAT_MODEL.md R-1 to R-19. Includes proposal-cap exhaustion, the permanent deadlock counter, the CANCEL/BUY_DELAY race, floor signer compromise, floor cherry-picking inside 10 min, and stray tokens sent directly.
 > **Main invariants:** INVARIANTS.md I-1 to I-41.
 > **Areas of concern:** vote-weight checkpoints across parties; any path for Credits or the Statement to leave outside redeem, assemble, or buy; ETH conservation in buy, claim, and withdraw; preset verification accepting more than one order; governance liveness.

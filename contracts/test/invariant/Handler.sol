@@ -735,6 +735,9 @@ contract Handler is Test {
         Party p = _party(pSeed);
         Party.Params memory prm = p.params();
         address who = variant % 3 == 0 ? p.host() : _actor(aSeed);
+        // Manual: the host's hand order until MANUAL_GRACE (1 day) after FULL; then any card holder, Time order.
+        bool manualHost = prm.arrangement == CreditKeys.Preset.Manual && block.timestamp <= uint256(p.fullAt()) + 1 days;
+        if (prm.arrangement == CreditKeys.Preset.Manual && !manualHost) prm.arrangement = CreditKeys.Preset.Time;
         uint256[] memory order = p.depositOrder();
         bool orderOk = order.length == 80;
         if (orderOk) order = _correctOrder(prm, order, variant);
@@ -755,7 +758,7 @@ contract Handler is Test {
         (bool rOk, uint256 resolved) = _resolve(spec, f.floorWei);
         bool priceOk = spec.mode == Party.PriceMode.Fixed || (_fresh(p, f, fValid) && rOk);
         uint256 wantAsk = _clamp(p, spec, resolved);
-        bool authOk = prm.arrangement == CreditKeys.Preset.Manual ? who == p.host() : cards.heldNow(address(p), who) > 0;
+        bool authOk = manualHost ? who == p.host() : cards.heldNow(address(p), who) > 0;
         bool expected = p.status() == Party.Status.FULL && orderOk && priceOk && authOk;
         _arm(who, p);
 
