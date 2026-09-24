@@ -23,7 +23,7 @@ contract DeploySepolia is Script {
         // Reuse an already-deployed test Credits + Statement stand-in when given (EXISTING_CREDITS/EXISTING_STATEMENT).
         address existing = vm.envOr("EXISTING_CREDITS", address(0));
         if (existing != address(0)) {
-            TestnetPartyFactory f = new TestnetPartyFactory(ICredits(existing), IStatement(vm.envAddress("EXISTING_STATEMENT")), feeTo, signer, vm.envUint("TIME_UNIT"));
+            TestnetPartyFactory f = new TestnetPartyFactory(ICredits(existing), IStatement(vm.envAddress("EXISTING_STATEMENT")), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), vm.envUint("TIME_UNIT"));
             KeyProbe kp = new KeyProbe();
             vm.stopBroadcast();
             console2.log("PartyFactory", address(f));
@@ -49,7 +49,7 @@ contract DeploySepolia is Script {
         }
         credits.seal();
         MockStatement statement = new MockStatement(address(credits));
-        TestnetPartyFactory factory = new TestnetPartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, signer, vm.envUint("TIME_UNIT"));
+        TestnetPartyFactory factory = new TestnetPartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), vm.envUint("TIME_UNIT"));
         KeyProbe probe = new KeyProbe();
         vm.stopBroadcast();
 

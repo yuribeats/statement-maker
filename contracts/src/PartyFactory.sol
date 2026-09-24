@@ -26,13 +26,14 @@ contract PartyFactory is EIP712 {
     mapping(address host => uint256) public nonces;
     event PartyCreated(address indexed party, address indexed host, uint256 index);
 
-    constructor(ICredits credits_, IStatement statement_, address feeRecipient_, address floorSigner_) EIP712("Statement Maker", "1") {
+    /// @param collectionOwner_ becomes CreditCards.owner(): marketplace collection-page editing only, no protocol powers.
+    constructor(ICredits credits_, IStatement statement_, address feeRecipient_, address floorSigner_, address collectionOwner_) EIP712("Statement Maker", "1") {
         require(address(credits_) != address(0) && address(statement_) != address(0) && feeRecipient_ != address(0) && floorSigner_ != address(0), "zero");
         credits = credits_;
         statement = statement_;
         feeRecipient = feeRecipient_;
         floorSigner = floorSigner_;
-        cards = new CreditCards(address(this));
+        cards = new CreditCards(address(this), collectionOwner_);
         implementation = new Party();
     }
 

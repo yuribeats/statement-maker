@@ -9,8 +9,8 @@ import {ICredits, IStatement} from "../interfaces/IExternal.sol";
 contract TestnetPartyFactory is PartyFactory {
     uint256 internal immutable _unit;
 
-    constructor(ICredits c, IStatement s, address fee, address signer, uint256 unit)
-        PartyFactory(c, s, fee, signer)
+    constructor(ICredits c, IStatement s, address fee, address signer, address collectionOwner, uint256 unit)
+        PartyFactory(c, s, fee, signer, collectionOwner)
     {
         require(block.chainid != 1, "testnet only");
         require(unit > 0 && unit <= 1 hours, "unit");

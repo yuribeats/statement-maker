@@ -2,6 +2,7 @@
 pragma solidity 0.8.28;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -16,7 +17,9 @@ interface ICardParty {
 ///         the right to redeem its Credit before the burn (or after expiry), and 1/80 of the sale.
 ///         One collection for all parties; each card belongs to exactly one party, fixed at mint.
 ///         Vote weight is the number of a party's cards an account held at a past block (checkpointed on transfer).
-contract CreditCards is ERC721 {
+/// @dev `owner()` exists only so a person can manage the collection page on marketplaces (OpenSea grants edit access
+///      to `owner()`). The owner has no power over cards, parties, votes or funds: no function here checks it.
+contract CreditCards is ERC721, Ownable {
     using Checkpoints for Checkpoints.Trace208;
 
     address public immutable factory;
@@ -32,7 +35,7 @@ contract CreditCards is ERC721 {
     error NotParty();
     error FutureLookup();
 
-    constructor(address factory_) ERC721("Credit Cards", "CARD") {
+    constructor(address factory_, address collectionOwner_) ERC721("Credit Cards", "CARD") Ownable(collectionOwner_) {
         factory = factory_;
     }
 
