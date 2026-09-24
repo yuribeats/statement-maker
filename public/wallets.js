@@ -142,11 +142,11 @@ export function pick({ chainId = 1, title = 'Connect wallet', note = '', extra =
       resolve(result);
     };
     const onKey = e => { if (e.key === 'Escape') close(); };
-    let wcOn = false, busy = '';
+    let wcOn = false, busy = '', seq = 0;
     const last = remembered();
     function row(w) {
       const ico = w.icon ? `<img src="${esc(w.icon)}" alt="" width="24" height="24">` : `<span class="w-ico" aria-hidden="true">${esc(w.name.slice(0, 1))}</span>`;
-      return `<li><button type="button" class="w-row" data-w="${esc(w.id)}" ${busy ? 'disabled' : ''}>${ico}<span class="w-name">${esc(w.name)}</span><span class="faint">${busy === w.id ? 'Check your wallet…' : w.id === last ? 'Last used' : w.id === 'walletconnect' ? 'QR · mobile and other wallets' : 'Installed'}</span></button></li>`;
+      return `<li><button type="button" class="w-row" data-w="${esc(w.id)}">${ico}<span class="w-name">${esc(w.name)}</span><span class="faint">${busy === w.id ? 'Waiting: unlock and approve in the wallet, or pick another' : w.id === last ? 'Last used' : w.id === 'walletconnect' ? 'QR · mobile and other wallets' : 'Installed'}</span></button></li>`;
     }
     function draw() {
       if (done) return;
@@ -174,7 +174,9 @@ export function pick({ chainId = 1, title = 'Connect wallet', note = '', extra =
     }
     const err = m => { const e = root.querySelector('#wp-err'); if (e) e.textContent = m; };
     async function choose(id) {
-      busy = id; draw();
+      // A locked or ignored wallet can leave its request pending forever: picking another wallet supersedes it.
+      const my = ++seq;
+      busy = id; draw(); err('');
       try {
         let w;
         if (id === 'walletconnect') {
@@ -199,14 +201,15 @@ export function pick({ chainId = 1, title = 'Connect wallet', note = '', extra =
           if (!w) throw new Error('That wallet is no longer available');
           await w.provider.request({ method: 'eth_requestAccounts' });
         }
-        if (done) return;
+        if (done || my !== seq) return;
         const [a] = await w.provider.request({ method: 'eth_accounts' });
         if (!a) throw new Error('The wallet shared no account');
         await ensureChain(w.provider, chainId);
+        if (done || my !== seq) return;
         setActive(w); remember(id);
         close({ account: String(a).toLowerCase(), provider: w.provider, id, name: w.name });
       } catch (e) {
-        if (done) return;
+        if (done || my !== seq) return;
         busy = ''; draw();
         err(e?.code === 4001 ? 'Request rejected in the wallet.' : e?.code === -32002 ? 'The wallet already has a request open. Open the wallet to answer it.' : (e?.shortMessage || e?.message || 'Could not connect'));
       }
