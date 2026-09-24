@@ -34,9 +34,11 @@ contract DeploySepolia is Script {
             console2.log("KeyProbe", address(kp));
             return;
         }
-        Credits credits = new Credits(msg.sender);
+        // Resume with an already-deployed, unsealed test Credits (EXISTING_UNSEALED_CREDITS) if a previous run stopped early.
+        address resume = vm.envOr("EXISTING_UNSEALED_CREDITS", address(0));
+        Credits credits = resume != address(0) ? Credits(resume) : new Credits(msg.sender);
         uint256 n = holders.length * per;
-        uint256 batch = 100;
+        uint256 batch = 40; // keeps each distribute call well under the 16,777,216 per-transaction gas cap
         for (uint256 start; start < n; start += batch) {
             uint256 m = start + batch > n ? n - start : batch;
             address[] memory to = new address[](m);
