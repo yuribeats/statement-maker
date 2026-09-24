@@ -321,9 +321,9 @@ function logLine(e) {
     bid: () => `Bid ${ethx(e.eth)}${e.endsAt ? ' · first bid: the 24-hour timer started' : ''}`,
     refund: () => `Outbid: bid of ${ethx(e.eth)} refunded <span class="faint">· simulated</span>`,
     extend: () => `Bid in the last 5 minutes: end moved to ${esc(new Date(e.endsAt).toLocaleString())}`,
-    settle: () => e.noBids ? `Closed the auction with no bids · now sells at the reserve, ${ethx(e.askEth)}` : `Settled the auction: Statement ${Number(e.number)} to ${userLink(e.winner)} for ${ethx(e.price)} · fee ${eth(e.fee)}`,
+    settle: () => `Settled the auction: Statement ${Number(e.number)} to ${userLink(e.winner)} for ${ethx(e.price)} · fee ${eth(e.fee)}`,
     buy: () => `Bought Statement ${Number(e.number)} for ${eth(e.price)} · fee ${eth(e.fee)}`,
-    claim: () => `Claimed ${plural(e.cards?.length, 'card')} · ${eth((e.eth || 0) * (e.cards?.length || 0))}`,
+    claim: () => `Claimed ${plural(e.cards?.length, 'card')} · ${eth((e.eth || 0) * (e.cards?.length || 0))}${e.by && e.by !== e.a ? ` <span class="faint">· paid out by ${userLink(e.by)}</span>` : ''}`,
     params: () => `Changed settings${e.keys?.length ? ': ' + esc(e.keys.join(', ')) : ''}`,
     list: () => `Listed Statement ${Number(e.number)} for ${eth(e.priceEth)}`,
     unlist: () => `Cancelled the listing of Statement ${Number(e.number)}`,
@@ -415,7 +415,7 @@ async function pageParty(id, opts = {}) {
       <div><span>Arranged by</span><strong${p.manual ? ' class="alert-c"' : ''}>${p.manual ? 'Manual · the host’s metric below' : esc(arrLabel(p.params.arrangement)) + ' — ' + esc(arrDesc(p.params.arrangement))}${p.assembled && p.orderSource ? ' · burned with ' + esc(p.orderSource === 'Manual' ? 'the host’s order' : p.orderFallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: p.orderSource })) : ''}</strong></div>
       ${p.manual ? `<div class="rule-strong"><span class="alert-c">Host’s metric</span><strong class="alert-c">${esc(arrDesc(p.params.arrangement))}</strong></div>` : ''}
       <div><span>Defaults</span><strong class="muted">Set by the host and applied automatically. Card holders can vote a different price. The host can change settings only until someone else deposits${p.manual ? ', orders and burns this Manual party,' : ''} and can hand hosting on; without Credit Cards a host cannot vote, chat or burn${p.manual ? ' (except the Manual burn)' : ''}.</strong></div>
-      ${p.house ? `<div><span>Credits floor · 24-hour average</span><strong>${ethx(p.floor?.credit)}${p.assembled ? '' : ` · opening bid if burned now: ${ethx(p.floor?.credit != null ? +(p.floor.credit * 100).toFixed(6) : null)}`}</strong></div>`
+      ${p.house ? `<div><span>Credits floor · 24-hour average</span><strong>${ethx(p.floor?.credit)}${p.assembled ? '' : ` · opening bid if burned now: ${ethx(p.openingNowEth)}`}</strong></div>`
         : `<div><span>Floor · ${p.params.floorMode === 'latest' ? 'latest reading' : '24-hour average'}</span><strong>${eth(p.floorEth)} <span class="faint">${floorNote(p.floor)}</span></strong></div>`}
       ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}${p.raiseAskEth != null && me ? ` <button type="button" id="raise-ask" style="margin:0" title="A floor-relative ask can only rise, never fall">Raise to ${eth(p.raiseAskEth)}</button>` : ''}</strong></div>` : ''}
       <div><span>Sale split</span><strong>1% Statement Maker, the rest to the 80 Credit Cards</strong></div>
@@ -449,7 +449,7 @@ async function pageParty(id, opts = {}) {
      </div>
      ${au.settled ? '' : !au.ended ? (me ? `<div class="actions" style="align-items:center;margin-top:14px"><input id="bid-amt" inputmode="decimal" value="${esc(weiDec(au.minNextWei))}" style="width:140px;border:0;border-bottom:1px solid var(--line)" aria-label="Bid, ETH"><span class="muted">ETH</span><button type="button" class="cta" id="bid">Bid</button><span class="faint">Preview · no ETH moves</span> ${cost('bid')}</div>`
        : connectAct)
-       : me ? `<div class="actions" style="margin-top:14px"><button type="button" class="cta" id="settle">${au.high ? 'Settle · Statement to the high bidder' : 'Close with no bids'}</button> ${cost('settle')}</div>` : connectAct}
+       : !au.high ? '' : me ? `<div class="actions" style="margin-top:14px"><button type="button" class="cta" id="settle">Settle · Statement to the high bidder</button> ${cost('settle')}</div>` : connectAct}
      <div class="error" id="bid-err"></div>
      ${au.bids.length ? `<h2 style="margin:18px 0 8px">Bids · ${au.bids.length}</h2><div class="rows">${au.bids.map(b => `<div><span>${ago(b.at)} ago · ${userLink(b.bidder)}</span><strong>${ethx(b.eth)}${b.refunded ? ' <span class="faint">· outbid, refunded</span>' : ''}${b.extended ? ' <span class="faint">· extended</span>' : ''}</strong></div>`).join('')}</div>` : ''}
     </div>` : ''}
@@ -463,7 +463,9 @@ async function pageParty(id, opts = {}) {
      <div><span>Price</span><strong>${eth(p.sold.price)} to ${userLink(p.sold.buyer)}</strong></div>
      <div><span>Statement Maker 1%</span><strong>${eth(p.sold.fee)}</strong></div>
      <div><span>Per Credit Card</span><strong>${eth(p.perCard)}</strong></div>
-     <div><span>Claimed</span><strong>${p.credits.filter(c => c.claimed).length} / 80 cards</strong></div></div></div>` : ''}
+     <div><span>Claimed</span><strong>${p.credits.filter(c => c.claimed).length} / 80 cards</strong></div></div>
+     ${me && p.credits.some(c => !c.claimed) ? `<div class="actions"><button type="button" id="claim-for">Pay out every unclaimed card to its holder · ${p.credits.filter(c => !c.claimed).length}</button> <span class="faint">Anyone can do this; each share goes to the card’s holder.</span> ${cost('claim', ' per card')}</div>` : ''}
+     <div class="error" id="sold-err"></div></div>` : ''}
 
     ${p.status === 'OPEN' && !embed ? `
     <div class="panel">
@@ -484,7 +486,7 @@ async function pageParty(id, opts = {}) {
 
     ${p.status === 'EXPIRED' ? `
     <div class="panel"><h2>Expired</h2>
-     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their card holders by ${userLink(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Each Credit goes to whoever holds its card. Any member can send them all.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit', ' per Credit')}</div>` : ''}`}
+     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their card holders by ${userLink(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Each Credit goes to whoever holds its card. Anyone can send them all.</p>${me ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit', ' per Credit')}</div>` : ''}`}
      <div class="error" id="ret-err"></div></div>` : ''}
     ${p.status !== 'OPEN' && p.status !== 'EXPIRED' ? `
     <div class="panel" id="proposals">
@@ -643,6 +645,7 @@ async function pageParty(id, opts = {}) {
   $('#send-x')?.addEventListener('click', () => { $('#send-row').hidden = true; sending = null; });
   $('#send-go')?.addEventListener('click', () => act('transfer', { card: sending, to: $('#send-to').value.trim() }, 'card-err'));
   $('#claim-all')?.addEventListener('click', () => act('claim', {}, 'card-err'));
+  $('#claim-for')?.addEventListener('click', () => act('claimFor', { cards: p.credits.filter(c => !c.claimed).map(c => c.card) }, 'sold-err'));
   $('#buy')?.addEventListener('click', () => act('buy', {}, 'buy-err'));
   $('#bid')?.addEventListener('click', () => act('bid', { amount: $('#bid-amt').value.trim() }, 'bid-err'));
   $('#settle')?.addEventListener('click', () => act('settle', {}, 'bid-err'));
