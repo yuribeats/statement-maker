@@ -345,6 +345,8 @@ contract Party is Initializable, ReentrancyGuardTransient {
         _refreshOpen(msg.sender);
         if (_openIds[msg.sender].length >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
         if (!cancel) _checkPrice(price);
+        // A floor-relative price needs the host's minimum ask as a lower bound (limits a bad or compromised floor reading).
+        if (!cancel && price.mode != PriceMode.Fixed && _params.minAskWei == 0) revert Bad("minAsk");
         if (!cancel && buyDelayHours > MAX_BUY_DELAY_HOURS) revert Bad("buyDelay");
         uint16 h = cancel ? 24 : (hours_ == 0 ? _params.voteHours : hours_); // cancels always run 24h
         if (!_windowOk(h)) revert Bad("window");
