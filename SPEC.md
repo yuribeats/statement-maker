@@ -155,7 +155,9 @@ One page per party: 8×10 frame, member list with Credit Card balances, chat, op
 
 ## 11. Accounts and ownership (implemented in the prototype)
 - Sign-in: EIP-4361 message built by the server; its statement IS the terms acceptance (version-stamped). The wallet signs; the server verifies with viem `verifyMessage` (plain wallets and EIP-1271/6492 smart wallets), single-use nonce, 10-minute expiry. The signed message and signature are stored as the record of acceptance.
-- Session: random 256-bit token in an HttpOnly, SameSite=Strict cookie (Secure in production), 7 days. Every mutating route acts as the session address; request bodies can no longer name an address.
+- Session: HMAC-signed token (address + expiry) in an HttpOnly, SameSite=Strict cookie (Secure in production), 7 days. Stateless: logout clears the cookie but a copied token stays valid until expiry. Every mutating route acts as the session address; request bodies can no longer name an address.
+- Terms acceptances (signed message + signature) are stored in their own table, not in the shared state document; sign-in routes are rate-limited and run without the global write lock.
+- Party settings lock once anyone other than the host has deposited.
 - POSTs from another origin are refused.
 - Simulated wallets exist only in dev builds (`/api/auth/dev`), not registered when NODE_ENV=production.
 - Ownership: the server follows Credits Transfer events from the snapshot block (every 30 s) and re-reads `ownerOf` on-chain for each Credit at deposit. The real vault counts only Credits it actually receives.

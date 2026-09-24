@@ -6,7 +6,7 @@ export default async function (req, res) {
   const p = u.searchParams.get('__path') || '';
   // Cron endpoints: Vercel sends "Authorization: Bearer $CRON_SECRET".
   if (p === 'cron/floor' || p === 'cron/sync') {
-    if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) { res.writeHead(401); return res.end(); }
+    if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) { res.writeHead(401); return res.end(); }
     await (p === 'cron/floor' ? jobs.refreshFloor() : jobs.syncTransfers());
     res.writeHead(200, { 'content-type': 'application/json' });
     return res.end('{"ok":true}');
