@@ -1,4 +1,4 @@
-// Statement Maker — local prototype front end. Hash routes, no framework.
+// Statement Maker — front end. Hash routes, no framework.
 // All user-supplied strings go through esc() before render().
 const app = document.getElementById('app');
 const $ = (s, el = document) => el.querySelector(s);
@@ -243,7 +243,7 @@ async function pageParty(id) {
     ${p.status === 'ASSEMBLED' && p.listing ? `
     <div class="panel"><h2>Buy</h2>
      <div class="rows"><div><span>Price</span><strong>${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div><div><span>Split</span><strong>Artist royalty · 1% Statement Maker · ${eth(p.listingEth ? p.listingEth * 0.99 / SLOTS : null)} per Credit Card</strong></div></div>
-     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Simulated · royalty 0 until the Statement contract is known</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
+     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves · royalty 0 until the Statement contract is known</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
      <div class="error" id="buy-err"></div></div>` : ''}
     ${p.status === 'SOLD' ? `
     <div class="panel"><h2>Sold</h2><div class="rows">
@@ -280,7 +280,7 @@ async function pageParty(id) {
       <div><span>Deadlock</span><strong>After 3 blocked proposals of a kind or 30 days, 54 yes passes it; no is ignored</strong></div>
       <div><span>Window</span><strong>24 hours to 7 days, chosen by the proposer</strong></div>
       <div><span>Execute</span><strong>Any card holder, within 7 days of passing, or it lapses</strong></div></div>` : ''}
-     ${p.status === 'FULL' && p.orderApproved ? (() => { const wait = p.assemblyOpensAt - p.now; const arrVote = p.proposals.some(q => q.type === 'APPROVE_ARRANGEMENT' && !q.executed && !q.superseded && !q.closed); const ready = wait <= 0 && !arrVote; return `<div class="prop"><div class="prop-head"><strong>Assemble</strong><span class="chip ${ready ? 'pass' : 'open'}">${ready ? 'Ready' : arrVote ? 'Waiting for arrangement vote' : 'Opens in ' + hrs(wait)}</span></div><p class="muted">Uses the ${p.orderSource === 'vote' ? 'voted' : p.orderSource === 'arranger' ? 'arranger’s (' + esc(p.orderPreset) + ')' : 'default (' + esc(arrLabel(p.params.arrangement)) + ')'} order. Once open, any card holder can burn the 80 into the Statement; the default price then goes live. Simulated until the Statement contract is public.</p>${isMember && ready ? `<div class="actions"><button type="button" class="cta" id="assemble">Assemble</button> ${cost('assemble')}</div>` : ''}</div>`; })() : ''}
+     ${p.status === 'FULL' && p.orderApproved ? (() => { const wait = p.assemblyOpensAt - p.now; const arrVote = p.proposals.some(q => q.type === 'APPROVE_ARRANGEMENT' && !q.executed && !q.superseded && !q.closed); const ready = wait <= 0 && !arrVote; return `<div class="prop"><div class="prop-head"><strong>Assemble</strong><span class="chip ${ready ? 'pass' : 'open'}">${ready ? 'Ready' : arrVote ? 'Waiting for arrangement vote' : 'Opens in ' + hrs(wait)}</span></div><p class="muted">Uses the ${p.orderSource === 'vote' ? 'voted' : p.orderSource === 'arranger' ? 'arranger’s (' + esc(p.orderPreset) + ')' : 'default (' + esc(arrLabel(p.params.arrangement)) + ')'} order. Once open, any card holder can burn the 80 into the Statement; the default price then goes live. Preview until the Statement contract is public.</p>${isMember && ready ? `<div class="actions"><button type="button" class="cta" id="assemble">Assemble</button> ${cost('assemble')}</div>` : ''}</div>`; })() : ''}
      ${p.assembled ? `<div class="prop"><div class="prop-head"><strong>Statement ${Number(p.assembled.number)}</strong><a href="#/statement/${esc(p.id)}">View →</a></div><p class="muted">Assembled by ${short(p.assembled.by)}</p></div>` : ''}
      ${[...p.proposals].reverse().map(q => {
        const mine = q.votes?.[me];
@@ -486,12 +486,12 @@ function pageRules() {
    <div><span>Contract</span><strong>Credits 0x9763…3043, Ethereum</strong></div>
    <div><span>Traits</span><strong>Computed by the Credits art contract itself</strong></div>
    <div><span>Rarity</span><strong>Sum of −log2 frequency over Colors, Print, Weight, Eights</strong></div>
-   <div><span>Status</span><strong><span class="demo">Local prototype</span> · no contracts deployed · wallets simulated</strong></div>
+   <div><span>Status</span><strong><span class="demo">Preview</span> · the Statement contract is not published yet · nothing here moves Credits or ETH</strong></div>
   </div></div>`);
 }
 
 // ---------- terms ----------
-const TERMS_VERSION = '2026-09-23';
+const TERMS_VERSION = '2026-09-23.2';
 const TERMS = [
  ['What Statement Maker is', 'Statement Maker is a tool that lets holders of Credits pool them in groups called parties. When a party collects 80 Credits, the party can burn them to create one Statement and then sell it. Statement Maker provides the website and the smart contracts. It does not hold your Credits or your money; the party contracts do.'],
  ['Not affiliated with Jack Butcher', 'Statement Maker is independent. It is not made, endorsed, or operated by Jack Butcher, jack.art, the Credits project, or X. Credits and Statements are Jack Butcher’s work. We only coordinate holders who choose to use the burn function his contracts provide.'],
@@ -504,7 +504,7 @@ const TERMS = [
  ['Risks', 'Smart contracts can have bugs, and ours have not been audited yet. The Statement contract has not been published; it may work differently from what this site assumes, or may not accept parties at all. Prices can fall. Transactions cannot be reversed. If you lose access to your wallet, nobody can recover your Credits, Credit Cards, or proceeds. Laws about tokens like Credit Cards may change or differ where you live.'],
  ['No advice', 'Nothing on this site is financial, investment, legal, or tax advice. You decide what to deposit, how to vote, and whether to sell.'],
  ['Your responsibilities', 'You control your own wallet and keys. You confirm you are legally allowed to use this service where you live, are not subject to sanctions, and will handle your own taxes. You will not use Statement Maker to manipulate votes, prices, or other members.'],
- ['Prototype', 'This version is a local prototype. Wallets are simulated and nothing happens on-chain.'],
+ ['Preview', 'Statement Maker is in preview until the Statement contract is published. Deposits, votes, sales and claims shown here are recorded by Statement Maker only; nothing moves Credits or ETH on-chain yet.'],
  ['Liability and changes', 'Statement Maker is provided as is, without warranties. To the extent the law allows, Statement Maker is not liable for losses from using it. These terms may change; you will be asked to accept any new version before your next action.'],
 ];
 const termsBody = () => `<div class="rows terms">${TERMS.map(([h, t], i) => `<div><span>${String(i + 1).padStart(2, '0')} ${esc(h)}</span><strong>${esc(t)}</strong></div>`).join('')}</div>`;

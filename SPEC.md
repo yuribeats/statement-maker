@@ -136,7 +136,7 @@ One page per party: 8×10 frame, member list with Credit Card balances, chat, op
 - Signed messages, zero gas.
 - Binding scope: only pool-level settings (default thresholds, theme calendar). The 1% fee is not subject to these votes. Nothing binds Jack's contracts.
 
-## 8. UI — match jack.art/credits (copy in research/jack-credits-style.css)
+## 8. UI — match jack.art/credits (reference: the public jack.art/credits stylesheet)
 - White #fff, ink #111, muted #929292/#999, hairlines 1px #e3e3e3 / #e8e8e8. No other color; the art supplies CMYK.
 - One type size: 11px/1.65 SF Mono → Menlo, all uppercase; bold 700 for headings only.
 - Header 30px 40px, nav gap 28px; main max-width 1440px; two-column works grid, 64px gap.
