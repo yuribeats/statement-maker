@@ -1,32 +1,47 @@
-# STATEMENT POOL — spec draft v0.2 (2026-09-23)
+# STATEMENT POOL — spec draft v0.3 (2026-09-23)
 
 Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 
 ## 1. Objects
-- **Sheet**: one pending Statement. Has a creator, an optional theme (trait filter), 80 slots, a deadline.
-- **Sheet token**: one ERC-20 per sheet, deployed by a factory as a minimal clone. Supply exactly 80 × 10^18 (one whole token per Credit; 18 decimals so fractions trade).
+- **Party**: one group assembling one Statement. Has hosts, params (§3), 80 slots, a deadline, a page with chat.
+  "Sheet" now means only the 8×10 artwork layout.
+- **Party token**: one ERC-20 per party, deployed by a factory as a minimal clone. Supply exactly 80 × 10^18 (one whole token per Credit; 18 decimals so fractions trade).
   Freely transferable. Anyone may pair it on Uniswap; the tool links to "create pool" but does not seed liquidity.
-  Balance = vote weight on that sheet = share of any proceeds.
+  Balance = vote weight in that party = share of any proceeds.
   Votes: OpenZeppelin ERC20Votes (checkpointed) with self-delegation by default, so holders never need a separate "delegate" transaction.
 - **Vault**: holds deposited Credits, then the assembled Statement.
 
-## 2. Sheet lifecycle
+## 2. Party lifecycle
 | State | Enters when | Allowed |
 |---|---|---|
-| OPEN | creator opens sheet | deposit (must match theme); withdraw your own Credit. Deposits are recorded, no token yet |
-| FULL | 80th deposit | 80 tokens minted, 1 per Credit to each depositor. Withdraw closed. Arrangement phase (§4) |
+| OPEN | host opens party | deposit (must meet the party's params); withdraw your own Credit. Deposits are recorded, no token yet |
+| FULL | 80th deposit | 80 tokens minted, 1 per Credit to each depositor. Withdraw closed. Arrangement phase (§5) |
 | ASSEMBLED | vault calls Statement contract with the approved order; Credits burned | governance on the Statement |
 | LISTED / SOLD | passed proposal | buy / accept |
 | DISTRIBUTED | sale settles | token holders redeem tokens for ETH pro rata (tokens burned on redeem) |
 | EXPIRED | deadline passes unfilled or unassembled | every depositor withdraws their original Credit; any minted tokens are void |
 
 Tokens are minted at FULL, not at deposit: a token that could be sold while OPEN would detach from the Credit it stands for and break withdrawals.
-Credits are never burned before assembly. If the Statement contract rejects contract callers, nothing is lost: sheets expire and Credits return.
+Credits are never burned before assembly. If the Statement contract rejects contract callers, nothing is lost: parties expire and Credits return.
 
-## 3. Per-sheet governance (binding, on-chain) — Party-style
+## 3. Hosts and party params
+- The address that opens a party is its first host. Hosts can add or remove hosts (last host cannot leave without naming a replacement).
+- Host privileges:
+  - Set and edit params while OPEN (see below).
+  - Set the deadline; close a party early (triggers EXPIRED, everyone withdraws).
+  - Open proposals.
+  - Moderate the party chat.
+- Params (set by hosts):
+  - **Minimum deposit**: fewest Credits one depositor may add. Final slots are exempt: when fewer slots remain than the minimum, the deposit may equal the remainder, so the party can always reach exactly 80.
+  - **Target sell price**: shown on the party page. Once assembled, it pre-fills the first LIST proposal (members still vote).
+  - **Eligibility filters**: Colors (plate combo), Print, Weight, Eights, marks range, rarity rank range, token-number range. Filters combine with AND.
+- Filter enforcement: our indexer turns the filters into the list of eligible Credit ids and publishes its Merkle root; deposit requires a membership proof. Anyone can check the list: every trait is recomputable from the chain (CreditArt.describe(seed, paidAt) is public). Rarity rank comes from OpenSea's OpenRarity calculation and is the one input not on-chain.
+- Param edits after deposits exist: undecided (options: allowed freely, allowed only if they do not disqualify Credits already deposited, or locked at first deposit).
+
+## 4. Party governance (binding, on-chain) — Party-style
 Borrowed from PartyGovernance.sol: propose → vote → passThresholdBps → executionDelay → execute; host veto; rage quit.
 Vote weight = ERC20Votes checkpoint at the proposal's creation block (stops buy-vote-sell, which matters now that tokens trade).
-**Pass rule:** YES weight > 50% of total supply (more than 40 of 80 tokens) AND NO weight = 0 when voting closes. Any NO vote kills the proposal. No host veto (the NO rule replaces it).
+**Pass rule:** YES weight > 50% of total supply (more than 40 of 80 tokens) AND NO weight = 0 when voting closes. Any NO vote kills the proposal. Hosts vote with their tokens like everyone else; host privileges are in §3.
 Guard options (undecided):
 - Dust veto: with 18 decimals, 0.000000000000000001 token can block every proposal. Option: a NO counts only from holders of ≥ 1 whole token at the snapshot.
 - Permanent deadlock: one holder can block every sale forever, leaving the Statement stuck in the vault. Option: after N failed proposals or T days, the same proposal can pass by supermajority (e.g. 2/3) despite NO votes; or dissenters may redeem at the listed price.
@@ -35,7 +50,7 @@ Proposal types (closed set, no arbitrary calls):
 - Post-assembly: LIST (price, venue, duration) · ACCEPT_OFFER (offer id, min price) · AUCTION (reserve, duration) · CANCEL_LISTING · DISTRIBUTE
 - DISPLAY/LEND (optional, later)
 
-## 4. Arrangement (the 8×10 order)
+## 5. Arrangement (the 8×10 order)
 Burn returns seeds in call order and the preview renders an ordered sheet. Order is likely part of the work (unverified until Statement contract ships).
 Flow:
 1. Group votes NOMINATE_ARRANGER.
@@ -49,19 +64,19 @@ Auto-order presets:
 - Gradient: by marks, light → dark
 - Random with a published seed (reproducible)
 
-## 5. Group pages
-One page per sheet: 8×10 frame, member list with token balances, chat, open proposals and vote tallies, arrangement editor, activity log (deposits, votes, sales).
+## 6. Party pages
+One page per party: 8×10 frame, member list with token balances, chat, open proposals and vote tallies, arrangement editor, activity log (deposits, votes, sales).
 - Chat: off-chain, hosted on the VPS (SQLite). Sign-In with Ethereum. Post rights: depositors while OPEN, token holders after FULL. Reading: public or members-only (decision).
-- Votes are on-chain (§3); the page shows them and submits them.
+- Votes are on-chain (§4); the page shows them and submits them.
 
-## 6. Collection-wide votes (signaling, off-chain)
-- Electorate: every Credit, burned or not. Power = Credits held + sheet tokens held across all sheets (1 burned Credit = 1 token = 1 vote).
+## 7. Collection-wide votes (signaling, off-chain)
+- Electorate: every Credit, burned or not. Power = Credits held + party tokens held across all parties (1 burned Credit = 1 token = 1 vote).
 - Credits contract has no vote checkpoints → power computed by our indexer at a fixed block; snapshot published as a Merkle root so anyone can verify.
 - Tokens sitting in a Uniswap pool count for no one (the pool contract cannot sign).
 - Signed messages, zero gas.
 - Binding scope: only pool-level settings (fees, default thresholds, theme calendar). Nothing binds Jack's contracts.
 
-## 7. UI — match jack.art/credits (copy in research/jack-credits-style.css)
+## 8. UI — match jack.art/credits (copy in research/jack-credits-style.css)
 - White #fff, ink #111, muted #929292/#999, hairlines 1px #e3e3e3 / #e8e8e8. No other color; the art supplies CMYK.
 - One type size: 11px/1.65 SF Mono → Menlo, all uppercase; bold 700 for headings only.
 - Header 30px 40px, nav gap 28px; main max-width 1440px; two-column works grid, 64px gap.
@@ -69,11 +84,12 @@ One page per sheet: 8×10 frame, member list with token balances, chat, open pro
 - Credit detail = 2×2 metadata overlay (Colors / Print / Weight / Eights), toggled like #metadata-toggle.
 - Text buttons only (underline when pressed), no fills, no rounded corners.
 
-## 8. Open decisions
-- Pass rule guards: dust-veto minimum, deadlock escape (§3).
+## 9. Open decisions
+- Pass rule guards: dust-veto minimum, deadlock escape (§4).
+- Param edits after deposits exist (§3).
 - Chat readable by public or members only.
 - Fork Party Protocol governance or build on OZ Governor/ERC20Votes.
 
-## 9. Unknowns
+## 10. Unknowns
 - Statement contract ABI/rules (single-owner? contract callers? order semantics?). Ships ~2026-10-01.
 - Whether Party Protocol's mainnet factory is still maintained (repo last commit 2024-12-20).
