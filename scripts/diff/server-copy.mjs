@@ -8,7 +8,8 @@
 //   credits + traits → byId, TRAITS, RARITY → score + rank
 //   COLOR_ORDER … PRESETS (arrangement presets)
 //   tally, isSuperseded/lastExecAt/canCountBlocked/countBlocked/blockedCount, kindOf, deadlocked,
-//   the wei price-math block (decUnits … priceWei/priceEth/belowFloor, listingWei/listingEth/goLive), cleanTarget
+//   the wei price-math block (decUnits … priceWei/priceEth/belowFloor, listingWei/listingEth/goLive), cleanTarget,
+//   the burn's price choice (BURN_CANDIDATES, burnCandidates, noteCandidate, pendingProposal, passesHere, burnPrice)
 // Stubs (the only non-verbatim pieces): floorFor(p) returns { eth: p.__floorEth, wei: p.__floorWei } (the signed floor
 // reading in wei, as the contract receives it) and now() returns the harness clock.
 import fs from 'node:fs';
@@ -56,12 +57,19 @@ export const RANGES = [
   ['function deadlocked(p, type)', '}'],
   ['// ---- price math in wei', '// ---- end price math'],
   ['function cleanTarget(t)', '}'],
+  ['const BURN_CANDIDATES', 'const BURN_CANDIDATES'],
+  ['const burnCandidates', 'const burnCandidates'],
+  ['const noteCandidate', 'const noteCandidate'],
+  ['const pendingProposal', 'const pendingProposal'],
+  ['function passesHere(p, q)', '}'],
+  ['function burnPrice(p)', '}'],
 ];
 
 const code = RANGES.map(r => lines(...r)).join('\n') + `
 ;({ SLOTS, OVERRIDE, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS, DEADLOCK_DAYS, byId, credits, TRAITS, RARITY,
     COLOR_ORDER, PRINT_ORDER, WEIGHT_ORDER, PRESETS, tally, kindOf, deadlocked, isSuperseded, lastExecAt, canCountBlocked, countBlocked, blockedCount,
-    belowFloor, priceEth, priceWei, resolvePrice, listingWei, listingEth, goLive, weiStr, cleanTarget })`;
+    belowFloor, priceEth, priceWei, resolvePrice, listingWei, listingEth, goLive, weiStr, cleanTarget,
+    BURN_CANDIDATES, burnCandidates, noteCandidate, pendingProposal, passesHere, burnPrice })`;
 
 export const clock = { now: Date.UTC(2026, 8, 23) };
 const ctx = vm.createContext({

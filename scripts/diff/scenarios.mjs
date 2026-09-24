@@ -60,4 +60,64 @@ const row = (name, site, contract) => out.push(`${site === contract ? 'SAME' : '
   p.__floorEth = 50;
   row(`S6 ask after floor 100→50 on a floor+10% listing (was ${at100})`, S.listingEth(listing, p), 110);
 }
+// S7: the burn re-judges every price voted while FULL at its own floor (Party._burnPrice, re-audit M-1/M-2). Contract
+// outcomes are Party.sol's: the M-2 rows are contracts/test/unit/ReAudit.t.sol (test_M2_*), the rest follow _burnPrice.
+// Outcome: 'vote#id' (candidate applied as if executed), 'pending#id' (the price executed while FULL), 'default', or the
+// revert reason ('floor needed').
+const burnOut = p => { const b = S.burnPrice(p); return b.error || (b.pending ? `pending#${b.q.id}` : b.q ? `vote#${b.q.id}` : 'default'); };
+const fixedAt = (id, eth, y, n = 0, extra = {}) => ({ ...prop(id, 'LIST', T, y, n, extra), args: { mode: 'fixed', value: String(eth), buyDelayHours: 1 } });
+const bparty = extra => party({ params: { target: { mode: 'fixed', value: '1' }, buyDelayHours: 1 }, ...extra });
+const candidate = (p, q) => { clock.now = T; p.proposals.push(q); S.noteCandidate(p, q); };
+{ // S7a: a Fixed price passed at 41 YES while above the floor, not executed; the floor rises above it before the burn
+  const p = bparty({ __floorEth: 100 });
+  candidate(p, fixedAt(1, 150, 41));
+  clock.now = T + 25 * H;
+  row('S7a fixed 150 at 41 YES, floor 100 at the burn', burnOut(p), 'vote#1');
+  p.__floorEth = 200;
+  row('S7a fixed 150 at 41 YES, floor rose to 200 at the burn (skipped)', burnOut(p), 'default');
+  p.proposals[0].votes = votes(60, 0);
+  row('S7a same price with 60 YES, floor 200 (below-floor rule met)', burnOut(p), 'vote#1');
+}
+{ // S7b: the price executed while FULL (pending), ReAudit test_M2_fixedPending_rejudgedAtBurn / _pendingWith60 / _pendingNeedsFloorReading
+  const mk = (y, floor) => {
+    const q = fixedAt(1, 5, y); q.executed = true; q.executedAt = T + 25 * H;
+    return bparty({ __floorEth: floor, proposals: [q], burnCandidates: [], listing: { mode: 'fixed', value: '5', buyDelayHours: 1, source: 'vote', proposal: 1 } });
+  };
+  clock.now = T + 26 * H;
+  row('S7b pending fixed 5 at 41 YES, floor 5 at the burn', burnOut(mk(41, 5)), 'pending#1');
+  row('S7b pending fixed 5 at 41 YES, floor 20 at the burn', burnOut(mk(41, 20)), 'default');
+  row('S7b pending fixed 5 at 60 YES, floor 20 at the burn', burnOut(mk(60, 20)), 'pending#1');
+  row('S7b pending fixed 5 at 41 YES, no floor reading', burnOut(mk(41, null)), 'floor needed');
+  row('S7b pending fixed 5 at 60 YES, no floor reading', burnOut(mk(60, null)), 'pending#1');
+}
+{ // S7c: no pending price, a Fixed candidate at 41..59 YES and no floor reading: the burn is refused
+  const p = bparty({ __floorEth: null });
+  candidate(p, fixedAt(1, 150, 45));
+  clock.now = T + 25 * H;
+  row('S7c fixed candidate at 45 YES, no floor reading', burnOut(p), 'floor needed');
+  const d = bparty({ __floorEth: null });
+  clock.now = T + 25 * H;
+  row('S7c no candidate, no pending, no floor reading (fixed default)', burnOut(d), 'default');
+}
+{ // S7d: only the latest 8 candidates are judged (residual: 41-YES groups can push an older one out of the window)
+  const run = n => {
+    const p = bparty({ __floorEth: 100 });
+    candidate(p, fixedAt(1, 50, 60)); // passes below the floor
+    for (let k = 2; k <= n; k++) candidate(p, fixedAt(k, 50, 41)); // below the floor with 41: skipped at the burn
+    clock.now = T + 25 * H;
+    return burnOut(p);
+  };
+  row('S7d 8 candidates, the oldest passes', run(8), 'vote#1');
+  row('S7d 9 candidates, the oldest (out of the window) passes', run(9), 'default');
+}
+{ // S7e: the newest id wins, whatever order the candidates reached 41 in
+  const p = bparty({ __floorEth: 100 });
+  const a = fixedAt(5, 150, 30), b = fixedAt(3, 150, 41);
+  clock.now = T; p.proposals.push(b, a); S.noteCandidate(p, a); S.noteCandidate(p, b); // #3 reaches 41 first
+  a.votes = votes(41, 0); S.noteCandidate(p, a); // then #5
+  clock.now = T + 25 * H;
+  row('S7e candidates recorded [#3, #5], both pass', burnOut(p), 'vote#5');
+  p.burnCandidates = [5, 3];
+  row('S7e candidates recorded [#5, #3], both pass', burnOut(p), 'vote#5');
+}
 console.log(out.join('\n'));
