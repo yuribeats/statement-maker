@@ -16,7 +16,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:30p
 header nav{display:flex;gap:28px;align-items:center}
 header nav a[aria-current=page]{text-decoration:underline;text-underline-offset:5px}
 .acting{display:flex;gap:10px;align-items:center}
-.acting select{border:0;border-bottom:1px solid var(--line);background:none;padding:2px 0;max-width:190px}
+.acting button{border-bottom:1px solid var(--line);padding:2px 0;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 main{max-width:1440px;margin:auto;padding:55px 40px 80px}
 
 .intro{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:45px}
@@ -242,3 +242,19 @@ a.addr{border-bottom:1px solid var(--line)}
 .thumbs .in-party img{opacity:.25}
 a.sim-card:hover{opacity:1;border-color:var(--c)}
 @media(max-width:700px){.thumbs{grid-template-columns:repeat(8,1fr)}}
+
+/* Wallet picker */
+.alert-m{color:var(--m)}
+.wallet-modal{width:min(520px,100%)}
+.wallets{list-style:none;margin:0;padding:0}
+.wallets li{border-bottom:1px solid var(--line2)}
+.w-row{display:grid;grid-template-columns:24px 1fr auto;gap:14px;align-items:center;width:100%;padding:12px 0;text-align:left}
+.w-row.off{color:var(--muted)}
+.w-row.off a{color:var(--ink)}
+.w-row img,.w-inline img{width:24px;height:24px;display:block}
+.w-ico{width:24px;height:24px;border:1px solid var(--line);display:grid;place-items:center;font-size:10px}
+.w-row.off .w-ico{color:var(--faint)}
+.w-row:disabled{cursor:progress}
+.w-inline{display:inline-flex;gap:10px;align-items:center}
+.wc-qr{margin-top:18px;display:grid;justify-items:start;gap:8px}
+.wc-qr img{width:220px;height:220px;image-rendering:pixelated;border:1px solid var(--line)}

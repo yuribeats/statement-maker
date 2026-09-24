@@ -4,11 +4,17 @@
   "type": "module",
   "scripts": {
     "traits": "node scripts/traits.mjs",
-    "dev": "node server.mjs"
+    "dev": "node server.mjs",
+    "build:web3": "esbuild web3/sepolia.mjs --bundle --format=esm --minify --platform=browser --outfile=public/sepolia.js && esbuild web3/wc.mjs --bundle --format=esm --minify --platform=browser --external:@reown/appkit/core --outfile=public/wc.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "viem": "^2.56.8",
     "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@walletconnect/ethereum-provider": "^2.25.0",
+    "esbuild": "^0.28.2",
+    "qrcode-generator": "^2.0.4"
   }
 }

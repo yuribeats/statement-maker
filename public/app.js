@@ -1,4 +1,5 @@
 // Statement Maker — front end. Hash routes, no framework.
+import * as Wallets from '/wallets.js';
 // All user-supplied strings go through esc() before render().
 const app = document.getElementById('app');
 const $ = (s, el = document) => el.querySelector(s);
@@ -24,35 +25,80 @@ let access = { canParty: false, storeOnly: '' };
 const STORE_ONLY_TEXT = 'A party sells its Statement only on Statement Maker, at the party\u2019s own price. The party cannot list, offer or auction it on OpenSea or any other marketplace. After the sale, the buyer owns it and may resell anywhere.';
 const storeBanner = () => `<div class="store-only"><strong>Sold only on Statement Maker.</strong> ${STORE_ONLY_TEXT} Credit Cards can be traded anywhere; the Statement cannot.</div>`;
 
-// ---------- wallet: real sign-in with a browser wallet; simulated wallets only in dev builds ----------
-async function fillActing() {
-  const sel = $('#acting');
-  const real = !!window.ethereum;
-  const top = stats?.dev ? await api('holders') : [];
-  const seen = new Set();
-  const sims = top.filter(o => o.address !== me && !seen.has(o.address) && seen.add(o.address));
-  render(sel,
-    (me ? `<option value="${esc(me)}" selected>${short(me)}</option><option value="__off">Disconnect</option>` : '<option value="" selected>Connect wallet</option>') +
-    (real && !me ? '<option value="__wallet">Browser wallet…</option>' : '') +
-    (!real && !me && !stats?.dev ? '<option value="" disabled>No wallet found in this browser</option>' : '') +
-    (stats?.dev ? '<optgroup label="Simulated wallets (dev)">' + sims.map(o => `<option value="${esc(o.address)}">${short(o.address) + ' · ' + Number(o.count)}</option>`).join('') + '<option value="__paste">Paste address…</option></optgroup>' : ''));
+// ---------- wallet: sign-in with a wallet the user picks (EIP-6963 or WalletConnect); simulated wallets only in dev builds ----------
+// The SIWE session must belong to the wallet's active account: switching accounts in the wallet signs out.
+const CHAIN = 1;
+let chainNow = CHAIN;
+const meName = () => esc(access?.ens || '') || short(me);
+function fillActing() {
+  const b = $('#acting');
+  if (!b) return;
+  b.textContent = me ? (access?.ens || me.slice(0, 6) + '…' + me.slice(-4)) : 'Connect wallet';
+  b.title = me ? 'Wallet: switch or disconnect' : 'Connect a wallet';
+  b.classList.toggle('alert-m', !!me && chainNow !== CHAIN);
 }
-$('#acting').addEventListener('change', async e => {
-  let v = e.target.value;
-  if (v === '__off') { await api('auth/logout', {}); setMe(''); return; }
-  if (v === '__wallet') {
-    try {
-      const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      fillActing(); openTermsModal(account.toLowerCase(), 'wallet');
-    } catch { fillActing(); }
-    return;
-  }
-  if (v === '__paste') { v = (prompt('Wallet address') || '').trim().toLowerCase(); if (!/^0x[0-9a-f]{40}$/.test(v)) { fillActing(); return; } }
-  if (v) { fillActing(); openTermsModal(v, 'sim'); }
+async function signOut() { try { await api('auth/logout', {}); } catch {} await setMe(''); }
+// Dev builds list simulated wallets (top holders, or a pasted address) under the real ones.
+async function devExtra() {
+  if (!stats?.dev) return '';
+  const top = await api('holders').catch(() => []);
+  const seen = new Set();
+  const sims = top.filter(o => o.address !== me && !seen.has(o.address) && seen.add(o.address)).slice(0, 12);
+  return `<div class="panel" style="margin-top:24px"><h2>Simulated wallets (dev)</h2><div class="chips">${sims.map(o => `<button type="button" data-sim="${esc(o.address)}">${short(o.address)} · ${Number(o.count)}</button>`).join('')}<button type="button" data-sim="__paste">Paste address…</button></div></div>`;
+}
+async function connectWallet() {
+  const extra = await devExtra();
+  let sim = '';
+  const r = await Wallets.pick({ chainId: CHAIN, title: 'Connect wallet', note: 'Ethereum mainnet · sign in only, no transaction', extra,
+    bind: (root, close) => root.querySelectorAll('[data-sim]').forEach(b => b.onclick = () => {
+      let v = b.dataset.sim;
+      if (v === '__paste') v = (prompt('Wallet address') || '').trim().toLowerCase();
+      if (/^0x[0-9a-f]{40}$/.test(v)) { sim = v; close(); }
+    }) });
+  if (sim) return openTermsModal(sim, 'sim');
+  if (!r) return;
+  if (me && r.account !== me) await signOut();
+  if (r.account !== me) openTermsModal(r.account, 'wallet');
+}
+function walletPanel() {
+  const w = Wallets.wallet();
+  const root = $('#modal-root');
+  const close = () => { root.replaceChildren(); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  const ico = w?.icon ? `<img src="${esc(w.icon)}" alt="" width="24" height="24">` : '';
+  render(root, `
+  <div class="modal-back" id="wb">
+   <div class="modal wallet-modal" role="dialog" aria-modal="true" aria-labelledby="wt">
+    <div class="modal-head"><h2 id="wt">Wallet</h2><span class="muted">Signed in</span></div>
+    <div class="modal-body"><div class="rows">
+     <div><span>Connected</span><strong>${userLink(me)}${access?.ens ? ' · ' + short(me) : ''}</strong></div>
+     <div><span>Wallet</span><strong class="w-inline">${ico}${w ? esc(w.name) : stats?.dev ? 'Simulated (dev)' : 'Not connected in this tab'}</strong></div>
+     ${w && chainNow !== CHAIN ? `<div><span>Network</span><strong class="alert-m">Chain ${Number(chainNow)} · this site reads Ethereum mainnet</strong></div>` : ''}
+     <div><span>Parties</span><strong>${access?.canParty ? 'Allowed · holds a Credit or a Credit Card' : 'Holds 0 Credits · parties need a wallet holding a Credit'}</strong></div>
+    </div></div>
+    <div class="modal-foot"><div class="actions" style="align-items:center"><button class="cta" type="button" id="w-switch">Switch wallet</button><button type="button" id="w-off">Disconnect</button><button type="button" id="w-close">Close</button></div></div>
+   </div>
+  </div>`);
+  document.body.style.overflow = 'hidden';
+  document.addEventListener('keydown', onKey);
+  $('#wb').addEventListener('click', e => { if (e.target.id === 'wb') close(); });
+  $('#w-close').onclick = close;
+  $('#w-switch').onclick = () => { close(); connectWallet(); };
+  $('#w-off').onclick = async () => { close(); await Wallets.disconnect(); await signOut(); };
+}
+$('#acting').addEventListener('click', () => me ? walletPanel() : connectWallet());
+// Account switched (or disconnected) inside the wallet: the old session no longer matches, so sign out.
+Wallets.on('accounts', async ([a]) => {
+  if (!me || a === me) return;
+  await signOut();
+  if (a) openTermsModal(a, 'wallet');
 });
+Wallets.on('chain', c => { chainNow = c; fillActing(); });
+// A "Switch wallet" button placed anywhere in a page opens the picker.
+app.addEventListener('click', e => { if (e.target.closest?.('[data-switch-wallet]')) connectWallet(); });
+const switchBtn = '<button type="button" class="cta" data-switch-wallet style="margin:0">Switch wallet</button>';
 const navProfile = () => { const a = $('#nav-profile'); if (a) { a.hidden = !me; a.href = me ? '#/u/' + me : '#/u'; } };
 async function setMe(v) { me = v; try { const m = await api('auth/me'); access = m; } catch {} navProfile(); fillActing(); route(); }
-const hex = str => '0x' + [...new TextEncoder().encode(str)].map(b => b.toString(16).padStart(2, '0')).join('');
 
 // ---------- ordering presets ----------
 const COLOR_ORDER = ['C', 'M', 'Y', 'K', 'CM', 'CY', 'MY', 'CK', 'MK', 'YK', 'CMY', 'CMK', 'CYK', 'MYK', 'CMYK'];
@@ -274,7 +320,8 @@ async function pageParty(id) {
     ${p.status === 'OPEN' ? `
     <div class="panel">
      <h2>Deposit</h2>
-     ${!me ? `<p class="muted">Choose a wallet under “Acting as”.</p>` : `
+     ${!me ? `<p class="muted">Use “Connect wallet” at the top right.</p>` : `
+       ${!wallet.length ? `<p class="alert-k">Connected: ${meName()} holds 0 Credits. Parties need a wallet holding a Credit.</p><div class="actions">${switchBtn}</div>` : !eligibleMine.length ? `<p class="alert-k">Connected: ${meName()} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'}; none meet this party’s criteria.</p><div class="actions">${switchBtn}</div>` : ''}
        <p class="muted">${short(me)} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'} · ${eligibleMine.length} eligible here · minimum ${minDep}</p>
        <div class="picker">${wallet.slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
@@ -482,15 +529,21 @@ async function pageNew() {
     drawOwn();
   }, 150); };
   // The host's own Credits that meet the criteria; the party opens with at least the minimum of them.
-  let own = [];
+  let own = [], ownState = 'loading';
   const picks = new Set();
-  api('wallet/' + me).then(w => { own = w; drawOwn(); }).catch(() => {});
+  api('wallet/' + me).then(w => { own = w; ownState = 'ok'; drawOwn(); }).catch(e => { ownState = e.message; drawOwn(); });
   function drawOwn() {
     const ok = own.filter(c => !c.deposited && matchesClient(c, draft.filters));
     for (const id of [...picks]) if (!ok.some(c => c.id === id)) picks.delete(id);
     const min = draft.minDeposit || 1;
-    $('#own-note').textContent = `${short(me)} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; ${ok.length} meet these criteria. Selected ${picks.size} of at least ${min}.`;
-    render($('#own-picker'), ok.slice(0, 200).map(c => `<button type="button" data-own="${Number(c.id)}" aria-pressed="${picks.has(c.id)}" title="#${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`).join('') || '<span class="muted">None of your Credits meet these criteria. Loosen the filters or hold a matching Credit.</span>');
+    const note = $('#own-note');
+    if (ownState !== 'ok') { note.textContent = ownState === 'loading' ? 'Reading your Credits…' : ownState; render($('#own-picker'), ''); }
+    else if (!own.length) { render(note, `<span class="alert-k">Connected: ${meName()} holds 0 Credits. Parties need a wallet holding a Credit.</span><span class="actions" style="display:flex;margin-top:10px">${switchBtn}</span>`); render($('#own-picker'), ''); }
+    else if (!ok.length) { render(note, `<span class="alert-k">Connected: ${meName()} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; none match the chosen filters.</span> Loosen the filters, or switch to a wallet holding a matching Credit.<span class="actions" style="display:flex;margin-top:10px">${switchBtn}</span>`); render($('#own-picker'), ''); }
+    else {
+      note.textContent = `${short(me)} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; ${ok.length} meet these criteria. Selected ${picks.size} of at least ${min}.`;
+      render($('#own-picker'), ok.slice(0, 200).map(c => `<button type="button" data-own="${Number(c.id)}" aria-pressed="${picks.has(c.id)}" title="#${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`).join(''));
+    }
     app.querySelectorAll('[data-own]').forEach(b => b.onclick = () => { const id = Number(b.dataset.own); picks.has(id) ? picks.delete(id) : picks.add(id); drawOwn(); });
     $('#create').disabled = !($('#new-ack').checked && picks.size >= min);
     $('#create').textContent = `Open party and deposit ${picks.size || ''}`;
@@ -702,7 +755,7 @@ function openTermsModal(address, mode = 'sim') {
       if (mode === 'wallet') {
         // Your wallet signs a sign-in message whose statement is this acceptance; the server verifies the signature.
         const { nonce, message } = await api('auth/nonce', { address });
-        const signature = await window.ethereum.request({ method: 'personal_sign', params: [hex(message), address] });
+        const signature = await Wallets.sign(message, address);
         who = (await api('auth/verify', { nonce, message, signature })).address;
       } else {
         who = (await api('auth/dev', { address, accept: $('#agree').checked })).address;
@@ -718,11 +771,11 @@ function pageGate() {
   render(app, `
   <div class="intro"><div><h1>For Credit holders</h1><p class="muted">Parties are open to wallets that hold a Credit or a Credit Card.</p></div></div>
   <div class="works"><div class="rows terms">
-   <div><span>Parties</span><strong>${me ? `The connected wallet ${short(me)} holds no Credits and no Credit Cards, so it cannot start or join a party.` : 'Connect a wallet that holds at least one Credit to start or join a party.'}</strong></div>
+   <div><span>Parties</span><strong>${me ? `Connected: ${meName()} holds 0 Credits. Parties need a wallet holding a Credit.` : 'Connect a wallet that holds at least one Credit to start or join a party.'}</strong></div>
    <div><span>Starting a party</span><strong>You must hold a Credit, and open the party by depositing at least its minimum number of Credits that meet the criteria you set.</strong></div>
    <div><span>Without a Credit</span><strong>You can view and buy Statements, read the rules, and try the simulation.</strong></div>
   </div>
-  <div><div class="actions">${me ? '' : '<span class="muted">Use “Connect wallet” at the top right.</span>'}<a class="cta" href="#/statements" style="margin:0">View Statements →</a><a href="#/try">Try it →</a></div></div></div>`);
+  <div><div class="actions">${me ? switchBtn : '<button type="button" class="cta" data-switch-wallet style="margin:0">Connect wallet</button>'}<a class="cta" href="#/statements" style="margin:0">View Statements →</a><a href="#/try">Try it →</a></div></div></div>`);
 }
 
 // ---------- statements ----------
@@ -1061,4 +1114,4 @@ async function route() {
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
 window.addEventListener('hashchange', route);
-Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; access = m; }), api('stats').then(x => (stats = x))]).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
+Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; access = m; }), api('stats').then(x => (stats = x))]).then(async () => { const a = await Wallets.restore(CHAIN); const w = Wallets.wallet(); if (w) try { chainNow = Number(await w.provider.request({ method: 'eth_chainId' })) || CHAIN; } catch {} if (me && a && a !== me) { await api('auth/logout', {}).catch(() => {}); me = ''; access = await api('auth/me').catch(() => access); } }).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);

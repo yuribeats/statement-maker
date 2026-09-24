@@ -3,6 +3,7 @@
 import { createPublicClient, createWalletClient, custom, http, parseEther, formatEther, parseAbi, getAddress } from 'viem';
 import { sepolia } from 'viem/chains';
 import ABIS from './abis.json';
+import * as Wallets from '../public/wallets.js';
 
 import ADDR from './sepolia-addresses.json';
 const STMT_ABI = parseAbi(['function ownerOf(uint256) view returns (address)', 'function next() view returns (uint256)', 'function setApprovalForAll(address,bool)', 'function isApprovedForAll(address,address) view returns (bool)']);
@@ -24,7 +25,7 @@ const eth = w => w == null ? '—' : Number(formatEther(w)).toFixed(4) + ' ETH';
 // Test hook: ?fork=<rpc>&as=<address> drives a local fork with an unlocked account instead of a wallet.
 const qs = new URLSearchParams(location.search);
 const FORK = qs.get('fork');
-const provider = FORK
+const forkProvider = FORK
   ? { request: async ({ method, params }) => {
       if (method === 'eth_requestAccounts' || method === 'eth_accounts') return [qs.get('as')];
       if (method === 'eth_chainId') return '0xaa36a7';
@@ -33,22 +34,46 @@ const provider = FORK
       if (r.error) throw new Error(r.error.message);
       return r.result;
     } }
-  : window.ethereum;
-// Reads go through the wallet's own connection (the site's security policy allows no outside connections).
-const pub = createPublicClient({ chain: sepolia, transport: FORK ? http(FORK) : custom(window.ethereum || { request: async () => { throw new Error('no wallet'); } }) });
+  : null;
+// Reads go through the chosen wallet's own connection (the site's security policy allows no other RPC).
+let provider = forkProvider;
+const noWallet = { request: async () => { throw new Error('no wallet'); } };
+let pub = createPublicClient({ chain: sepolia, transport: FORK ? http(FORK) : custom(noWallet) });
 let wallet = null, me = null;
 const S = { parties: [], sel: null, party: null, credits: [], picks: new Set(), cardPicks: new Set(), log: [], busy: false, stmts: [], listings: [] };
 
 function log(t, hash) { S.log.unshift({ t, hash, at: new Date().toLocaleTimeString() }); draw(); }
 
-async function connect() {
-  if (!provider) return alert('No wallet found. Install a browser wallet (e.g. MetaMask) and switch it to Sepolia.');
-  const [a] = await provider.request({ method: 'eth_requestAccounts' });
-  try { await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xaa36a7' }] }); } catch {}
+// The same wallet picker as the main site (EIP-6963 wallets + WalletConnect), on Sepolia.
+function use(p, a) {
+  provider = p;
+  if (!FORK) { pub = createPublicClient({ chain: sepolia, transport: custom(p) }); p.request({ method: 'eth_chainId' }).then(c => { wrongChain = Number(c) !== SEPOLIA; draw(); }, () => {}); }
   me = getAddress(a);
-  wallet = createWalletClient({ chain: sepolia, transport: custom(provider), account: me });
+  wallet = createWalletClient({ chain: sepolia, transport: custom(p), account: me });
+}
+async function connect() {
+  if (FORK) { const [a] = await provider.request({ method: 'eth_requestAccounts' }); use(provider, a); return refresh(); }
+  const r = await Wallets.pick({ chainId: SEPOLIA, title: 'Connect wallet', note: 'Sepolia testnet · test Credits only' });
+  if (!r) return;
+  S.sel = null; S.party = null; S.picks.clear(); S.cardPicks.clear();
+  use(r.provider, r.account);
   await refresh();
 }
+async function disconnect() {
+  await Wallets.disconnect();
+  me = null; wallet = null; S.sel = null; S.party = null; S.credits = [];
+  draw();
+}
+const SEPOLIA = 11155111;
+let wrongChain = false;
+// Account switched in the wallet: follow it (no sign-in on this page). Emptied: disconnected.
+Wallets.on('accounts', ([a]) => {
+  if (!a) { me = null; wallet = null; return draw(); }
+  if (me && a === me.toLowerCase()) return;
+  S.sel = null; S.party = null; S.picks.clear(); S.cardPicks.clear();
+  use(Wallets.wallet().provider, a); refresh();
+});
+Wallets.on('chain', c => { wrongChain = c !== SEPOLIA; if (me) refresh(); else draw(); });
 
 async function tx(label, req) {
   if (S.busy) return;
@@ -146,7 +171,7 @@ function draw() {
   }
   const p = S.party;
   render(app, `
-  <div class="intro"><div><h1>Statement Maker · Sepolia</h1><p class="muted">Test contracts ${esc(ADDR.version || '')} · ${short(me)} · ${S.credits.length} test Credits · 1 minute = 1 hour</p></div><button type="button" id="reload" class="muted">Refresh</button></div>
+  <div class="intro"><div><h1>Statement Maker · Sepolia</h1><p class="muted">Test contracts ${esc(ADDR.version || '')} · ${short(me)}${Wallets.wallet() ? ' · ' + esc(Wallets.wallet().name) : ''} · ${S.credits.length} test Credits · 1 minute = 1 hour</p>${wrongChain ? '<p class="alert-m">Your wallet is not on Sepolia. Switch its network to Sepolia.</p>' : ''}</div><div class="actions"><button type="button" id="reload" class="muted">Refresh</button>${FORK ? '' : '<button type="button" id="switch-w">Switch wallet</button><button type="button" id="disc-w">Disconnect</button>'}</div></div>
   <div class="store-only"><strong>Sold only on Statement Maker.</strong> A party's Statement can only be sold through its own contract at the party's price. Credit Cards can be traded anywhere.</div>
   <div class="works">
    <section>
@@ -273,10 +298,14 @@ function bind() {
   });
   document.querySelectorAll('[data-unlist]').forEach(b => b.onclick = () => tx(`Cancel listing #${b.dataset.unlist}`, { address: ADDR.market, abi: ABIS.Market, functionName: 'cancel', args: [BigInt(b.dataset.unlist)] }));
   document.querySelectorAll('[data-mbuy]').forEach(b => b.onclick = () => tx(`Buy Statement #${b.dataset.mbuy}`, { address: ADDR.market, abi: ABIS.Market, functionName: 'buy', args: [BigInt(b.dataset.mbuy), BigInt(b.dataset.price)], value: BigInt(b.dataset.price) }));
+  $('#switch-w')?.addEventListener('click', connect);
+  $('#disc-w')?.addEventListener('click', disconnect);
   $('#buy')?.addEventListener('click', () => tx('Buy the Statement', { ...P(S.party.a), functionName: 'buy', args: [S.party.ask], value: S.party.ask }));
   $('#claim')?.addEventListener('click', () => tx(`Claim ${S.party.myCards.length} cards`, { ...P(S.party.a), functionName: 'claim', args: [S.party.myCards] }));
   $('#withdraw')?.addEventListener('click', () => tx('Withdraw', { ...P(S.party.a), functionName: 'withdraw', args: [] }));
 }
 
+// Reconnect silently to the wallet chosen last time.
+if (!FORK) Wallets.restore(SEPOLIA).then(a => { const w = Wallets.wallet(); if (a && w) { use(w.provider, a); refresh(); } });
 draw();
 setInterval(() => { if (me && !S.busy) refresh(); }, 20_000);
