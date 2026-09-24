@@ -31,7 +31,7 @@ function queueNames() {
     for (let i = 0; i < want.length; i += 100) {
       const batch = want.slice(i, i + 100);
       batch.forEach(a => ensAsked.add(a));
-      try { const r = await api('ens?a=' + batch.join(',')); for (const a of batch) if (a in r.names) ensNames.set(a, r.names[a]); else ensAsked.delete(a); } catch { batch.forEach(a => ensAsked.delete(a)); return; }
+      try { const r = await api('ens?a=' + batch.join(',')); const skip = new Set(r.skipped || []); for (const a of batch) if (a in r.names) ensNames.set(a, r.names[a]); else if (!skip.has(a)) ensAsked.delete(a); } catch { batch.forEach(a => ensAsked.delete(a)); return; }
       applyNames();
     }
   }, 60);
