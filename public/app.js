@@ -135,15 +135,15 @@ async function renderFit() {
   const mini = ids => `<span class="mini">${ids.map(id => `<img src="${svg(id)}" alt="">`).join('')}</span>`;
   render(el, `
   <div class="fit">
-   <div>
-    <div class="caption" style="min-height:0;margin-bottom:12px"><h2><span class="dot y"></span>Parties your Credits fit</h2><span class="muted">${f.held} available in ${short(me)}</span></div>
-    ${f.parties.length ? `<div class="rows">${f.parties.map(q => `<div><span><a href="#/party/${esc(q.id)}">${esc(q.name)}</a><br><span class="faint">${q.filled}/80 · ${q.left} left · min ${q.minDeposit}</span></span><strong>${mini(q.sample)}<br>${q.fit} of yours qualify · <a href="#/party/${esc(q.id)}">Join →</a></strong></div>`).join('')}</div>`
+   <details>
+    <summary><h2><span class="dot y"></span>Parties your Credits fit</h2><span class="muted">${f.parties.length} part${f.parties.length === 1 ? 'y' : 'ies'} · ${f.held} Credits available</span></summary>
+    ${f.parties.length ? `<div class="rows">${f.parties.map(q => `<div><span><a href="#/party/${esc(q.id)}">${esc(q.name)}</a> <span class="faint">${q.filled}/80 · min ${q.minDeposit}</span></span><strong>${mini(q.sample)} ${q.fit} qualify · <a href="#/party/${esc(q.id)}">Join →</a></strong></div>`).join('')}</div>`
       : '<p class="muted">No open party accepts your Credits right now.</p>'}
-   </div>
-   <div>
-    <div class="caption" style="min-height:0;margin-bottom:12px"><h2>Start a party from your Credits</h2><span class="muted">Rarest pools you hold most of first</span></div>
-    <div class="rows">${f.ideas.map((i, k) => `<div><span>${esc(i.label)}<br><span class="faint">You hold ${n(i.mine)} · ${n(i.eligible)} exist</span></span><strong>${mini(i.sample)}<br><button type="button" data-idea="${k}">Start with these rules →</button></strong></div>`).join('')}</div>
-   </div>
+   </details>
+   <details>
+    <summary><h2>Start a party from your Credits</h2><span class="muted">${f.ideas.length} ideas</span></summary>
+    <div class="rows">${f.ideas.map((i, k) => `<div><span>${esc(i.label)} <span class="faint">${n(i.mine)} yours · ${n(i.eligible)} exist</span></span><strong>${mini(i.sample)} <button type="button" data-idea="${k}">Start →</button></strong></div>`).join('')}</div>
+   </details>
   </div>`);
   el.querySelectorAll('[data-idea]').forEach(b => b.onclick = () => {
     const i = f.ideas[Number(b.dataset.idea)];
