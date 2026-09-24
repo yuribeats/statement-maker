@@ -1,4 +1,4 @@
-# STATEMENT POOL — spec draft v0.6 (2026-09-23)
+# STATEMENT POOL — spec draft v0.7 (2026-09-23)
 
 Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 
@@ -61,6 +61,10 @@ Proposal types (closed set, no arbitrary calls):
   - Read at sale time, not at assembly, so a later change by the artist is followed.
   - Hard cap on the total paid (e.g. 25%) so a faulty or hostile royalty lookup cannot drain the sale.
   - Credits itself has none: no ERC-2981 (supportsInterface false) and the engine returns no recipients.
+- Platform fee: 1% of the sale price, paid in the same `buy()` transaction to the fee recipient address.
+  - Rate is fixed per party when the party is created; it can never rise for an existing party.
+- Split of each sale: price → artist royalty (per lookup) → 1% platform fee → remainder to token holders pro rata.
+  Example at 3 ETH with a 5% royalty: 0.15 artist, 0.03 platform, 2.82 to holders (0.03525 per token).
 - Floor-relative asks:
   - Floor data is read off-chain (marketplace APIs, since other Statements will trade there) and averaged over 24 h. This is a data input only; we list nothing there.
   - A keeper updates the on-chain ask as the floor rises. The contract accepts only increases: the ask never goes down. Lowering the price requires a new LIST vote.
@@ -91,7 +95,7 @@ One page per party: 8×10 frame, member list with token balances, chat, open pro
 - Credits contract has no vote checkpoints → power computed by our indexer at a fixed block; snapshot published as a Merkle root so anyone can verify.
 - Tokens sitting in a Uniswap pool count for no one (the pool contract cannot sign).
 - Signed messages, zero gas.
-- Binding scope: only pool-level settings (fees, default thresholds, theme calendar). Nothing binds Jack's contracts.
+- Binding scope: only pool-level settings (default thresholds, theme calendar). The 1% fee is not subject to these votes. Nothing binds Jack's contracts.
 
 ## 8. UI — match jack.art/credits (copy in research/jack-credits-style.css)
 - White #fff, ink #111, muted #929292/#999, hairlines 1px #e3e3e3 / #e8e8e8. No other color; the art supplies CMYK.
