@@ -358,9 +358,11 @@ async function pageParty(id, opts = {}) {
   const root = opts.root || app, embed = !!opts.root;
   const p = await api('parties/' + encodeURIComponent(id));
   const isHost = p.hosts.includes(me), isMember = p.members.some(m => m.address === me);
-  const canHandArrange = p.manual && isHost && p.status === 'FULL';
+  // Manual: the host orders and burns until 1 day after the party filled; after that the host has no say and any card
+  // holder (the host too, as a holder) burns in Time order (Party.assemble).
+  const fallbackOpen = p.manual && p.fallbackAt != null && p.now > p.fallbackAt;
+  const canHandArrange = p.manual && isHost && p.status === 'FULL' && !fallbackOpen;
   const holder = !!me && p.credits.some(c => c.depositor === me && !c.claimed); // holds an unclaimed card of this party
-  const fallbackOpen = p.manual && p.fallbackAt != null && p.now >= p.fallbackAt;
   const myTokens = p.members.find(m => m.address === me)?.count || 0;
   const myCards = me ? p.credits.filter(c => c.depositor === me).sort((a, b) => a.card - b.card) : [];
   const order = partyUI.mode === 'arrange' && partyUI.order ? partyUI.order : p.credits;
@@ -499,12 +501,12 @@ async function pageParty(id, opts = {}) {
       <div><span>Window</span><strong>1 hour to 7 days, chosen by the proposer</strong></div>
       <div><span>Execute</span><strong>Any card holder, within 7 days of passing, or it lapses</strong></div></div>` : ''}
      ${p.status === 'FULL' ? (() => {
-       const hostBurn = p.manual && canHandArrange && partyUI.mode === 'arrange', fbBurn = p.manual && !isHost && fallbackOpen && holder;
+       const hostBurn = p.manual && canHandArrange && partyUI.mode === 'arrange', fbBurn = p.manual && fallbackOpen && holder;
        const canBurn = p.manual ? hostBurn || fbBurn : holder;
        return `<div class="prop"><div class="prop-head"><strong>Burn</strong><span class="chip ${!p.manual || fallbackOpen ? 'pass' : 'open'}">${p.house || !p.manual ? 'Any card holder' : fallbackOpen ? 'Any card holder · Time order' : 'Host arranges by hand'}</span></div>
       <p class="muted">${p.house ? 'Arranged in purchase order, earliest first. Any card holder can burn the 80 into the Statement in one step.' : !p.manual ? `Arrangement is locked as ${esc(arrLabel(p.params.arrangement))} (${esc(arrDesc(p.params.arrangement))}). Any card holder can burn the 80 into the Statement in one step.`
         : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} ${p.house ? `The auction then opens at ${OPENING_BASIS}; its 24-hour timer starts at the first bid.` : 'The default price then goes live.'} Preview: nothing is burned on-chain.</p>
-      ${burnAlert(p.manual ? (fallbackOpen && !isHost ? 'Time' : null) : p.params.arrangement?.preset)}
+      ${burnAlert(p.manual ? (fallbackOpen ? 'Time' : null) : p.params.arrangement?.preset)}
       ${canBurn ? (partyUI.confirmBurn
         ? `<div class="actions"><span class="blocked">Burning is permanent. The 80 Credits become one Statement.</span><button type="button" class="cta" id="assemble">Confirm burn</button><button type="button" id="burn-x">Cancel</button></div>`
         : `<div class="actions"><button type="button" class="cta" id="burn-ask">${hostBurn ? 'Burn with this order' : fbBurn ? 'Burn in Time order' : 'Burn'}</button></div>`)
@@ -540,7 +542,7 @@ async function pageParty(id, opts = {}) {
      <div class="composer">
       <div class="caption" style="min-height:0"><h2>New proposal</h2></div>
        <div class="field"><label>Price</label><div><div style="display:flex;gap:12px;align-items:center"><select id="pm"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select><input id="pv" type="number" step="0.01" value="${p.floorEth ? (p.floorEth * 1.1).toFixed(2) : 1}" style="width:110px"><span id="pp" class="muted"></span></div><div class="hint" id="ph"></div></div></div>
-      <div class="field"><label>Buy wait, hours</label><div><input id="bw2" type="number" min="0" max="72" value="${Number(p.params.buyDelayHours ?? 1)}" style="width:80px"><div class="hint">Range: 0–72 · voted with this price · party default ${Number(p.params.buyDelayHours ?? 1)}h</div></div></div>
+      <div class="field"><label>Buy wait, hours</label><div><input id="bw2" type="number" min="0" max="72" value="${Number(p.params.buyDelayHours ?? 1)}" style="width:80px"><div class="hint">Range: 0–72 whole hours, at least 1 for a floor-based price · voted with this price · party default ${Number(p.params.buyDelayHours ?? 1)}h</div></div></div>
       <div class="field"><label>Voting window</label><div><select id="win">${[1, 24, 48, 72, 168].map(h => `<option value="${h}" ${h === (p.params.voteHours || 48) ? 'selected' : ''}>${h === 1 ? '1 hour' : h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select><div class="hint">Range: 1 hour – 7 days</div></div></div>
       <div class="actions" style="margin-top:12px"><button type="button" class="cta" id="propose-price" style="margin:0">Propose</button> ${cost('propose')} <span class="hint">Your yes vote is cast automatically.</span></div>
      </div>` : !me ? connectAct : `<p class="note">Only Credit Card holders can propose and vote.</p>`}
@@ -661,7 +663,7 @@ async function pageParty(id, opts = {}) {
       el.textContent = clock(left) + ' left';
     }, 1000);
   }
-  $('#assemble')?.addEventListener('click', async () => { partyUI.confirmBurn = false; await act('assemble', p.manual && isHost ? { order: (partyUI.order || p.credits).map(c => c.id) } : {}, 'vote-err'); });
+  $('#assemble')?.addEventListener('click', async () => { partyUI.confirmBurn = false; await act('assemble', canHandArrange ? { order: (partyUI.order || p.credits).map(c => c.id) } : {}, 'vote-err'); });
   $('#return')?.addEventListener('click', () => act('return', {}, 'ret-err'));
   $('#nominate-legacy')?.addEventListener('click', () => act('propose', { type: 'NOMINATE_ARRANGER', hours: $('#win')?.value, args: { address: $('#nominee').value } }, 'vote-err'));
   const send = () => { const t = $('#say').value.trim(); if (t) act('chat', { text: t }, 'chat-err'); };
@@ -701,7 +703,7 @@ async function pageNew() {
       <div id="arr-metric" ${draft.arrangement?.preset === 'Manual' ? '' : 'hidden'} style="margin-top:6px"><input id="am" maxlength="200" placeholder="The metric you will order by, e.g. darkest to lightest, left to right" value="${esc(draft.arrangement?.metric || '')}"></div>
       <div class="hint${draft.arrangement?.preset === 'Manual' ? ' alert-c' : ''}" id="arr-hint">${draft.arrangement?.preset === 'Manual' ? ARR_HINT.manual : esc(ARR_HINT.preset(draft.arrangement))}</div></div></div>
     <div class="field"><label>Floor reference</label><div><div class="chips">${[['avg24h', '24-hour average'], ['latest', 'Latest reading']].map(([k, l]) => `<button type="button" data-fm="${k}" aria-pressed="${(draft.floorMode || 'avg24h') === k}">${l}</button>`).join('')}</div>${hint('Floor = the Statement collection floor once Statements trade; until then 80 × the Credits floor. Read every minute. The average resists one cheap listing moving it; the latest follows the market as it is. Used for floor-based prices and the 60/80 below-floor rule.')}</div></div>
-    <div class="field"><label for="bw">Buy wait, hours</label><div><input id="bw" type="number" min="0" max="72" value="${val(draft.buyDelayHours ?? 1)}">${hint('Range: 0–72 hours · default 1 · how long after a price goes live before anyone can buy. Every price vote can set its own.')}</div></div>
+    <div class="field"><label for="bw">Buy wait, hours</label><div><input id="bw" type="number" min="0" max="72" value="${val(draft.buyDelayHours ?? 1)}">${hint('Range: 0–72 whole hours, at least 1 when the default price is floor-based · default 1 · how long after a price goes live before anyone can buy. Every price vote can set its own.')}</div></div>
     <div class="field"><label>Default price</label><div>
       <div class="chips">${[['fixed', 'ETH'], ['floorEth', 'Floor + ETH'], ['floorPct', 'Floor + %']].map(([m, l]) => `<button type="button" data-tm="${m}" aria-pressed="${draft.target.mode === m}">${l}</button>`).join('')}</div>
       <input id="tv" type="number" step="0.01" value="${val(draft.target.value)}" style="margin-top:6px"><div class="hint" id="tvh"></div></div></div>
