@@ -112,6 +112,30 @@ function cleanTarget(t) {
   if (mode === 'floorEth' && !(value > -1e6 && value < 1e6)) return null;
   return { mode, value };
 }
+// ---- default arrangement presets (same orderings as the client's auto-order) ----
+const COLOR_ORDER = ['C', 'M', 'Y', 'K', 'CM', 'CY', 'MY', 'CK', 'MK', 'YK', 'CMY', 'CMK', 'CYK', 'MYK', 'CMYK'];
+const PRINT_ORDER = ['Registered', 'Nudge', 'Slip', 'Skew', 'Drift', 'Loose'];
+const WEIGHT_ORDER = ['sparse', 'lean', 'even', 'extreme'];
+const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const PRESETS = {
+  Deposit: cs => cs,
+  Number: cs => [...cs].sort((a, b) => a.id - b.id),
+  Time: cs => [...cs].sort((a, b) => a.paidAt - b.paidAt),
+  Rarity: cs => [...cs].sort((a, b) => a.rank - b.rank),
+  Colors: cs => [...cs].sort((a, b) => COLOR_ORDER.indexOf(a.colors) - COLOR_ORDER.indexOf(b.colors) || a.id - b.id),
+  Print: cs => [...cs].sort((a, b) => PRINT_ORDER.indexOf(b.print) - PRINT_ORDER.indexOf(a.print) || a.id - b.id),
+  Weight: cs => [...cs].sort((a, b) => WEIGHT_ORDER.indexOf(a.weight) - WEIGHT_ORDER.indexOf(b.weight) || a.marks - b.marks),
+  Eights: cs => [...cs].sort((a, b) => b.eights - a.eights || a.id - b.id),
+  Ink: cs => [...cs].sort((a, b) => a.marks - b.marks),
+  Random: (cs, seed) => { const r = rng(seed), o = [...cs]; for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } return o; },
+};
+function cleanArrangement(a) {
+  const preset = Object.hasOwn(PRESETS, a?.preset) ? a.preset : 'Deposit';
+  return preset === 'Random' ? { preset, seed: int(a?.seed, 1, 999999) || 1 + Math.floor(Math.random() * 999999) } : { preset };
+}
+const defaultOrder = p => { const a = p.params.arrangement || { preset: 'Deposit' }; return PRESETS[a.preset](p.deposits.map(d => byId.get(d.id)), a.seed).map(c => c.id); };
+const ASSEMBLY_DELAY = p => (p.params.voteHours || 48) * 36e5; // time after filling for members to change the defaults
+const BUY_DELAY = 24 * 36e5; // a price must be live this long before anyone can buy
 const eligibleCount = f => { let n = 0; for (const c of byId.values()) if (matches(c, f)) n++; return n; };
 const isAddr = a => /^0x[0-9a-f]{40}$/.test(a);
 // A stored order is valid only if it is exactly the party's current 80 deposits.
@@ -174,6 +198,9 @@ function view(p) {
     ...p, now: now(), orderApproved: !!p.order, arranger: arrangerOf(p), arrangerElected: !!p.arranger, status: status(p), members: members(p), targetEth: targetEth(p),
     credits: order.map(id => { const d = p.deposits.find(x => x.id === id); return { ...card(byId.get(id), d?.address), card: d?.card, depositorAddr: d?.depositor, claimed: !!d?.claimed }; }),
     perCard: p.sold ? p.sold.perCard : null,
+    assemblyOpensAt: p.fullAt ? p.fullAt + ASSEMBLY_DELAY(p) : null,
+    buyOpensAt: p.listing ? p.listing.at + BUY_DELAY : null,
+    defaultBelowFloor: belowFloor(p.params.target),
     deadlock: { LIST: deadlocked(p, 'LIST'), NOMINATE_ARRANGER: deadlocked(p, 'NOMINATE_ARRANGER'), APPROVE_ARRANGEMENT: deadlocked(p, 'APPROVE_ARRANGEMENT') },
     proposals: p.proposals.map(x => ({ ...x, ...tally(p, x) })),
     eligible: p.eligible ?? (p.eligible = eligibleCount(p.params.filters)),
@@ -236,20 +263,23 @@ if (!state.parties.length) {
     const deposits = pick(params.filters, n, per);
     return { id, name, demo: true, hosts: [deposits[0].address], createdAt: Date.now() - 2 * 864e5, deadline: Date.now() + 8 * 864e5, params, deposits, order: null, arranger: null, proposals: [], chat: [] };
   };
-  const a = mk('eights', 'Two Eights Or More', { minDeposit: 1, target: { mode: 'floorPct', value: 40 }, filters: { eights: [2, 3, 4, 5] } }, 51, 6);
-  const b = mk('cyan', 'Cyan Plate Only', { minDeposit: 2, target: { mode: 'fixed', value: 3 }, filters: { colors: ['C'] } }, 23, 4);
-  const c = mk('slip', 'Misregistered', { minDeposit: 1, target: { mode: 'floorEth', value: 0.5 }, filters: { print: ['Slip', 'Drift', 'Skew', 'Loose', 'Nudge'] } }, 80, 5);
+  const a = mk('eights', 'Two Eights Or More', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Eights' }, target: { mode: 'floorPct', value: 40 }, filters: { eights: [2, 3, 4, 5] } }, 51, 6);
+  const b = mk('cyan', 'Cyan Plate Only', { minDeposit: 2, voteHours: 48, arrangement: { preset: 'Ink' }, target: { mode: 'fixed', value: 3 }, filters: { colors: ['C'] } }, 23, 4);
+  const c = mk('slip', 'Misregistered', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Rarity' }, target: { mode: 'floorEth', value: 0.5 }, filters: { print: ['Slip', 'Drift', 'Skew', 'Loose', 'Nudge'] } }, 80, 5);
   const snap = q => Object.fromEntries(members(q).map(m => [m.address, m.count]));
   const votesUpTo = (q, cap, skip = []) => { const v = {}; let w = 0; for (const m of members(q)) { if (skip.includes(m.address) || w + m.count > cap) continue; v[m.address] = true; w += m.count; } return v; };
   const T = Date.now();
   const ms = members(c);
   c.fullAt = T - 3 * 864e5;
+  c.order = defaultOrder(c); c.orderSource = 'default';
   const fl = floor.credit ? floor.credit * SLOTS : 2.4;
   c.arranger = ms[1].address;
   c.proposals.push({ id: 1, type: 'NOMINATE_ARRANGER', args: { address: ms[1].address }, by: ms[0].address, at: T - 60 * 36e5, endsAt: T - 12 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 46), executed: true, executedBy: ms[3].address });
   const printOrder = ['Registered', 'Nudge', 'Slip', 'Skew', 'Drift', 'Loose'];
   const ord = deposited(c).map(id => byId.get(id)).sort((x, y) => printOrder.indexOf(y.print) - printOrder.indexOf(x.print) || x.id - y.id).map(x => x.id);
-  c.proposals.push({ id: 2, type: 'APPROVE_ARRANGEMENT', args: { order: ord, preset: 'Print' }, by: ms[1].address, at: T - 28 * 36e5, endsAt: T + 20 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 44) });
+  c.order = ord; c.orderSource = 'arranger'; c.orderPreset = 'Print';
+  const rar = deposited(c).map(id => byId.get(id)).sort((x, y) => x.rank - y.rank).map(x => x.id);
+  c.proposals.push({ id: 2, type: 'APPROVE_ARRANGEMENT', args: { order: rar, preset: 'Rarity (challenge)' }, by: ms[4].address, at: T - 28 * 36e5, endsAt: T + 20 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 40) });
   const v3 = votesUpTo(c, 50, [ms[9].address]); v3[ms[9].address] = false;
   c.proposals.push({ id: 3, type: 'LIST', args: { mode: 'floorPct', value: -20 }, by: ms[2].address, at: T - 10 * 36e5, endsAt: T + 38 * 36e5, snapshot: snap(c), votes: v3 });
   c.proposals.push({ id: 4, type: 'LIST', args: { mode: 'floorPct', value: 15 }, by: ms[0].address, at: T - 50 * 36e5, endsAt: T - 2 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 48) });
@@ -257,14 +287,19 @@ if (!state.parties.length) {
   c.chat.push({ address: ms[9].address, text: 'voted no on -20%. not selling below floor.', at: T - 20e5 });
   a.chat.push({ address: a.hosts[0], text: 'twos and up only. 29 slots left.', at: T - 50e5 });
   // An assembled, listed party so the buy and claim flow can be seen.
-  const k = mk('black', 'Black Plate Only', { minDeposit: 1, target: { mode: 'fixed', value: 3 }, filters: { colors: ['K'] } }, 80, 5);
+  const k = mk('black', 'Black Plate Only', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Ink' }, target: { mode: 'fixed', value: 3 }, filters: { colors: ['K'] } }, 80, 5);
   k.fullAt = T - 6 * 864e5;
   k.order = deposited(k).map(id => byId.get(id)).sort((x, y) => x.marks - y.marks).map(x => x.id);
   k.assembled = { by: members(k)[2].address, at: T - 2 * 864e5, number: 1 };
   k.proposals.push({ id: 1, type: 'APPROVE_ARRANGEMENT', args: { order: k.order, preset: 'Ink' }, by: k.hosts[0], at: T - 5 * 864e5, endsAt: T - 3 * 864e5, snapshot: snap(k), votes: votesUpTo(k, 52), executed: true, executedBy: k.hosts[0] });
   k.proposals.push({ id: 2, type: 'LIST', args: { mode: 'fixed', value: 3 }, by: k.hosts[0], at: T - 44 * 36e5, endsAt: T - 20 * 36e5, snapshot: snap(k), votes: votesUpTo(k, 47), executed: true, executedBy: members(k)[1].address });
-  k.listing = { mode: 'fixed', value: 3, startEth: 3, at: T - 19 * 36e5 };
+  k.listing = { mode: 'fixed', value: 3, startEth: 3, at: T - 19 * 36e5, source: 'vote' };
+  k.orderSource = 'vote';
   k.deadline = T + 10 * 864e5;
+  a.description = 'Only Credits with two or more eights in the transaction ID. Arranged by eights, most first.';
+  b.description = 'Cyan plate only. One colour, eighty ways. Light to dark.';
+  c.description = 'Every print that slipped, drifted, skewed or came loose. Registration errors as the subject.';
+  k.description = 'Black plate only, sparse to dense.';
   state.parties = [a, b, c, k];
   save();
 }
@@ -398,8 +433,9 @@ http.createServer(async (req, res) => {
       const minDeposit = int(x.minDeposit, 1, SLOTS); if (!minDeposit) return json(res, 400, { error: 'minimum deposit must be 1–80' });
       const filters = cleanFilters(x.filters);
       const name = String(x.name || 'Untitled').replace(/\s+/g, ' ').trim().slice(0, 60) || 'Untitled';
+      const description = String(x.description || '').replace(/\r/g, '').trim().slice(0, 1000);
       const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) + '-' + crypto.randomUUID().slice(0, 8);
-      const p = { id, name, hosts: [host], createdAt: now(), deadline: now() + days * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit, target, filters }, eligible: eligibleCount(filters), deposits: [], order: null, arranger: null, proposals: [], chat: [] };
+      const p = { id, name, description, hosts: [host], createdAt: now(), deadline: now() + days * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit, target, filters, arrangement: cleanArrangement(x.arrangement) }, eligible: eligibleCount(filters), deposits: [], order: null, arranger: null, proposals: [], chat: [] };
       state.parties.unshift(p); save();
       return json(res, 200, view(p));
     }
@@ -426,7 +462,8 @@ http.createServer(async (req, res) => {
           if (!matches(cr, p.params.filters)) return json(res, 400, { error: `#${id} does not meet this party's filters` });
         }
         ids.forEach(id => p.deposits.push({ address: who, depositor: who, card: state.nextCard++, id, at: now() }));
-        if (p.deposits.length === SLOTS) p.fullAt = now();
+        // At 80 the host's default arrangement applies at once; card holders can vote a different one.
+        if (p.deposits.length === SLOTS) { p.fullAt = now(); p.order = defaultOrder(p); p.orderSource = 'default'; }
         save(); return json(res, 200, view(p));
       }
       if (c === 'withdraw') {
@@ -489,8 +526,8 @@ http.createServer(async (req, res) => {
         if (prop.type === 'APPROVE_ARRANGEMENT' && !validOrder(p, prop.args.order)) return json(res, 400, { error: 'order no longer matches the party' });
         prop.executed = true; prop.executedBy = who;
         if (prop.type === 'NOMINATE_ARRANGER') p.arranger = prop.args.address;
-        if (prop.type === 'APPROVE_ARRANGEMENT') p.order = prop.args.order;
-        if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: now() };
+        if (prop.type === 'APPROVE_ARRANGEMENT') { p.order = prop.args.order; p.orderSource = 'vote'; }
+        if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: now(), source: 'vote' };
         if (prop.type === 'CANCEL_LISTING') p.listing = null;
         // Executing one proposal supersedes every other pending proposal of the same kind (no stale re-runs).
         for (const q of p.proposals) if (q !== prop && !q.executed && kindOf(q.type) === kindOf(prop.type)) q.superseded = true;
@@ -498,9 +535,14 @@ http.createServer(async (req, res) => {
       }
       if (c === 'arrange') {
         if (st !== 'FULL') return json(res, 400, { error: 'arranging happens only while the party is full' });
-        if (who !== arrangerOf(p)) return json(res, 403, { error: 'only the arranger can submit an order' });
+        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
         const order = Array.isArray(x.order) ? x.order.slice(0, SLOTS + 1).map(Number) : [];
         if (!validOrder(p, order)) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });
+        // The arranger (host by default) sets the order directly, no vote. Anyone else's order becomes a challenge vote.
+        if (who === arrangerOf(p)) {
+          p.order = order; p.orderSource = 'arranger'; p.orderPreset = String(x.preset || 'Manual').slice(0, 60);
+          save(); return json(res, 200, view(p));
+        }
         if (p.proposals.filter(q => q.type === 'APPROVE_ARRANGEMENT' && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 arrangements under vote at once' });
         const at = now();
         p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: String(x.preset || 'custom').slice(0, 60) }, by: who, at, endsAt: at + windowMs(x.hours, p), override: deadlocked(p, 'APPROVE_ARRANGEMENT'), snapshot: Object.fromEntries(members(p).map(m => [m.address, m.count])), votes: { [who]: true } });
@@ -511,7 +553,12 @@ http.createServer(async (req, res) => {
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         if (st !== 'FULL') return json(res, 400, { error: 'party is ' + st });
         if (!p.order || !validOrder(p, p.order)) return json(res, 400, { error: 'the arrangement has not been approved' });
+        const opensAt = (p.fullAt || 0) + ASSEMBLY_DELAY(p);
+        if (now() < opensAt) return json(res, 400, { error: `assembly opens in ${Math.ceil((opensAt - now()) / 36e5)}h, so card holders can change the defaults first` });
+        if (p.proposals.some(q => q.type === 'APPROVE_ARRANGEMENT' && !q.executed && !q.superseded && !tally(p, q).closed)) return json(res, 400, { error: 'an arrangement vote is still open' });
         p.assembled = { by: who, at: now(), number: state.parties.filter(q => q.assembled).length + 1 };
+        // The host's default price goes live at assembly unless card holders already voted a price.
+        if (!p.listing) p.listing = { ...p.params.target, startEth: priceEth(p.params.target), at: now(), source: 'default' };
         save(); return json(res, 200, view(p));
       }
       if (c === 'return') {
@@ -537,6 +584,7 @@ http.createServer(async (req, res) => {
         // Simulated sale at the party's approved ask. Royalty is unknown until the Statement contract ships (0 here).
         if (st !== 'ASSEMBLED') return json(res, 400, { error: 'party is ' + st });
         if (!p.listing) return json(res, 400, { error: 'not listed' });
+        if (now() < p.listing.at + BUY_DELAY) return json(res, 400, { error: `buying opens ${Math.ceil((p.listing.at + BUY_DELAY - now()) / 36e5)}h after the price went live` });
         const price = priceEth(p.listing);
         if (!(price > 0)) return json(res, 400, { error: 'no price available' });
         const royalty = 0, fee = price * 0.01;
@@ -559,6 +607,9 @@ http.createServer(async (req, res) => {
         if ('minDeposit' in q) { const n = int(q.minDeposit, 1, SLOTS); if (!n) return json(res, 400, { error: 'minimum deposit must be 1–80' }); next.minDeposit = n; }
         if ('target' in q) { const t = cleanTarget(q.target); if (!t) return json(res, 400, { error: 'target price is out of range' }); next.target = t; }
         if ('filters' in q) next.filters = cleanFilters(q.filters);
+        if ('arrangement' in q) next.arrangement = cleanArrangement(q.arrangement);
+        if ('description' in x) p.description = String(x.description || '').replace(/\r/g, '').trim().slice(0, 1000);
+        if ('name' in x) p.name = String(x.name || p.name).replace(/\s+/g, ' ').trim().slice(0, 60) || p.name;
         if ('voteHours' in q) { if (!WINDOWS.includes(Number(q.voteHours))) return json(res, 400, { error: 'vote window must be 24, 48, 72 or 168 hours' }); next.voteHours = Number(q.voteHours); }
         const breaks = p.deposits.filter(d => !matches(byId.get(d.id), next.filters));
         if (breaks.length) return json(res, 400, { error: `would disqualify ${breaks.length} deposited Credit(s)` });

@@ -40,6 +40,15 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 - Filter enforcement: our indexer turns the filters into the list of eligible Credit ids and publishes its Merkle root; deposit requires a membership proof. Anyone can check the list: every trait is recomputable from the chain (CreditArt.describe(seed, paidAt) is public). Rarity rank comes from OpenSea's OpenRarity calculation and is the one input not on-chain.
 - Param edits after deposits exist: undecided (options: allowed freely, allowed only if they do not disqualify Credits already deposited, or locked at first deposit).
 
+- Every setting is a DEFAULT that runs automatically; depositing accepts the defaults; card holders can change any of them by vote.
+  - Name (≤ 60) and description (≤ 1,000), plain text.
+  - Default arrangement: one auto-order preset (Deposit order, Number, Time, Rarity, Colors, Print, Weight, Eights, Ink, Random with a published seed). Applied the moment the party fills.
+  - Default price: goes live at assembly unless card holders already voted a price.
+  - Default voting window.
+- Arranging: the host is the default arranger. The arranger may save any order (auto or manual) at any time while FULL; it takes effect at once, no vote. Any card holder may challenge with a different order (APPROVE_ARRANGEMENT vote) or propose a new arranger (NOMINATE_ARRANGER). Neither vote is required before the burn.
+- Assembly opens one voting window after the party fills (default 48 h), and waits for any open arrangement challenge to close.
+- Buying opens 24 h after a price goes live (default or voted), so card holders can react before a sale.
+
 ## 4. Party governance (binding, on-chain) — Party-style
 Borrowed from PartyGovernance.sol: propose → vote → close → execute. No host veto, no rage quit (Statements cannot be split back into Credits).
 Time limits: each proposal has a voting window of 24 h, 48 h, 72 h or 7 days, chosen by the proposer (party default set by hosts, 48 h). A passed proposal must be executed within 7 days of closing or it lapses.
