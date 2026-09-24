@@ -1,0 +1,833 @@
+'forge clean' running (wd: /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts)
+'forge config --json' running
+'forge build --build-info --deny never --skip ./test/** ./script/** --force' running (wd: /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts)
+INFO:Printers:
+Contract IERC5267
++--------------+-------------------------+--------------------------+
+| Function     | State variables written | Conditions on msg.sender |
++--------------+-------------------------+--------------------------+
+| eip712Domain | []                      | []                       |
++--------------+-------------------------+--------------------------+
+
+Contract IERC20Errors
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
++----------+-------------------------+--------------------------+
+
+Contract IERC721Errors
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
++----------+-------------------------+--------------------------+
+
+Contract IERC1155Errors
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
++----------+-------------------------+--------------------------+
+
+Contract Clones
++----------------------------------------------+-------------------------+--------------------------+
+| Function                                     | State variables written | Conditions on msg.sender |
++----------------------------------------------+-------------------------+--------------------------+
+| clone                                        | []                      | []                       |
+| clone                                        | []                      | []                       |
+| cloneDeterministic                           | []                      | []                       |
+| cloneDeterministic                           | []                      | []                       |
+| predictDeterministicAddress                  | []                      | []                       |
+| predictDeterministicAddress                  | []                      | []                       |
+| cloneWithImmutableArgs                       | []                      | []                       |
+| cloneWithImmutableArgs                       | []                      | []                       |
+| cloneDeterministicWithImmutableArgs          | []                      | []                       |
+| cloneDeterministicWithImmutableArgs          | []                      | []                       |
+| predictDeterministicAddressWithImmutableArgs | []                      | []                       |
+| predictDeterministicAddressWithImmutableArgs | []                      | []                       |
+| fetchCloneArgs                               | []                      | []                       |
+| _cloneCodeWithImmutableArgs                  | []                      | []                       |
++----------------------------------------------+-------------------------+--------------------------+
+
+Contract Initializable
++-------------------------------------+---------------------------+--------------------------+
+| Function                            | State variables written   | Conditions on msg.sender |
++-------------------------------------+---------------------------+--------------------------+
+| _checkInitializing                  | []                        | []                       |
+| _disableInitializers                | []                        | []                       |
+| _getInitializedVersion              | []                        | []                       |
+| _isInitializing                     | []                        | []                       |
+| _initializableStorageSlot           | []                        | []                       |
+| _getInitializableStorage            | []                        | []                       |
+| slitherConstructorConstantVariables | ['INITIALIZABLE_STORAGE'] | []                       |
++-------------------------------------+---------------------------+--------------------------+
+
+Contract ERC721
++----------------------+---------------------------------------------+--------------------------+
+| Function             | State variables written                     | Conditions on msg.sender |
++----------------------+---------------------------------------------+--------------------------+
+| name                 | []                                          | []                       |
+| symbol               | []                                          | []                       |
+| tokenURI             | []                                          | []                       |
+| balanceOf            | []                                          | []                       |
+| ownerOf              | []                                          | []                       |
+| safeTransferFrom     | []                                          | []                       |
+| safeTransferFrom     | []                                          | []                       |
+| transferFrom         | []                                          | []                       |
+| approve              | []                                          | []                       |
+| setApprovalForAll    | []                                          | []                       |
+| getApproved          | []                                          | []                       |
+| isApprovedForAll     | []                                          | []                       |
+| supportsInterface    | []                                          | []                       |
+| supportsInterface    | []                                          | []                       |
+| _msgSender           | []                                          | []                       |
+| _msgData             | []                                          | []                       |
+| _contextSuffixLength | []                                          | []                       |
+| constructor          | ['_name', '_symbol']                        | []                       |
+| supportsInterface    | []                                          | []                       |
+| balanceOf            | []                                          | []                       |
+| ownerOf              | []                                          | []                       |
+| name                 | []                                          | []                       |
+| symbol               | []                                          | []                       |
+| tokenURI             | []                                          | []                       |
+| _baseURI             | []                                          | []                       |
+| approve              | ['_tokenApprovals']                         | []                       |
+| getApproved          | []                                          | []                       |
+| setApprovalForAll    | ['_operatorApprovals']                      | []                       |
+| isApprovedForAll     | []                                          | []                       |
+| transferFrom         | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| safeTransferFrom     | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| safeTransferFrom     | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _ownerOf             | []                                          | []                       |
+| _getApproved         | []                                          | []                       |
+| _isAuthorized        | []                                          | []                       |
+| _checkAuthorized     | []                                          | []                       |
+| _increaseBalance     | ['_balances']                               | []                       |
+| _update              | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _mint                | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _safeMint            | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _safeMint            | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _burn                | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _transfer            | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _safeTransfer        | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _safeTransfer        | ['_balances', '_owners', '_tokenApprovals'] | []                       |
+| _approve             | ['_tokenApprovals']                         | []                       |
+| _approve             | ['_tokenApprovals']                         | []                       |
+| _setApprovalForAll   | ['_operatorApprovals']                      | []                       |
+| _requireOwned        | []                                          | []                       |
++----------------------+---------------------------------------------+--------------------------+
+
+Contract IERC721
++-------------------+-------------------------+--------------------------+
+| Function          | State variables written | Conditions on msg.sender |
++-------------------+-------------------------+--------------------------+
+| supportsInterface | []                      | []                       |
+| balanceOf         | []                      | []                       |
+| ownerOf           | []                      | []                       |
+| safeTransferFrom  | []                      | []                       |
+| safeTransferFrom  | []                      | []                       |
+| transferFrom      | []                      | []                       |
+| approve           | []                      | []                       |
+| setApprovalForAll | []                      | []                       |
+| getApproved       | []                      | []                       |
+| isApprovedForAll  | []                      | []                       |
++-------------------+-------------------------+--------------------------+
+
+Contract IERC721Receiver
++------------------+-------------------------+--------------------------+
+| Function         | State variables written | Conditions on msg.sender |
++------------------+-------------------------+--------------------------+
+| onERC721Received | []                      | []                       |
++------------------+-------------------------+--------------------------+
+
+Contract IERC721Metadata
++-------------------+-------------------------+--------------------------+
+| Function          | State variables written | Conditions on msg.sender |
++-------------------+-------------------------+--------------------------+
+| balanceOf         | []                      | []                       |
+| ownerOf           | []                      | []                       |
+| safeTransferFrom  | []                      | []                       |
+| safeTransferFrom  | []                      | []                       |
+| transferFrom      | []                      | []                       |
+| approve           | []                      | []                       |
+| setApprovalForAll | []                      | []                       |
+| getApproved       | []                      | []                       |
+| isApprovedForAll  | []                      | []                       |
+| supportsInterface | []                      | []                       |
+| name              | []                      | []                       |
+| symbol            | []                      | []                       |
+| tokenURI          | []                      | []                       |
++-------------------+-------------------------+--------------------------+
+
+Contract ERC721Utils
++-----------------------+-------------------------+--------------------------+
+| Function              | State variables written | Conditions on msg.sender |
++-----------------------+-------------------------+--------------------------+
+| checkOnERC721Received | []                      | []                       |
++-----------------------+-------------------------+--------------------------+
+
+Contract Base64
++-------------------------------------+--------------------------+--------------------------+
+| Function                            | State variables written  | Conditions on msg.sender |
++-------------------------------------+--------------------------+--------------------------+
+| encode                              | []                       | []                       |
+| encodeURL                           | []                       | []                       |
+| _encode                             | []                       | []                       |
+| slitherConstructorConstantVariables | ['_TABLE', '_TABLE_URL'] | []                       |
++-------------------------------------+--------------------------+--------------------------+
+
+Contract Context
++----------------------+-------------------------+--------------------------+
+| Function             | State variables written | Conditions on msg.sender |
++----------------------+-------------------------+--------------------------+
+| _msgSender           | []                      | []                       |
+| _msgData             | []                      | []                       |
+| _contextSuffixLength | []                      | []                       |
++----------------------+-------------------------+--------------------------+
+
+Contract Create2
++----------------+-------------------------+--------------------------+
+| Function       | State variables written | Conditions on msg.sender |
++----------------+-------------------------+--------------------------+
+| deploy         | []                      | []                       |
+| computeAddress | []                      | []                       |
+| computeAddress | []                      | []                       |
++----------------+-------------------------+--------------------------+
+
+Contract Errors
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
++----------+-------------------------+--------------------------+
+
+Contract Panic
++-------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
+| Function                            | State variables written                                                                                                                                                                                 | Conditions on msg.sender |
++-------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
+| panic                               | []                                                                                                                                                                                                      | []                       |
+| slitherConstructorConstantVariables | ['ARRAY_OUT_OF_BOUNDS', 'ASSERT', 'DIVISION_BY_ZERO', 'EMPTY_ARRAY_POP', 'ENUM_CONVERSION_ERROR', 'GENERIC', 'INVALID_INTERNAL_FUNCTION', 'RESOURCE_ERROR', 'STORAGE_ENCODING_ERROR', 'UNDER_OVERFLOW'] | []                       |
++-------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
+
+Contract ReentrancyGuardTransient
++-------------------------------------+------------------------------+--------------------------+
+| Function                            | State variables written      | Conditions on msg.sender |
++-------------------------------------+------------------------------+--------------------------+
+| _nonReentrantBefore                 | []                           | []                       |
+| _nonReentrantAfter                  | []                           | []                       |
+| _reentrancyGuardEntered             | []                           | []                       |
+| slitherConstructorConstantVariables | ['REENTRANCY_GUARD_STORAGE'] | []                       |
++-------------------------------------+------------------------------+--------------------------+
+
+Contract ShortStrings
++-------------------------------------+-------------------------+--------------------------+
+| Function                            | State variables written | Conditions on msg.sender |
++-------------------------------------+-------------------------+--------------------------+
+| toShortString                       | []                      | []                       |
+| toString                            | []                      | []                       |
+| byteLength                          | []                      | []                       |
+| toShortStringWithFallback           | []                      | []                       |
+| toStringWithFallback                | []                      | []                       |
+| byteLengthWithFallback              | []                      | []                       |
+| slitherConstructorConstantVariables | ['FALLBACK_SENTINEL']   | []                       |
++-------------------------------------+-------------------------+--------------------------+
+
+Contract StorageSlot
++----------------+-------------------------+--------------------------+
+| Function       | State variables written | Conditions on msg.sender |
++----------------+-------------------------+--------------------------+
+| getAddressSlot | []                      | []                       |
+| getBooleanSlot | []                      | []                       |
+| getBytes32Slot | []                      | []                       |
+| getUint256Slot | []                      | []                       |
+| getInt256Slot  | []                      | []                       |
+| getStringSlot  | []                      | []                       |
+| getStringSlot  | []                      | []                       |
+| getBytesSlot   | []                      | []                       |
+| getBytesSlot   | []                      | []                       |
++----------------+-------------------------+--------------------------+
+
+Contract Strings
++-------------------------------------+----------------------------------------------------------------------------+--------------------------+
+| Function                            | State variables written                                                    | Conditions on msg.sender |
++-------------------------------------+----------------------------------------------------------------------------+--------------------------+
+| toString                            | []                                                                         | []                       |
+| toStringSigned                      | []                                                                         | []                       |
+| toHexString                         | []                                                                         | []                       |
+| toHexString                         | []                                                                         | []                       |
+| toHexString                         | []                                                                         | []                       |
+| toChecksumHexString                 | []                                                                         | []                       |
+| equal                               | []                                                                         | []                       |
+| parseUint                           | []                                                                         | []                       |
+| parseUint                           | []                                                                         | []                       |
+| tryParseUint                        | []                                                                         | []                       |
+| tryParseUint                        | []                                                                         | []                       |
+| _tryParseUintUncheckedBounds        | []                                                                         | []                       |
+| parseInt                            | []                                                                         | []                       |
+| parseInt                            | []                                                                         | []                       |
+| tryParseInt                         | []                                                                         | []                       |
+| tryParseInt                         | []                                                                         | []                       |
+| _tryParseIntUncheckedBounds         | []                                                                         | []                       |
+| parseHexUint                        | []                                                                         | []                       |
+| parseHexUint                        | []                                                                         | []                       |
+| tryParseHexUint                     | []                                                                         | []                       |
+| tryParseHexUint                     | []                                                                         | []                       |
+| _tryParseHexUintUncheckedBounds     | []                                                                         | []                       |
+| parseAddress                        | []                                                                         | []                       |
+| parseAddress                        | []                                                                         | []                       |
+| tryParseAddress                     | []                                                                         | []                       |
+| tryParseAddress                     | []                                                                         | []                       |
+| _tryParseChr                        | []                                                                         | []                       |
+| escapeJSON                          | []                                                                         | []                       |
+| _unsafeReadBytesOffset              | []                                                                         | []                       |
+| slitherConstructorConstantVariables | ['ABS_MIN_INT256', 'ADDRESS_LENGTH', 'HEX_DIGITS', 'SPECIAL_CHARS_LOOKUP'] | []                       |
++-------------------------------------+----------------------------------------------------------------------------+--------------------------+
+
+Contract TransientSlot
++-----------+-------------------------+--------------------------+
+| Function  | State variables written | Conditions on msg.sender |
++-----------+-------------------------+--------------------------+
+| asAddress | []                      | []                       |
+| asBoolean | []                      | []                       |
+| asBytes32 | []                      | []                       |
+| asUint256 | []                      | []                       |
+| asInt256  | []                      | []                       |
+| tload     | []                      | []                       |
+| tstore    | []                      | []                       |
+| tload     | []                      | []                       |
+| tstore    | []                      | []                       |
+| tload     | []                      | []                       |
+| tstore    | []                      | []                       |
+| tload     | []                      | []                       |
+| tstore    | []                      | []                       |
+| tload     | []                      | []                       |
+| tstore    | []                      | []                       |
++-----------+-------------------------+--------------------------+
+
+Contract ECDSA
++-------------+-------------------------+--------------------------+
+| Function    | State variables written | Conditions on msg.sender |
++-------------+-------------------------+--------------------------+
+| tryRecover  | []                      | []                       |
+| recover     | []                      | []                       |
+| tryRecover  | []                      | []                       |
+| recover     | []                      | []                       |
+| tryRecover  | []                      | []                       |
+| recover     | []                      | []                       |
+| _throwError | []                      | []                       |
++-------------+-------------------------+--------------------------+
+
+Contract EIP712
++-------------------------------------+-------------------------------------------------------------------------------------------------------------------+--------------------------+
+| Function                            | State variables written                                                                                           | Conditions on msg.sender |
++-------------------------------------+-------------------------------------------------------------------------------------------------------------------+--------------------------+
+| eip712Domain                        | []                                                                                                                | []                       |
+| constructor                         | ['_cachedChainId', '_cachedDomainSeparator', '_cachedThis', '_hashedName', '_hashedVersion', '_name', '_version'] | []                       |
+| _domainSeparatorV4                  | []                                                                                                                | []                       |
+| _buildDomainSeparator               | []                                                                                                                | []                       |
+| _hashTypedDataV4                    | []                                                                                                                | []                       |
+| eip712Domain                        | []                                                                                                                | []                       |
+| _EIP712Name                         | []                                                                                                                | []                       |
+| _EIP712Version                      | []                                                                                                                | []                       |
+| slitherConstructorConstantVariables | ['TYPE_HASH']                                                                                                     | []                       |
++-------------------------------------+-------------------------------------------------------------------------------------------------------------------+--------------------------+
+
+Contract Hashes
++----------------------+-------------------------+--------------------------+
+| Function             | State variables written | Conditions on msg.sender |
++----------------------+-------------------------+--------------------------+
+| commutativeKeccak256 | []                      | []                       |
+| efficientKeccak256   | []                      | []                       |
++----------------------+-------------------------+--------------------------+
+
+Contract MerkleProof
++---------------------------+-------------------------+--------------------------+
+| Function                  | State variables written | Conditions on msg.sender |
++---------------------------+-------------------------+--------------------------+
+| verify                    | []                      | []                       |
+| processProof              | []                      | []                       |
+| verify                    | []                      | []                       |
+| processProof              | []                      | []                       |
+| verifyCalldata            | []                      | []                       |
+| processProofCalldata      | []                      | []                       |
+| verifyCalldata            | []                      | []                       |
+| processProofCalldata      | []                      | []                       |
+| multiProofVerify          | []                      | []                       |
+| processMultiProof         | []                      | []                       |
+| multiProofVerify          | []                      | []                       |
+| processMultiProof         | []                      | []                       |
+| multiProofVerifyCalldata  | []                      | []                       |
+| processMultiProofCalldata | []                      | []                       |
+| multiProofVerifyCalldata  | []                      | []                       |
+| processMultiProofCalldata | []                      | []                       |
++---------------------------+-------------------------+--------------------------+
+
+Contract MessageHashUtils
++---------------------------------+-------------------------+--------------------------+
+| Function                        | State variables written | Conditions on msg.sender |
++---------------------------------+-------------------------+--------------------------+
+| toEthSignedMessageHash          | []                      | []                       |
+| toEthSignedMessageHash          | []                      | []                       |
+| toDataWithIntendedValidatorHash | []                      | []                       |
+| toDataWithIntendedValidatorHash | []                      | []                       |
+| toTypedDataHash                 | []                      | []                       |
++---------------------------------+-------------------------+--------------------------+
+
+Contract ERC165
++-------------------+-------------------------+--------------------------+
+| Function          | State variables written | Conditions on msg.sender |
++-------------------+-------------------------+--------------------------+
+| supportsInterface | []                      | []                       |
+| supportsInterface | []                      | []                       |
++-------------------+-------------------------+--------------------------+
+
+Contract IERC165
++-------------------+-------------------------+--------------------------+
+| Function          | State variables written | Conditions on msg.sender |
++-------------------+-------------------------+--------------------------+
+| supportsInterface | []                      | []                       |
++-------------------+-------------------------+--------------------------+
+
+Contract Math
++------------------+-------------------------+--------------------------+
+| Function         | State variables written | Conditions on msg.sender |
++------------------+-------------------------+--------------------------+
+| add512           | []                      | []                       |
+| mul512           | []                      | []                       |
+| tryAdd           | []                      | []                       |
+| trySub           | []                      | []                       |
+| tryMul           | []                      | []                       |
+| tryDiv           | []                      | []                       |
+| tryMod           | []                      | []                       |
+| saturatingAdd    | []                      | []                       |
+| saturatingSub    | []                      | []                       |
+| saturatingMul    | []                      | []                       |
+| ternary          | []                      | []                       |
+| max              | []                      | []                       |
+| min              | []                      | []                       |
+| average          | []                      | []                       |
+| ceilDiv          | []                      | []                       |
+| mulDiv           | []                      | []                       |
+| mulDiv           | []                      | []                       |
+| mulShr           | []                      | []                       |
+| mulShr           | []                      | []                       |
+| invMod           | []                      | []                       |
+| invModPrime      | []                      | []                       |
+| modExp           | []                      | []                       |
+| tryModExp        | []                      | []                       |
+| modExp           | []                      | []                       |
+| tryModExp        | []                      | []                       |
+| _zeroBytes       | []                      | []                       |
+| sqrt             | []                      | []                       |
+| sqrt             | []                      | []                       |
+| log2             | []                      | []                       |
+| log2             | []                      | []                       |
+| log10            | []                      | []                       |
+| log10            | []                      | []                       |
+| log256           | []                      | []                       |
+| log256           | []                      | []                       |
+| unsignedRoundsUp | []                      | []                       |
++------------------+-------------------------+--------------------------+
+
+Contract SafeCast
++-----------+-------------------------+--------------------------+
+| Function  | State variables written | Conditions on msg.sender |
++-----------+-------------------------+--------------------------+
+| toUint248 | []                      | []                       |
+| toUint240 | []                      | []                       |
+| toUint232 | []                      | []                       |
+| toUint224 | []                      | []                       |
+| toUint216 | []                      | []                       |
+| toUint208 | []                      | []                       |
+| toUint200 | []                      | []                       |
+| toUint192 | []                      | []                       |
+| toUint184 | []                      | []                       |
+| toUint176 | []                      | []                       |
+| toUint168 | []                      | []                       |
+| toUint160 | []                      | []                       |
+| toUint152 | []                      | []                       |
+| toUint144 | []                      | []                       |
+| toUint136 | []                      | []                       |
+| toUint128 | []                      | []                       |
+| toUint120 | []                      | []                       |
+| toUint112 | []                      | []                       |
+| toUint104 | []                      | []                       |
+| toUint96  | []                      | []                       |
+| toUint88  | []                      | []                       |
+| toUint80  | []                      | []                       |
+| toUint72  | []                      | []                       |
+| toUint64  | []                      | []                       |
+| toUint56  | []                      | []                       |
+| toUint48  | []                      | []                       |
+| toUint40  | []                      | []                       |
+| toUint32  | []                      | []                       |
+| toUint24  | []                      | []                       |
+| toUint16  | []                      | []                       |
+| toUint8   | []                      | []                       |
+| toUint256 | []                      | []                       |
+| toInt248  | []                      | []                       |
+| toInt240  | []                      | []                       |
+| toInt232  | []                      | []                       |
+| toInt224  | []                      | []                       |
+| toInt216  | []                      | []                       |
+| toInt208  | []                      | []                       |
+| toInt200  | []                      | []                       |
+| toInt192  | []                      | []                       |
+| toInt184  | []                      | []                       |
+| toInt176  | []                      | []                       |
+| toInt168  | []                      | []                       |
+| toInt160  | []                      | []                       |
+| toInt152  | []                      | []                       |
+| toInt144  | []                      | []                       |
+| toInt136  | []                      | []                       |
+| toInt128  | []                      | []                       |
+| toInt120  | []                      | []                       |
+| toInt112  | []                      | []                       |
+| toInt104  | []                      | []                       |
+| toInt96   | []                      | []                       |
+| toInt88   | []                      | []                       |
+| toInt80   | []                      | []                       |
+| toInt72   | []                      | []                       |
+| toInt64   | []                      | []                       |
+| toInt56   | []                      | []                       |
+| toInt48   | []                      | []                       |
+| toInt40   | []                      | []                       |
+| toInt32   | []                      | []                       |
+| toInt24   | []                      | []                       |
+| toInt16   | []                      | []                       |
+| toInt8    | []                      | []                       |
+| toInt256  | []                      | []                       |
+| toUint    | []                      | []                       |
++-----------+-------------------------+--------------------------+
+
+Contract SignedMath
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
+| ternary  | []                      | []                       |
+| max      | []                      | []                       |
+| min      | []                      | []                       |
+| average  | []                      | []                       |
+| abs      | []                      | []                       |
++----------+-------------------------+--------------------------+
+
+Contract Checkpoints
++--------------------+-------------------------+--------------------------+
+| Function           | State variables written | Conditions on msg.sender |
++--------------------+-------------------------+--------------------------+
+| push               | []                      | []                       |
+| lowerLookup        | []                      | []                       |
+| upperLookup        | []                      | []                       |
+| upperLookupRecent  | []                      | []                       |
+| latest             | []                      | []                       |
+| latestCheckpoint   | []                      | []                       |
+| length             | []                      | []                       |
+| at                 | []                      | []                       |
+| _insert            | []                      | []                       |
+| _upperBinaryLookup | []                      | []                       |
+| _lowerBinaryLookup | []                      | []                       |
+| _unsafeAccess      | []                      | []                       |
+| push               | []                      | []                       |
+| lowerLookup        | []                      | []                       |
+| upperLookup        | []                      | []                       |
+| upperLookupRecent  | []                      | []                       |
+| latest             | []                      | []                       |
+| latestCheckpoint   | []                      | []                       |
+| length             | []                      | []                       |
+| at                 | []                      | []                       |
+| _insert            | []                      | []                       |
+| _upperBinaryLookup | []                      | []                       |
+| _lowerBinaryLookup | []                      | []                       |
+| _unsafeAccess      | []                      | []                       |
+| push               | []                      | []                       |
+| lowerLookup        | []                      | []                       |
+| upperLookup        | []                      | []                       |
+| upperLookupRecent  | []                      | []                       |
+| latest             | []                      | []                       |
+| latestCheckpoint   | []                      | []                       |
+| length             | []                      | []                       |
+| at                 | []                      | []                       |
+| _insert            | []                      | []                       |
+| _upperBinaryLookup | []                      | []                       |
+| _lowerBinaryLookup | []                      | []                       |
+| _unsafeAccess      | []                      | []                       |
++--------------------+-------------------------+--------------------------+
+
+Contract ICardParty
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
+| cardView | []                      | []                       |
++----------+-------------------------+--------------------------+
+
+Contract CreditCards
++-----------------------------+------------------------------------------------------------------+-------------------------------+
+| Function                    | State variables written                                          | Conditions on msg.sender      |
++-----------------------------+------------------------------------------------------------------+-------------------------------+
+| constructor                 | ['_name', '_symbol']                                             | []                            |
+| supportsInterface           | []                                                               | []                            |
+| balanceOf                   | []                                                               | []                            |
+| ownerOf                     | []                                                               | []                            |
+| name                        | []                                                               | []                            |
+| symbol                      | []                                                               | []                            |
+| tokenURI                    | []                                                               | []                            |
+| _baseURI                    | []                                                               | []                            |
+| approve                     | ['_tokenApprovals']                                              | []                            |
+| getApproved                 | []                                                               | []                            |
+| setApprovalForAll           | ['_operatorApprovals']                                           | []                            |
+| isApprovedForAll            | []                                                               | []                            |
+| transferFrom                | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| safeTransferFrom            | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| safeTransferFrom            | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _ownerOf                    | []                                                               | []                            |
+| _getApproved                | []                                                               | []                            |
+| _isAuthorized               | []                                                               | []                            |
+| _checkAuthorized            | []                                                               | []                            |
+| _increaseBalance            | ['_balances']                                                    | []                            |
+| _update                     | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _mint                       | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _safeMint                   | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _safeMint                   | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _burn                       | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _transfer                   | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _safeTransfer               | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _safeTransfer               | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| _approve                    | ['_tokenApprovals']                                              | []                            |
+| _approve                    | ['_tokenApprovals']                                              | []                            |
+| _setApprovalForAll          | ['_operatorApprovals']                                           | []                            |
+| _requireOwned               | []                                                               | []                            |
+| name                        | []                                                               | []                            |
+| symbol                      | []                                                               | []                            |
+| tokenURI                    | []                                                               | []                            |
+| balanceOf                   | []                                                               | []                            |
+| ownerOf                     | []                                                               | []                            |
+| safeTransferFrom            | []                                                               | []                            |
+| safeTransferFrom            | []                                                               | []                            |
+| transferFrom                | []                                                               | []                            |
+| approve                     | []                                                               | []                            |
+| setApprovalForAll           | []                                                               | []                            |
+| getApproved                 | []                                                               | []                            |
+| isApprovedForAll            | []                                                               | []                            |
+| supportsInterface           | []                                                               | []                            |
+| supportsInterface           | []                                                               | []                            |
+| _msgSender                  | []                                                               | []                            |
+| _msgData                    | []                                                               | []                            |
+| _contextSuffixLength        | []                                                               | []                            |
+| constructor                 | ['_name', '_symbol', 'factory']                                  | []                            |
+| registerParty               | ['isParty']                                                      | ['msg.sender != factory']     |
+| mint                        | ['_balances', '_owners', '_tokenApprovals', 'nextId', 'partyOf'] | ['! isParty[msg.sender]']     |
+| burn                        | ['_balances', '_owners', '_tokenApprovals']                      | ['partyOf[id] != msg.sender'] |
+| heldAt                      | []                                                               | []                            |
+| heldNow                     | []                                                               | []                            |
+| _update                     | ['_balances', '_owners', '_tokenApprovals']                      | []                            |
+| tokenURI                    | []                                                               | []                            |
+| _clean                      | []                                                               | []                            |
+| slitherConstructorVariables | ['nextId']                                                       | []                            |
++-----------------------------+------------------------------------------------------------------+-------------------------------+
+
+Contract CreditKeys
++-------------------------------------+-------------------------+--------------------------+
+| Function                            | State variables written | Conditions on msg.sender |
++-------------------------------------+-------------------------+--------------------------+
+| key                                 | []                      | []                       |
+| colorRank                           | []                      | []                       |
+| printRank                           | []                      | []                       |
+| weightRank                          | []                      | []                       |
+| colorWeight                         | []                      | []                       |
+| printWeight                         | []                      | []                       |
+| weightWeight                        | []                      | []                       |
+| eightsWeight                        | []                      | []                       |
+| shuffle                             | []                      | []                       |
+| slitherConstructorConstantVariables | ['ID_BITS']             | []                       |
++-------------------------------------+-------------------------+--------------------------+
+
+Contract IFactory
++--------------+-------------------------+--------------------------+
+| Function     | State variables written | Conditions on msg.sender |
++--------------+-------------------------+--------------------------+
+| credits      | []                      | []                       |
+| statement    | []                      | []                       |
+| cards        | []                      | []                       |
+| feeRecipient | []                      | []                       |
+| FEE_BPS      | []                      | []                       |
+| isValidFloor | []                      | []                       |
++--------------+-------------------------+--------------------------+
+
+Contract Party
++-------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+
+| Function                            | State variables written                                                                                                                                                                                 | Conditions on msg.sender                                                                        |
++-------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+
+| _nonReentrantBefore                 | []                                                                                                                                                                                                      | []                                                                                              |
+| _nonReentrantAfter                  | []                                                                                                                                                                                                      | []                                                                                              |
+| _reentrancyGuardEntered             | []                                                                                                                                                                                                      | []                                                                                              |
+| _checkInitializing                  | []                                                                                                                                                                                                      | []                                                                                              |
+| _disableInitializers                | []                                                                                                                                                                                                      | []                                                                                              |
+| _getInitializedVersion              | []                                                                                                                                                                                                      | []                                                                                              |
+| _isInitializing                     | []                                                                                                                                                                                                      | []                                                                                              |
+| _initializableStorageSlot           | []                                                                                                                                                                                                      | []                                                                                              |
+| _getInitializableStorage            | []                                                                                                                                                                                                      | []                                                                                              |
+| constructor                         | []                                                                                                                                                                                                      | []                                                                                              |
+| initialize                          | ['_params', 'cards', 'createdAt', 'credits', 'deadline', 'factory', 'host']                                                                                                                             | []                                                                                              |
+| params                              | []                                                                                                                                                                                                      | []                                                                                              |
+| depositOrder                        | []                                                                                                                                                                                                      | []                                                                                              |
+| burnOrder                           | []                                                                                                                                                                                                      | []                                                                                              |
+| count                               | []                                                                                                                                                                                                      | []                                                                                              |
+| proposalCount                       | []                                                                                                                                                                                                      | []                                                                                              |
+| proposal                            | []                                                                                                                                                                                                      | []                                                                                              |
+| status                              | []                                                                                                                                                                                                      | []                                                                                              |
+| cardView                            | []                                                                                                                                                                                                      | []                                                                                              |
+| deposit                             | ['_order', 'cardOfCredit', 'cardsOutstanding', 'creditOfCard', 'fullAt']                                                                                                                                | []                                                                                              |
+| redeem                              | ['_order', 'cardOfCredit', 'cardsOutstanding', 'creditOfCard']                                                                                                                                          | []                                                                                              |
+| redeemFor                           | ['_order', 'cardOfCredit', 'cardsOutstanding', 'creditOfCard']                                                                                                                                          | []                                                                                              |
+| _redeem                             | ['_order', 'cardOfCredit', 'cardsOutstanding', 'creditOfCard']                                                                                                                                          | []                                                                                              |
+| _removeFromOrder                    | ['_order']                                                                                                                                                                                              | []                                                                                              |
+| assemble                            | ['_assembling', '_burnOrder', 'ask', 'askLiveAt', 'askSpec', 'assembled', 'priceEpoch', 'statementId']                                                                                                  | ['cards.heldNow(address(this),msg.sender) == 0', 'msg.sender != host']                          |
+| _checkPermutation                   | []                                                                                                                                                                                                      | []                                                                                              |
+| _positionOf                         | []                                                                                                                                                                                                      | []                                                                                              |
+| _checkPreset                        | []                                                                                                                                                                                                      | []                                                                                              |
+| onERC721Received                    | []                                                                                                                                                                                                      | ['! _assembling || msg.sender != address(factory.statement())']                                 |
+| propose                             | ['_openCounted', '_proposals', 'openBy', 'voteOf', 'weightOf']                                                                                                                                          | ['cards.heldNow(address(this),msg.sender) == 0', 'openBy[msg.sender] >= MAX_OPEN_PER_PROPOSER'] |
+| vote                                | ['_proposals', 'voteOf', 'weightOf']                                                                                                                                                                    | []                                                                                              |
+| _vote                               | ['_proposals', 'voteOf', 'weightOf']                                                                                                                                                                    | []                                                                                              |
+| needFor                             | []                                                                                                                                                                                                      | []                                                                                              |
+| execute                             | ['_proposals', 'ask', 'askLiveAt', 'askSpec', 'hasPendingPrice', 'lastPriceExecutedAt', 'pendingPrice', 'priceEpoch']                                                                                   | ['cards.heldNow(address(this),msg.sender) == 0']                                                |
+| countBlocked                        | ['blockedCounted', 'blockedPriceProposals']                                                                                                                                                             | []                                                                                              |
+| _deadlocked                         | []                                                                                                                                                                                                      | []                                                                                              |
+| _refreshOpen                        | ['_openCounted', 'openBy']                                                                                                                                                                              | []                                                                                              |
+| raiseAsk                            | ['ask']                                                                                                                                                                                                 | []                                                                                              |
+| buy                                 | ['ask', 'owed', 'perCard', 'sold']                                                                                                                                                                      | []                                                                                              |
+| claim                               | ['cardsOutstanding', 'creditOfCard']                                                                                                                                                                    | ['cards.partyOf(c) != address(this) || cards.ownerOf(c) != msg.sender']                         |
+| withdraw                            | ['owed']                                                                                                                                                                                                | []                                                                                              |
+| transferHost                        | ['host']                                                                                                                                                                                                | ['msg.sender != host || to == address(0)']                                                      |
+| _checkPrice                         | []                                                                                                                                                                                                      | []                                                                                              |
+| _floor                              | []                                                                                                                                                                                                      | []                                                                                              |
+| _resolve                            | []                                                                                                                                                                                                      | []                                                                                              |
+| _resolveWith                        | []                                                                                                                                                                                                      | []                                                                                              |
+| _windowOk                           | []                                                                                                                                                                                                      | []                                                                                              |
+| receive                             | []                                                                                                                                                                                                      | []                                                                                              |
+| slitherConstructorConstantVariables | ['BUY_DELAY', 'DEADLOCK_BLOCKS', 'DEADLOCK_TIME', 'EXECUTE_WINDOW', 'FLOOR_MAX_AGE', 'MAX_OPEN_PER_PROPOSER', 'MAX_PROPOSALS', 'PASS', 'PASS_BELOW_FLOOR', 'PASS_DEADLOCK', 'ROYALTY_CAP_BPS', 'SLOTS'] | []                                                                                              |
++-------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+
+
+Contract PartyFactory
++-------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
+| Function                            | State variables written                                                                                                                                                                             | Conditions on msg.sender |
++-------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
+| constructor                         | ['_cachedChainId', '_cachedDomainSeparator', '_cachedThis', '_hashedName', '_hashedVersion', '_name', '_version']                                                                                   | []                       |
+| _domainSeparatorV4                  | []                                                                                                                                                                                                  | []                       |
+| _buildDomainSeparator               | []                                                                                                                                                                                                  | []                       |
+| _hashTypedDataV4                    | []                                                                                                                                                                                                  | []                       |
+| eip712Domain                        | []                                                                                                                                                                                                  | []                       |
+| _EIP712Name                         | []                                                                                                                                                                                                  | []                       |
+| _EIP712Version                      | []                                                                                                                                                                                                  | []                       |
+| eip712Domain                        | []                                                                                                                                                                                                  | []                       |
+| constructor                         | ['_cachedChainId', '_cachedDomainSeparator', '_cachedThis', '_hashedName', '_hashedVersion', '_name', '_version', 'cards', 'credits', 'feeRecipient', 'floorSigner', 'implementation', 'statement'] | []                       |
+| createParty                         | ['parties']                                                                                                                                                                                         | []                       |
+| partiesCount                        | []                                                                                                                                                                                                  | []                       |
+| floorDigest                         | []                                                                                                                                                                                                  | []                       |
+| isValidFloor                        | []                                                                                                                                                                                                  | []                       |
+| slitherConstructorConstantVariables | ['FEE_BPS', 'FLOOR_TYPEHASH']                                                                                                                                                                       | []                       |
++-------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
+
+Contract ICredits
++-------------------+-------------------------+--------------------------+
+| Function          | State variables written | Conditions on msg.sender |
++-------------------+-------------------------+--------------------------+
+| ownerOf           | []                      | []                       |
+| transferFrom      | []                      | []                       |
+| setApprovalForAll | []                      | []                       |
+| isApprovedForAll  | []                      | []                       |
+| seedOf            | []                      | []                       |
+| timestampOf       | []                      | []                       |
+| art               | []                      | []                       |
+| isSealed          | []                      | []                       |
++-------------------+-------------------------+--------------------------+
+
+Contract ICreditArt
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
+| describe | []                      | []                       |
++----------+-------------------------+--------------------------+
+
+Contract IStatement
++--------------+-------------------------+--------------------------+
+| Function     | State variables written | Conditions on msg.sender |
++--------------+-------------------------+--------------------------+
+| make         | []                      | []                       |
+| ownerOf      | []                      | []                       |
+| transferFrom | []                      | []                       |
++--------------+-------------------------+--------------------------+
+
+Contract IERC2981Like
++-------------+-------------------------+--------------------------+
+| Function    | State variables written | Conditions on msg.sender |
++-------------+-------------------------+--------------------------+
+| royaltyInfo | []                      | []                       |
++-------------+-------------------------+--------------------------+
+
+Contract ICreditsBurn
++----------+-------------------------+--------------------------+
+| Function | State variables written | Conditions on msg.sender |
++----------+-------------------------+--------------------------+
+| burn     | []                      | []                       |
++----------+-------------------------+--------------------------+
+
+Contract MockStatement
++-----------------------------+---------------------------------------------------------------+--------------------------+
+| Function                    | State variables written                                       | Conditions on msg.sender |
++-----------------------------+---------------------------------------------------------------+--------------------------+
+| constructor                 | ['_name', '_symbol']                                          | []                       |
+| supportsInterface           | []                                                            | []                       |
+| balanceOf                   | []                                                            | []                       |
+| ownerOf                     | []                                                            | []                       |
+| name                        | []                                                            | []                       |
+| symbol                      | []                                                            | []                       |
+| tokenURI                    | []                                                            | []                       |
+| _baseURI                    | []                                                            | []                       |
+| approve                     | ['_tokenApprovals']                                           | []                       |
+| getApproved                 | []                                                            | []                       |
+| setApprovalForAll           | ['_operatorApprovals']                                        | []                       |
+| isApprovedForAll            | []                                                            | []                       |
+| transferFrom                | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| safeTransferFrom            | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| safeTransferFrom            | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _ownerOf                    | []                                                            | []                       |
+| _getApproved                | []                                                            | []                       |
+| _isAuthorized               | []                                                            | []                       |
+| _checkAuthorized            | []                                                            | []                       |
+| _increaseBalance            | ['_balances']                                                 | []                       |
+| _update                     | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _mint                       | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _safeMint                   | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _safeMint                   | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _burn                       | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _transfer                   | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _safeTransfer               | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _safeTransfer               | ['_balances', '_owners', '_tokenApprovals']                   | []                       |
+| _approve                    | ['_tokenApprovals']                                           | []                       |
+| _approve                    | ['_tokenApprovals']                                           | []                       |
+| _setApprovalForAll          | ['_operatorApprovals']                                        | []                       |
+| _requireOwned               | []                                                            | []                       |
+| name                        | []                                                            | []                       |
+| symbol                      | []                                                            | []                       |
+| tokenURI                    | []                                                            | []                       |
+| balanceOf                   | []                                                            | []                       |
+| ownerOf                     | []                                                            | []                       |
+| safeTransferFrom            | []                                                            | []                       |
+| safeTransferFrom            | []                                                            | []                       |
+| transferFrom                | []                                                            | []                       |
+| approve                     | []                                                            | []                       |
+| setApprovalForAll           | []                                                            | []                       |
+| getApproved                 | []                                                            | []                       |
+| isApprovedForAll            | []                                                            | []                       |
+| supportsInterface           | []                                                            | []                       |
+| supportsInterface           | []                                                            | []                       |
+| _msgSender                  | []                                                            | []                       |
+| _msgData                    | []                                                            | []                       |
+| _contextSuffixLength        | []                                                            | []                       |
+| constructor                 | ['_name', '_symbol', 'credits']                               | []                       |
+| make                        | ['_balances', '_owners', '_seeds', '_tokenApprovals', 'next'] | []                       |
+| seedsOf                     | []                                                            | []                       |
+| setRoyalty                  | ['royaltyBps', 'royaltyReceiver']                             | []                       |
+| royaltyInfo                 | []                                                            | []                       |
+| slitherConstructorVariables | ['next']                                                      | []                       |
++-----------------------------+---------------------------------------------------------------+--------------------------+
+
+INFO:Slither:. analyzed (44 contracts)

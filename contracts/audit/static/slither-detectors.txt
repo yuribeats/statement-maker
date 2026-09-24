@@ -1,0 +1,251 @@
+'forge clean' running (wd: /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts)
+'forge config --json' running
+'forge build --build-info --deny never --skip ./test/** ./script/** --force' running (wd: /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts)
+INFO:Detectors:
+Detector: divide-before-multiply
+Party.buy(uint256) (src/Party.sol#466-495) performs a multiplication on the result of a division:
+	- share = pot / SLOTS (src/Party.sol#480)
+	- dust = pot - share * SLOTS (src/Party.sol#481)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#divide-before-multiply
+INFO:Detectors:
+Detector: reentrancy-no-eth
+Reentrancy in Party.claim(uint256[]) (src/Party.sol#498-512):
+	External calls:
+	- cards.burn(c) (src/Party.sol#506)
+	State variables written after the call(s):
+	- -- cardsOutstanding (src/Party.sol#505)
+	Party.cardsOutstanding (src/Party.sol#115) can be used in cross function reentrancies:
+	- Party.cardsOutstanding (src/Party.sol#115)
+	- delete creditOfCard[c] (src/Party.sol#504)
+	Party.creditOfCard (src/Party.sol#101) can be used in cross function reentrancies:
+	- Party.cardView(uint256) (src/Party.sol#179-183)
+	- Party.creditOfCard (src/Party.sol#101)
+Reentrancy in Party.deposit(uint256[],bytes32[][]) (src/Party.sol#188-211):
+	External calls:
+	- credits.transferFrom(msg.sender,address(this),id) (src/Party.sol#201)
+	- card = cards.mint(msg.sender) (src/Party.sol#203)
+	State variables written after the call(s):
+	- _order.push(id) (src/Party.sol#206)
+	Party._order (src/Party.sol#99) can be used in cross function reentrancies:
+	- Party.count() (src/Party.sol#168)
+	- Party.depositOrder() (src/Party.sol#166)
+	- Party.status() (src/Party.sol#172-177)
+	- cardOfCredit[id] = card (src/Party.sol#204)
+	Party.cardOfCredit (src/Party.sol#100) can be used in cross function reentrancies:
+	- Party.cardOfCredit (src/Party.sol#100)
+	- ++ cardsOutstanding (src/Party.sol#207)
+	Party.cardsOutstanding (src/Party.sol#115) can be used in cross function reentrancies:
+	- Party.cardsOutstanding (src/Party.sol#115)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-2
+INFO:Detectors:
+Detector: uninitialized-local
+Party.buy(uint256).royalty (src/Party.sol#472) is a local variable never initialized
+Party._checkPermutation(uint256[]).seen (src/Party.sol#296) is a local variable never initialized
+Party.execute(uint256,Party.Floor).price (src/Party.sol#402) is a local variable never initialized
+Party.buy(uint256).royaltyTo (src/Party.sol#473) is a local variable never initialized
+Party.claim(uint256[]).total (src/Party.sol#500) is a local variable never initialized
+Party.execute(uint256,Party.Floor).floorWei (src/Party.sol#403) is a local variable never initialized
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#uninitialized-local-variables
+INFO:Detectors:
+Detector: unused-return
+CreditCards._update(address,uint256,address) (src/CreditCards.sol#65-77) ignores return value by h.push(b,h.latest() - 1) (src/CreditCards.sol#71)
+CreditCards._update(address,uint256,address) (src/CreditCards.sol#65-77) ignores return value by h_scope_0.push(b,h_scope_0.latest() + 1) (src/CreditCards.sol#75)
+PartyFactory.isValidFloor(uint256,uint8,uint64,bytes) (src/PartyFactory.sol#55-58) ignores return value by (who,err,None) = ECDSA.tryRecover(floorDigest(floorWei,mode,issuedAt),sig) (src/PartyFactory.sol#56)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+INFO:Detectors:
+Detector: write-after-write
+Party._assembling (src/Party.sol#107) is written in both
+	_assembling = true (src/Party.sol#280)
+	_assembling = false (src/Party.sol#282)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#write-after-write
+INFO:Detectors:
+Detector: missing-zero-check
+CreditCards.constructor(address).factory_ (src/CreditCards.sol#33) lacks a zero-check on :
+		- factory = factory_ (src/CreditCards.sol#34)
+MockStatement.setRoyalty(address,uint96).to (src/mocks/MockStatement.sol#37) lacks a zero-check on :
+		- royaltyReceiver = to (src/mocks/MockStatement.sol#38)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation
+INFO:Detectors:
+Detector: calls-loop
+Party.deposit(uint256[],bytes32[][]) (src/Party.sol#188-211) has external calls inside a loop: credits.transferFrom(msg.sender,address(this),id) (src/Party.sol#201)
+Party.deposit(uint256[],bytes32[][]) (src/Party.sol#188-211) has external calls inside a loop: credits.ownerOf(id) != address(this) (src/Party.sol#202)
+Party.deposit(uint256[],bytes32[][]) (src/Party.sol#188-211) has external calls inside a loop: card = cards.mint(msg.sender) (src/Party.sol#203)
+Party._redeem(uint256,address) (src/Party.sol#224-236) has external calls inside a loop: cards.partyOf(cardId) != address(this) || cards.ownerOf(cardId) != holder (src/Party.sol#227)
+	Calls stack containing the loop:
+		Party.redeem(uint256[])
+Party._redeem(uint256,address) (src/Party.sol#224-236) has external calls inside a loop: cards.burn(cardId) (src/Party.sol#233)
+	Calls stack containing the loop:
+		Party.redeem(uint256[])
+Party._redeem(uint256,address) (src/Party.sol#224-236) has external calls inside a loop: credits.transferFrom(address(this),holder,id) (src/Party.sol#234)
+	Calls stack containing the loop:
+		Party.redeem(uint256[])
+Party.redeemFor(uint256[]) (src/Party.sol#219-222) has external calls inside a loop: _redeem(cardIds[i],cards.ownerOf(cardIds[i])) (src/Party.sol#221)
+Party._redeem(uint256,address) (src/Party.sol#224-236) has external calls inside a loop: cards.partyOf(cardId) != address(this) || cards.ownerOf(cardId) != holder (src/Party.sol#227)
+	Calls stack containing the loop:
+		Party.redeemFor(uint256[])
+Party._redeem(uint256,address) (src/Party.sol#224-236) has external calls inside a loop: cards.burn(cardId) (src/Party.sol#233)
+	Calls stack containing the loop:
+		Party.redeemFor(uint256[])
+Party._redeem(uint256,address) (src/Party.sol#224-236) has external calls inside a loop: credits.transferFrom(address(this),holder,id) (src/Party.sol#234)
+	Calls stack containing the loop:
+		Party.redeemFor(uint256[])
+Party.assemble(uint256[],Party.Floor) (src/Party.sol#254-292) has external calls inside a loop: o = credits.ownerOf(order[i]) (src/Party.sol#287)
+Party.claim(uint256[]) (src/Party.sol#498-512) has external calls inside a loop: cards.partyOf(c) != address(this) || cards.ownerOf(c) != msg.sender (src/Party.sol#503)
+Party.claim(uint256[]) (src/Party.sol#498-512) has external calls inside a loop: cards.burn(c) (src/Party.sol#506)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+INFO:Detectors:
+Detector: reentrancy-benign
+Reentrancy in Party.assemble(uint256[],Party.Floor) (src/Party.sol#254-292):
+	External calls:
+	- credits.setApprovalForAll(address(st),true) (src/Party.sol#279)
+	State variables written after the call(s):
+	- _assembling = true (src/Party.sol#280)
+Reentrancy in Party.assemble(uint256[],Party.Floor) (src/Party.sol#254-292):
+	External calls:
+	- credits.setApprovalForAll(address(st),true) (src/Party.sol#279)
+	- sid = st.make(order) (src/Party.sol#281)
+	State variables written after the call(s):
+	- _assembling = false (src/Party.sol#282)
+Reentrancy in Party.assemble(uint256[],Party.Floor) (src/Party.sol#254-292):
+	External calls:
+	- credits.setApprovalForAll(address(st),true) (src/Party.sol#279)
+	- sid = st.make(order) (src/Party.sol#281)
+	- credits.setApprovalForAll(address(st),false) (src/Party.sol#283)
+	State variables written after the call(s):
+	- statementId = sid (src/Party.sol#289)
+Reentrancy in PartyFactory.createParty(Party.Params) (src/PartyFactory.sol#38-44):
+	External calls:
+	- cards.registerParty(address(party)) (src/PartyFactory.sol#40)
+	- party.initialize(msg.sender,p) (src/PartyFactory.sol#41)
+	State variables written after the call(s):
+	- parties.push(address(party)) (src/PartyFactory.sol#42)
+Reentrancy in Party.deposit(uint256[],bytes32[][]) (src/Party.sol#188-211):
+	External calls:
+	- credits.transferFrom(msg.sender,address(this),id) (src/Party.sol#201)
+	- card = cards.mint(msg.sender) (src/Party.sol#203)
+	State variables written after the call(s):
+	- creditOfCard[card] = id (src/Party.sol#205)
+	- fullAt = uint64(block.timestamp) (src/Party.sol#210)
+Reentrancy in MockStatement.make(uint256[]) (src/mocks/MockStatement.sol#25-31):
+	External calls:
+	- seeds = credits.burn(msg.sender,ids) (src/mocks/MockStatement.sol#27)
+	State variables written after the call(s):
+	- _seeds[id].push(seeds[i]) (src/mocks/MockStatement.sol#29)
+	- id = next ++ (src/mocks/MockStatement.sol#28)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-3
+INFO:Detectors:
+Detector: reentrancy-events
+Reentrancy in PartyFactory.createParty(Party.Params) (src/PartyFactory.sol#38-44):
+	External calls:
+	- cards.registerParty(address(party)) (src/PartyFactory.sol#40)
+	- party.initialize(msg.sender,p) (src/PartyFactory.sol#41)
+	Event emitted after the call(s):
+	- PartyCreated(address(party),msg.sender,parties.length - 1) (src/PartyFactory.sol#43)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-4
+INFO:Detectors:
+Detector: timestamp
+Party.status() (src/Party.sol#172-177) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp > deadline (src/Party.sol#175)
+Party.propose(Party.PriceSpec,bool,uint16) (src/Party.sol#340-362) uses timestamp for comparisons
+	Dangerous comparisons:
+	- _proposals.length >= MAX_PROPOSALS (src/Party.sol#345)
+Party._vote(uint256,address,bool) (src/Party.sol#368-382) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp >= p.endsAt (src/Party.sol#370)
+Party.execute(uint256,Party.Floor) (src/Party.sol#392-427) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < p.endsAt (src/Party.sol#396)
+	- block.timestamp > uint256(p.endsAt) + EXECUTE_WINDOW (src/Party.sol#397)
+Party.countBlocked(uint256) (src/Party.sol#430-435) uses timestamp for comparisons
+	Dangerous comparisons:
+	- blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no == 0 || p.deadlock (src/Party.sol#432)
+Party._deadlocked() (src/Party.sol#437-441) uses timestamp for comparisons
+	Dangerous comparisons:
+	- since != type()(uint64).max && block.timestamp > since + DEADLOCK_TIME (src/Party.sol#440)
+	- lastPriceExecutedAt != 0 (src/Party.sol#439)
+	- fullAt != 0 (src/Party.sol#439)
+Party._refreshOpen(address) (src/Party.sol#443-452) uses timestamp for comparisons
+	Dangerous comparisons:
+	- i < n && openBy[who] > 0 (src/Party.sol#446)
+	- _openCounted[i] && _proposals[i].proposer == who && block.timestamp >= _proposals[i].endsAt (src/Party.sol#447)
+Party.buy(uint256) (src/Party.sol#466-495) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < uint256(askLiveAt) + BUY_DELAY (src/Party.sol#468)
+Party._floor(Party.Floor) (src/Party.sol#537-542) uses timestamp for comparisons
+	Dangerous comparisons:
+	- f.issuedAt > block.timestamp || block.timestamp - f.issuedAt > FLOOR_MAX_AGE (src/Party.sol#538)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Detector: assembly
+CreditCards._clean(string) (src/CreditCards.sol#108-119) uses assembly
+	- INLINE ASM (src/CreditCards.sol#117)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#assembly-usage
+INFO:Detectors:
+Detector: costly-loop
+Party.deposit(uint256[],bytes32[][]) (src/Party.sol#188-211) has costly operations inside a loop:
+	- ++ cardsOutstanding (src/Party.sol#207)
+Party._redeem(uint256,address) (src/Party.sol#224-236) has costly operations inside a loop:
+	- delete creditOfCard[cardId] (src/Party.sol#229)
+	Calls stack containing the loop:
+		Party.redeem(uint256[])
+Party._redeem(uint256,address) (src/Party.sol#224-236) has costly operations inside a loop:
+	- delete cardOfCredit[id] (src/Party.sol#230)
+	Calls stack containing the loop:
+		Party.redeem(uint256[])
+Party._removeFromOrder(uint256) (src/Party.sol#238-248) has costly operations inside a loop:
+	- _order.pop() (src/Party.sol#243)
+	Calls stack containing the loop:
+		Party.redeem(uint256[])
+		Party._redeem(uint256,address)
+Party._redeem(uint256,address) (src/Party.sol#224-236) has costly operations inside a loop:
+	- -- cardsOutstanding (src/Party.sol#232)
+	Calls stack containing the loop:
+		Party.redeem(uint256[])
+Party._redeem(uint256,address) (src/Party.sol#224-236) has costly operations inside a loop:
+	- delete creditOfCard[cardId] (src/Party.sol#229)
+	Calls stack containing the loop:
+		Party.redeemFor(uint256[])
+Party._redeem(uint256,address) (src/Party.sol#224-236) has costly operations inside a loop:
+	- delete cardOfCredit[id] (src/Party.sol#230)
+	Calls stack containing the loop:
+		Party.redeemFor(uint256[])
+Party._removeFromOrder(uint256) (src/Party.sol#238-248) has costly operations inside a loop:
+	- _order.pop() (src/Party.sol#243)
+	Calls stack containing the loop:
+		Party.redeemFor(uint256[])
+		Party._redeem(uint256,address)
+Party._redeem(uint256,address) (src/Party.sol#224-236) has costly operations inside a loop:
+	- -- cardsOutstanding (src/Party.sol#232)
+	Calls stack containing the loop:
+		Party.redeemFor(uint256[])
+Party.claim(uint256[]) (src/Party.sol#498-512) has costly operations inside a loop:
+	- delete creditOfCard[c] (src/Party.sol#504)
+Party.claim(uint256[]) (src/Party.sol#498-512) has costly operations inside a loop:
+	- -- cardsOutstanding (src/Party.sol#505)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#costly-operations-inside-a-loop
+INFO:Detectors:
+Detector: cyclomatic-complexity
+Party.assemble(uint256[],Party.Floor) (src/Party.sol#254-292) has a high cyclomatic complexity (12).
+Party.execute(uint256,Party.Floor) (src/Party.sol#392-427) has a high cyclomatic complexity (12).
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#cyclomatic-complexity
+INFO:Detectors:
+Detector: low-level-calls
+Low level call in Party.buy(uint256) (src/Party.sol#466-495):
+	- (ok,None) = msg.sender.call{value: msg.value - price}() (src/Party.sol#491)
+Low level call in Party.claim(uint256[]) (src/Party.sol#498-512):
+	- (ok,None) = msg.sender.call{value: total}() (src/Party.sol#510)
+Low level call in Party.withdraw() (src/Party.sol#515-521):
+	- (ok,None) = msg.sender.call{value: amt}() (src/Party.sol#519)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+INFO:Detectors:
+Detector: missing-inheritance
+Party (src/Party.sol#39-564) should inherit from ICardParty (src/CreditCards.sol#10-12)
+MockStatement (src/mocks/MockStatement.sol#14-45) should inherit from IStatement (src/interfaces/IExternal.sol#37-41)
+MockStatement (src/mocks/MockStatement.sol#14-45) should inherit from IERC2981Like (src/interfaces/IExternal.sol#43-45)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-inheritance
+INFO:Detectors:
+Detector: naming-convention
+Function IFactory.FEE_BPS() (src/Party.sol#16) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+INFO:Slither:. analyzed (44 contracts with 102 detectors), 65 result(s) found

@@ -12,6 +12,8 @@ const DATA = path.join(ROOT, 'data');
 const PORT = Number(process.env.PORT || 8088);
 const DEV = process.env.NODE_ENV !== 'production'; // dev clock only outside production
 const MAX_BODY = 64 * 1024;
+// Build id: changes whenever the served front end changes, so open tabs can notice a deploy and reload.
+const BUILD = crypto.createHash('sha256').update(fs.readFileSync(new URL('./public/app.js', import.meta.url))).update(fs.readFileSync(new URL('./public/style.css', import.meta.url))).digest('hex').slice(0, 12);
 const SLOTS = 80;
 const ZERO = '0x0000000000000000000000000000000000000000';
 const TERMS_VERSION = '2026-09-23.4';
@@ -547,6 +549,7 @@ http.createServer(async (req, res) => {
       for (const p of state.parties) for (const d of p.deposits) if (d.address === who) out.push({ card: d.card, party: p.id, name: p.name, credit: d.id, status: status(p), claimed: !!d.claimed });
       return json(res, 200, out);
     }
+    if (a === 'version') return json(res, 200, { build: BUILD });
     if (a === 'gas') return json(res, 200, { ...gas, units: GAS });
     if (DEV && a === 'dev' && b === 'advance' && req.method === 'POST') {
       const x = await body(req);

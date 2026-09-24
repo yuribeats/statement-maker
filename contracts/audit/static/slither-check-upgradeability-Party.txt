@@ -1,0 +1,5 @@
+INFO:Slither:
+Detector: initialize-target
+Party (src/Party.sol#39-564) needs to be initialized by Party.initialize(address,Party.Params) (src/Party.sol#146-161).
+Reference: https://github.com/crytic/slither/wiki/Upgradeability-Checks#initialize-function
+INFO:Slither:1 findings, 8 detectors run

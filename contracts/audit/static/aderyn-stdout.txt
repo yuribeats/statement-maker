@@ -1,0 +1,34 @@
+
+-----------------------------------------------------------------------------------
+# Configuration
+-----------------------------------------------------------------------------------
+Root - /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts
+Source - /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts/src
+Remappings - [
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "forge-std/=lib/forge-std/src/",
+    "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+    "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+    "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+]
+EVM version - cancun
+-----------------------------------------------------------------------------------
+# Source Scope
+-----------------------------------------------------------------------------------
+Include Filepaths Containing - No specific criteria.
+Exclude Filepaths Containing - No specific criteria.
+Auto Excluding - No Files.
+-----------------------------------------------------------------------------------
+# Compiling Abstract Syntax Trees
+-----------------------------------------------------------------------------------
+Ingesting 6 compiled files [solc : v0.8.28]
+-----------------------------------------------------------------------------------
+# Scanning Contracts
+-----------------------------------------------------------------------------------
+Running 88 detectors
+Detectors run, printing report.
+Report printed to audit/static/aderyn-report.md
+
+🪶 Aderyn spotted all it could. Stay secure.
+If our little bird helped you out, give it a perch with a GitHub Star ⭐
+https://github.com/Cyfrin/aderyn

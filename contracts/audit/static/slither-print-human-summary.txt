@@ -1,0 +1,40 @@
+'forge clean' running (wd: /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts)
+'forge config --json' running
+'forge build --build-info --deny never --skip ./test/** ./script/** --force' running (wd: /Users/yurirybak/Desktop/projects/statement-maker-2026-09-23/contracts)
+INFO:Printers:
+Compiled with Foundry
+Total number of contracts in source files: 10
+Number of contracts in dependencies: 32
+Number of contracts in tests       : 2
+Source lines of code (SLOC) in source files: 752
+Source lines of code (SLOC) in dependencies: 2702
+Source lines of code (SLOC) in tests       : 32
+Number of  assembly lines: 0
+Number of optimization issues: 0
+Number of informational issues: 21
+Number of low issues: 31
+Number of medium issues: 13
+Number of high issues: 0
+
+ERCs: ERC721, ERC165
+
++--------------+-------------+---------------+------------+--------------+--------------------+
+| Name         | # functions | ERCS          | ERC20 info | Complex code | Features           |
++--------------+-------------+---------------+------------+--------------+--------------------+
+| ICardParty   | 1           |               |            | No           |                    |
+| CreditCards  | 59          | ERC165,ERC721 |            | No           | Assembly           |
+| CreditKeys   | 10          |               |            | No           | Tokens interaction |
+| IFactory     | 6           |               |            | No           |                    |
+| Party        | 49          |               |            | Yes          | Receive ETH        |
+|              |             |               |            |              | Send ETH           |
+|              |             |               |            |              | Tokens interaction |
+|              |             |               |            |              | Assembly           |
+|              |             |               |            |              | Upgradeable        |
+| PartyFactory | 14          |               |            | No           | Ecrecover          |
+|              |             |               |            |              | Tokens interaction |
+| ICredits     | 8           |               |            | No           |                    |
+| ICreditArt   | 1           |               |            | No           |                    |
+| IStatement   | 3           |               |            | No           |                    |
+| IERC2981Like | 1           |               |            | No           |                    |
++--------------+-------------+---------------+------------+--------------+--------------------+
+INFO:Slither:. analyzed (44 contracts)

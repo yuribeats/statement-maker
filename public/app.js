@@ -784,6 +784,14 @@ async function pageSim() {
   $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(`You claimed ${eth(perCard * mine.length)} for 5 cards. The cards were burned.`); }));
 }
 
+// ---------- deploy check: a tab left open across a deploy reloads itself instead of running stale code ----------
+let build = null;
+async function checkBuild() {
+  try { const { build: b } = await api('version'); if (build && b !== build) location.reload(); build = b; } catch {}
+}
+checkBuild(); setInterval(checkBuild, 60_000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkBuild(); });
+
 // ---------- router ----------
 let lastParty = null;
 async function route() {
