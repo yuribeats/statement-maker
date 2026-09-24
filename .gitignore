@@ -4,3 +4,5 @@ data/svg
 data/state.json
 .env
 server.log
+tools/slips/out
+tools/slips/cache

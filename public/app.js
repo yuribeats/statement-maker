@@ -82,6 +82,8 @@ function filterText(f = {}) {
   if (f.rankMax) parts.push('Rarity top ' + Number(f.rankMax).toLocaleString());
   if (f.idMin || f.idMax) parts.push(`#${f.idMin || 1}–${f.idMax || '∞'}`);
   if (f.marksMin || f.marksMax) parts.push(`Ink ${f.marksMin || 0}–${f.marksMax || '∞'}`);
+  if (f.shiftPlates?.length) parts.push(`${f.shiftOnly ? 'Only' : 'Shifted'} ${f.shiftPlates.join('')}`);
+  if (f.shiftMin) parts.push(`Shift ≥ ${f.shiftMin}`);
   return esc(parts.join(' · ') || 'Any Credit');
 }
 const targetText = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : t.mode === 'floorPct' ? `Floor + ${t.value}%` : `Floor + ${t.value} ETH`);
@@ -103,6 +105,9 @@ function matchesClient(c, f = {}) {
   if (f.idMax && c.id > f.idMax) return false;
   if (f.marksMin && c.marks < f.marksMin) return false;
   if (f.marksMax && c.marks > f.marksMax) return false;
+  if (f.shiftPlates?.length && !f.shiftPlates.every(pl => (c.shifted || '').includes(pl))) return false;
+  if (f.shiftOnly && f.shiftPlates?.length && c.shifted !== 'CMYK'.split('').filter(pl => f.shiftPlates.includes(pl)).join('')) return false;
+  if (f.shiftMin && (c.shift || 0) < f.shiftMin) return false;
   return true;
 }
 
@@ -187,7 +192,7 @@ async function pageParty(id) {
      </div>` : ''}
     <div class="detail">${sel ? `<img src="${svg(sel.id)}" alt="Credit ${Number(sel.id)}"><div class="rows">
       <div><span>Credit</span><strong>#${Number(sel.id)}</strong></div>
-      <div><span>Colors · Print</span><strong>${esc(sel.colors)} · ${esc(sel.print)}</strong></div>
+      <div><span>Colors · Print</span><strong>${esc(sel.colors)} · ${esc(sel.register || sel.print)}</strong></div>
       <div><span>Weight · Eights</span><strong>${esc(sel.weight)} · ${Number(sel.eights)} (${esc(sel.tier)})</strong></div>
       <div><span>Rarity · Depositor</span><strong>#${sel.rank.toLocaleString()} · ${short(sel.depositor)}</strong></div></div>`
       : `<span class="faint">—</span><span class="muted">Select a Credit on the sheet.</span>`}</div>
@@ -377,7 +382,7 @@ let draft = { name: '', minDeposit: 1, days: 14, voteHours: 48, arrangement: { p
 const arrLabel = a => !a ? 'Deposit order' : a.preset === 'Random' ? `Random #${a.seed}` : a.preset === 'Deposit' ? 'Deposit order' : a.preset;
 async function pageNew() {
   stats = stats || await api('stats');
-  const chip = (key, vals) => `<div class="chips">${vals.map(v => `<button type="button" data-f="${key}" data-v="${esc(v)}" aria-pressed="${(draft.filters[key] || []).map(String).includes(String(v))}">${esc(v)}</button>`).join('')}</div>`;
+  const chip = (key, vals) => `<div class="chips">${vals.map(v => `<button type="button" data-f="${key}" data-v="${esc(v)}" aria-pressed="${[].concat(draft.filters[key] ?? []).map(String).includes(String(v))}">${esc(key === 'shiftMin' ? v + '+' : v)}</button>`).join('')}</div>`;
   const val = v => v == null ? '' : esc(v);
   const rg = stats.ranges;
   render(app, `
@@ -396,6 +401,8 @@ async function pageNew() {
     <div class="field"><label>Colors</label>${chip('colors', COLOR_ORDER)}</div>
     <div class="field"><label>Print</label>${chip('print', PRINT_ORDER)}</div>
     <div class="field"><label>Weight</label>${chip('weight', WEIGHT_ORDER)}</div>
+    <div class="field"><label>Shifted plates</label><div>${chip('shiftPlates', ['C', 'M', 'Y', 'K'])}<div class="chips" style="margin-top:4px"><button type="button" id="shift-only" aria-pressed="${!!draft.filters.shiftOnly}">Only these plates</button></div>${hint('Misregistered Credits only · plates that moved off register · from the art contract’s own shift function')}</div></div>
+    <div class="field"><label>Shift size</label><div>${chip('shiftMin', [1, 2])}${hint('Range: 1–2 squares · largest move of any plate')}</div></div>
     <div class="field"><label>Eights</label>${chip('eights', [0, 1, 2, 3, 4, 5])}</div>
     <div class="field"><label for="rk">Rarity rank ≤</label><div><input id="rk" type="number" min="1" max="${rg.rank[1]}" value="${val(draft.filters.rankMax)}" placeholder="Any">${hint(`Range: ${n(rg.rank[0])}–${n(rg.rank[1])} · 1 = rarest · e.g. 1,000 keeps the rarest 1,000`)}</div></div>
     <div class="field"><label>Ink (marks)</label><div><div style="display:flex;gap:12px"><input id="mk0" type="number" min="${rg.marks[0]}" max="${rg.marks[1]}" placeholder="Min" value="${val(draft.filters.marksMin)}"><input id="mk1" type="number" min="${rg.marks[0]}" max="${rg.marks[1]}" placeholder="Max" value="${val(draft.filters.marksMax)}"></div>${hint(`Range: ${rg.marks[0]}–${rg.marks[1]} inked squares · median 65`)}</div></div>
@@ -423,7 +430,9 @@ async function pageNew() {
     render($('#elig-sheet'), r.sample.map(id => `<span><img src="${svg(id)}" alt=""></span>`).join('') + '<span class="empty"></span>'.repeat(Math.max(0, SLOTS - r.sample.length)));
     $('#elig-note').textContent = r.count < SLOTS ? 'Fewer than 80 Credits match. This party could never fill.' : 'Rarest 16 shown.';
   }, 150); };
-  app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { const k = b.dataset.f, v = k === 'eights' ? +b.dataset.v : b.dataset.v; const a = draft.filters[k] || []; draft.filters[k] = a.includes(v) ? a.filter(x => x !== v) : [...a, v]; b.setAttribute('aria-pressed', draft.filters[k].includes(v)); refresh(); });
+  $('#shift-only').onclick = e => { draft.filters.shiftOnly = !draft.filters.shiftOnly; e.target.setAttribute('aria-pressed', draft.filters.shiftOnly); refresh(); };
+  app.querySelectorAll('[data-f="shiftMin"]').forEach(b => b.onclick = e => { e.stopImmediatePropagation(); const v = +b.dataset.v; draft.filters.shiftMin = draft.filters.shiftMin === v ? undefined : v; app.querySelectorAll('[data-f="shiftMin"]').forEach(x => x.setAttribute('aria-pressed', draft.filters.shiftMin === +x.dataset.v)); refresh(); });
+  app.querySelectorAll('[data-f]:not([data-f="shiftMin"])').forEach(b => b.onclick = () => { const k = b.dataset.f, v = k === 'eights' ? +b.dataset.v : b.dataset.v; const a = draft.filters[k] || []; draft.filters[k] = a.includes(v) ? a.filter(x => x !== v) : [...a, v]; b.setAttribute('aria-pressed', draft.filters[k].includes(v)); refresh(); });
   const fl = stats.floor ? stats.floor * SLOTS : null;
   const tvHint = () => { $('#tvh').textContent = draft.target.mode === 'fixed' ? 'Range: above 0 ETH' : (draft.target.mode === 'floorPct' ? 'Range: above −100%' : 'Range: above −' + eth(fl)) + ' · floor now ' + eth(fl); };
   app.querySelectorAll('[data-arr]').forEach(b => b.onclick = () => { draft.arrangement = b.dataset.arr === 'Random' ? { preset: 'Random', seed: 1 + Math.floor(Math.random() * 999999) } : { preset: b.dataset.arr }; app.querySelectorAll('[data-arr]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
@@ -444,7 +453,7 @@ async function pageWallet(addr) {
    <div class="compose" style="min-width:min(420px,100%)"><textarea id="w" rows="1" placeholder="0x…">${esc(addr)}</textarea><button type="button" id="go">Look up</button></div></div>
   ${addr ? `<div class="caption"><h2>${short(addr)} · ${list.length} Credits</h2><span class="muted">${solo} Statement${solo === 1 ? '' : 's'} alone · ${list.length % SLOTS} left over</span></div>
   <table class="table"><thead><tr><th></th><th>Credit</th><th>Colors</th><th>Print</th><th>Weight</th><th>Eights</th><th>Ink</th><th>Rarity</th><th>Party</th></tr></thead><tbody>
-  ${list.slice(0, 500).map(c => `<tr><td><img src="${svg(c.id)}" alt="" loading="lazy"></td><td>#${Number(c.id)}</td><td>${esc(c.colors)}</td><td>${esc(c.print)}</td><td>${esc(c.weight)}</td><td>${Number(c.eights)}</td><td>${Number(c.marks)}</td><td>${c.rank.toLocaleString()}</td><td>${c.deposited ? 'In a party' : '—'}</td></tr>`).join('')}
+  ${list.slice(0, 500).map(c => `<tr><td><img src="${svg(c.id)}" alt="" loading="lazy"></td><td>#${Number(c.id)}</td><td>${esc(c.colors)}</td><td>${esc(c.register || c.print)}</td><td>${esc(c.weight)}</td><td>${Number(c.eights)}</td><td>${Number(c.marks)}</td><td>${c.rank.toLocaleString()}</td><td>${c.deposited ? 'In a party' : '—'}</td></tr>`).join('')}
   </tbody></table>` : ''}`);
   const go = () => { location.hash = '#/wallet/' + $('#w').value.trim(); };
   $('#go').onclick = go;

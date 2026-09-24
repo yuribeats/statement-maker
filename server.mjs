@@ -84,6 +84,10 @@ function matches(c, f = {}) {
   if (f.idMax && c.id > f.idMax) return false;
   if (f.marksMin && c.marks < f.marksMin) return false;
   if (f.marksMax && c.marks > f.marksMax) return false;
+  // Misregistration detail, from the art library's own slips(): which plates moved and how far.
+  if (f.shiftPlates?.length && !f.shiftPlates.every(pl => c.shifted.includes(pl))) return false;
+  if (f.shiftOnly && f.shiftPlates?.length && c.shifted !== 'CMYK'.split('').filter(pl => f.shiftPlates.includes(pl)).join('')) return false;
+  if (f.shiftMin && c.shift < f.shiftMin) return false;
   return true;
 }
 // ---- input schema: every host-supplied value is reduced to known values and bounded numbers ----
@@ -98,6 +102,9 @@ function cleanFilters(f) {
     const vals = [...new Set(f[k].slice(0, 20).map(v => (k === 'eights' ? Number(v) : String(v))).filter(v => KNOWN[k].has(v)))];
     if (vals.length) out[k] = vals;
   }
+  if (Array.isArray(f.shiftPlates)) { const v = [...new Set(f.shiftPlates.map(String).filter(x => 'CMYK'.includes(x) && x.length === 1))]; if (v.length) out.shiftPlates = v; }
+  if (f.shiftOnly === true && out.shiftPlates) out.shiftOnly = true;
+  { const n = int(f.shiftMin, 1, 2); if (n) out.shiftMin = n; }
   for (const [k, lo, hi] of [['rankMax', 1, byId.size], ['idMin', 1, byId.size], ['idMax', 1, byId.size], ['marksMin', 0, 256], ['marksMax', 0, 256]]) {
     const n = int(f[k], lo, hi); if (n !== undefined) out[k] = n;
   }
@@ -208,7 +215,7 @@ function view(p) {
     listingEth: p.listing ? priceEth(p.listing) : null,
   };
 }
-const card = (c, depositor) => c && ({ id: c.id, colors: c.colors, print: c.print, weight: c.weight, eights: c.eights, tier: c.tier, marks: c.marks, rank: c.rank, paidAt: c.paidAt, owner: c.owner, depositor });
+const card = (c, depositor) => c && ({ id: c.id, colors: c.colors, print: c.print, register: c.register, shifted: c.shifted, shift: c.shift, weight: c.weight, eights: c.eights, tier: c.tier, marks: c.marks, rank: c.rank, paidAt: c.paidAt, owner: c.owner, depositor });
 
 // ---- svg cache ----
 fs.mkdirSync(path.join(DATA, 'svg'), { recursive: true });
@@ -224,8 +231,35 @@ async function svg(id) {
 
 // ---- Credit Card image: what the ERC-721's on-chain tokenURI would draw ----
 const xml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
+// The Statement as one SVG group: 80 Credit SVGs nested in the 8×10 grid (4:5, 8% margin, as jack.art lays it out).
+// Cached per party and order. The real card would draw from the Statement contract's own image instead.
+const statementCache = new Map();
+async function statementGroup(p, x, y, w, cardCredit) {
+  const order = p.order || deposited(p);
+  const key = p.id + ':' + order.join(',');
+  if (!statementCache.has(key)) {
+    const h = w * 5 / 4, pad = w * 0.08, cw = (w - pad * 2) / 8, ch = (h - pad * 2) / 10, s = Math.min(cw, ch);
+    const cells = await Promise.all(order.map(async (id, i) => {
+      const inner = String(await svg(id)).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+      return `<svg x="${(pad + (i % 8) * cw + (cw - s) / 2).toFixed(2)}" y="${(pad + Math.floor(i / 8) * ch + (ch - s) / 2).toFixed(2)}" width="${s.toFixed(2)}" height="${s.toFixed(2)}" viewBox="0 0 320 320" shape-rendering="crispEdges">${inner}</svg>`;
+    }));
+    statementCache.set(key, { body: `<rect width="${w}" height="${h}" fill="#fff" stroke="#e3e3e3"/>${cells.join('')}`, pad, cw, ch, h });
+    if (statementCache.size > 200) statementCache.delete(statementCache.keys().next().value);
+  }
+  const g = statementCache.get(key);
+  const i = order.indexOf(cardCredit);
+  return { g, i };
+}
 async function cardSvg(p, d) {
   const art = Buffer.from(String(await svg(d.id))).toString('base64');
+  // Once the Credits are burned, the card shows the Statement they became, with this card's Credit marked.
+  let picture = `<image x="40" y="90" width="360" height="360" href="data:image/svg+xml;base64,${art}"/><rect x="40" y="90" width="360" height="360" fill="none" stroke="#e3e3e3"/>`;
+  if (p.assembled) {
+    const W = 288, X = 76, Y = 90;
+    const { g, i } = await statementGroup(p, X, Y, W, d.id);
+    const mark = i >= 0 ? `<rect x="${(X + g.pad + (i % 8) * g.cw - 1).toFixed(2)}" y="${(Y + g.pad + Math.floor(i / 8) * g.ch - 1).toFixed(2)}" width="${(g.cw + 2).toFixed(2)}" height="${(g.ch + 2).toFixed(2)}" fill="none" stroke="#111" stroke-width="1.5"/><rect x="${(X + g.pad + (i % 8) * g.cw).toFixed(2)}" y="${(Y + g.pad + (Math.floor(i / 8) + 1) * g.ch + 1).toFixed(2)}" width="${g.cw.toFixed(2)}" height="3" fill="#FFD100"/>` : '';
+    picture = `<g transform="translate(${X} ${Y})">${g.body}</g>${mark}`;
+  }
   const st = status(p);
   const order = p.order || deposited(p);
   const slot = order.indexOf(d.id);
@@ -234,8 +268,7 @@ async function cardSvg(p, d) {
   const t = (x, y, text, size = 18, weight = 400, fill = '#111') => `<text x="${x}" y="${y}" font-family="SF Mono, Menlo, monospace" font-size="${size}" font-weight="${weight}" fill="${fill}" letter-spacing=".04em">${xml(text)}</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 856 540" width="856" height="540">
 <rect width="856" height="540" fill="#fff"/><rect x=".5" y=".5" width="855" height="539" fill="none" stroke="#111"/>
-<image x="40" y="90" width="360" height="360" href="data:image/svg+xml;base64,${art}"/>
-<rect x="40" y="90" width="360" height="360" fill="none" stroke="#e3e3e3"/>
+${picture}
 ${t(40, 60, 'CREDIT CARD', 22, 700)}${t(816, 60, 'NO. ' + String(d.card).padStart(6, '0'), 18, 400, '#929292').replace('<text', '<text text-anchor="end"')}
 ${t(440, 120, p.name.toUpperCase().slice(0, 30), 20, 700)}
 ${t(440, 160, 'CREDIT #' + d.id, 18)}
