@@ -4,7 +4,7 @@ const app = document.getElementById('app');
 const $ = (s, el = document) => el.querySelector(s);
 const render = (el, s) => el.replaceChildren(document.createRange().createContextualFragment(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const short = a => a ? esc(a.slice(0, 6) + '…' + a.slice(-4)) : '—';
+const short = a => a ? esc(String(a).slice(0, 6) + '…' + String(a).slice(-4)) : '—';
 const eth = n => n == null ? '—' : (+n).toFixed(n >= 10 ? 1 : 3) + ' ETH';
 const svg = id => `/api/svg/${Number(id)}`;
 const hrs = ms => ms <= 0 ? '0h' : ms < 36e5 ? Math.ceil(ms / 6e4) + 'm' : Math.ceil(ms / 36e5) + 'h';
@@ -140,7 +140,7 @@ async function pageParty(id) {
   const eligibleMine = wallet.filter(c => !c.deposited && matchesClient(c, p.params.filters));
 
   render(app, `
-  <div class="intro"><div><h1>${esc(p.name)}</h1><p class="muted">${p.status === 'OPEN' ? `${remaining} slots open · closes in ${Math.max(0, Math.ceil((p.deadline - Date.now()) / 864e5))} days` : p.status === 'FULL' ? 'Full · arranging the 80' : esc(p.status)}${p.demo ? ' · <span class="demo">Demo data</span>' : ''}</p></div><div style="text-align:right"><a href="#/" class="muted">← All parties</a><div><button type="button" id="skip" class="faint" title="Prototype only: move the clock forward">Dev · skip 24h</button></div></div></div>
+  <div class="intro"><div><h1>${esc(p.name)}</h1><p class="muted">${p.status === 'OPEN' ? `${remaining} slots open · closes in ${Math.max(0, Math.ceil((p.deadline - Date.now()) / 864e5))} days` : p.status === 'FULL' ? 'Full · arranging the 80' : esc(p.status)}${p.demo ? ' · <span class="demo">Demo data</span>' : ''}</p></div><div style="text-align:right"><a href="#/" class="muted">← All parties</a>${stats?.dev ? `<div><button type="button" id="skip" class="faint" title="Prototype only: move the clock forward">Dev · skip 24h</button></div>` : ''}</div></div>
   <div class="works">
    <section aria-label="Statement">
     ${sheet(p, { interactive: true, order, selected: partyUI.selected })}
@@ -298,7 +298,7 @@ async function pageNew() {
   const rg = stats.ranges;
   render(app, `
   <div class="intro"><div><h1>Start a party</h1><p class="muted">You host. You set who can join and what the Statement should sell for.</p></div></div>
-  <form class="new" onsubmit="return false">
+  <form class="new" id="new-form">
    <div>
     <div class="field"><label for="n">Name</label><input id="n" value="${val(draft.name)}" placeholder="Two eights or more" maxlength="60"></div>
     <div class="field"><label for="md">Minimum deposit</label><div><input id="md" type="number" min="1" max="80" value="${val(draft.minDeposit)}">${hint('Range: 1–80 Credits per depositor')}</div></div>
@@ -323,6 +323,7 @@ async function pageNew() {
     <p class="note" id="elig-note"></p>
    </div>
   </form>`);
+  $('#new-form').addEventListener('submit', e => e.preventDefault());
   const read = () => {
     draft.name = $('#n').value; draft.voteHours = +$('#vh').value; draft.minDeposit = +$('#md').value || 1; draft.days = +$('#dd').value || 14; draft.target.value = +$('#tv').value || 0;
     const num = id => +$(id).value || undefined;
@@ -523,4 +524,4 @@ async function route() {
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
 window.addEventListener('hashchange', route);
-(me ? api('terms/' + me).then(t => { if (!t.accepted) me = ''; }) : Promise.resolve()).then(() => Promise.all([fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
+(me ? api('terms/' + me).then(t => { if (!t.accepted) me = ''; }) : Promise.resolve()).then(() => Promise.all([fillActing(), api('stats').then(x => (stats = x)), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);

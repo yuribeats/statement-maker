@@ -20,6 +20,10 @@ export async function startEvm() {
   }
   const code = fs.readFileSync(new URL('../data/art.bytecode', import.meta.url), 'utf8').trim();
   await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'anvil_setCode', params: [ART, code] }) });
+  // Refuse to run against anything but the exact art bytecode (e.g. a stray process already on the port).
+  const got = await (await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getCode', params: [ART, 'latest'] }) })).json();
+  if (String(got.result).toLowerCase() !== code.toLowerCase()) { proc.kill(); throw new Error('local EVM does not hold the Credits art bytecode'); }
+  proc.on('exit', c => { if (c) { console.error('anvil exited', c); process.exit(1); } });
   const client = createPublicClient({ transport: http(url, { batch: { batchSize: 200 } }) });
   return { client, stop: () => proc.kill() };
 }

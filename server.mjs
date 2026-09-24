@@ -2,11 +2,14 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { startEvm, ART, artAbi } from './scripts/evm.mjs';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
 const DATA = path.join(ROOT, 'data');
 const PORT = Number(process.env.PORT || 8088);
+const DEV = process.env.NODE_ENV !== 'production'; // dev clock only outside production
+const MAX_BODY = 64 * 1024;
 const SLOTS = 80;
 const ZERO = '0x0000000000000000000000000000000000000000';
 const TERMS_VERSION = '2026-09-23';
@@ -62,7 +65,7 @@ const STATE = path.join(DATA, 'state.json');
 let state = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE)) : { parties: [] };
 // Dev clock: lets the prototype skip ahead through voting windows and deadlines.
 const now = () => Date.now() + (state.clockOffset || 0);
-const save = () => fs.writeFileSync(STATE, JSON.stringify(state, null, 1));
+const save = () => { const tmp = STATE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(state, null, 1)); fs.renameSync(tmp, STATE); };
 
 function matches(c, f = {}) {
   if (f.colors?.length && !f.colors.includes(c.colors)) return false;
@@ -76,6 +79,36 @@ function matches(c, f = {}) {
   if (f.marksMax && c.marks > f.marksMax) return false;
   return true;
 }
+// ---- input schema: every host-supplied value is reduced to known values and bounded numbers ----
+const KNOWN = { colors: new Set(), print: new Set(), weight: new Set(), eights: new Set() };
+for (const c of byId.values()) for (const k of TRAITS) KNOWN[k].add(c[k]);
+const int = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : undefined; };
+function cleanFilters(f) {
+  f = f && typeof f === 'object' && !Array.isArray(f) ? f : {};
+  const out = {};
+  for (const k of TRAITS) {
+    if (!Array.isArray(f[k])) continue;
+    const vals = [...new Set(f[k].slice(0, 20).map(v => (k === 'eights' ? Number(v) : String(v))).filter(v => KNOWN[k].has(v)))];
+    if (vals.length) out[k] = vals;
+  }
+  for (const [k, lo, hi] of [['rankMax', 1, byId.size], ['idMin', 1, byId.size], ['idMax', 1, byId.size], ['marksMin', 0, 256], ['marksMax', 0, 256]]) {
+    const n = int(f[k], lo, hi); if (n !== undefined) out[k] = n;
+  }
+  return out;
+}
+function cleanTarget(t) {
+  const mode = ['fixed', 'floorEth', 'floorPct'].includes(t?.mode) ? t.mode : null;
+  const value = Number(t?.value);
+  if (!mode || !Number.isFinite(value)) return null;
+  if (mode === 'fixed' && !(value > 0 && value < 1e6)) return null;
+  if (mode === 'floorPct' && !(value > -100 && value < 1e6)) return null;
+  if (mode === 'floorEth' && !(value > -1e6 && value < 1e6)) return null;
+  return { mode, value };
+}
+const eligibleCount = f => { let n = 0; for (const c of byId.values()) if (matches(c, f)) n++; return n; };
+const isAddr = a => /^0x[0-9a-f]{40}$/.test(a);
+// A stored order is valid only if it is exactly the party's current 80 deposits.
+const validOrder = (p, order) => Array.isArray(order) && order.length === SLOTS && new Set(order).size === SLOTS && order.every(id => p.deposits.some(d => d.id === id)) && p.deposits.length === SLOTS;
 const deposited = p => p.deposits.map(d => d.id);
 const members = p => {
   const m = new Map();
@@ -96,7 +129,7 @@ function tally(p, prop) {
   const passing = yes > SLOTS / 2 && no === 0;
   const execBy = endsAt + EXEC_WINDOW;
   const lapsed = closed && passing && !prop.executed && now() > execBy;
-  return { yes, no, passing, endsAt, closed, execBy, lapsed, executable: closed && passing && !prop.executed && !lapsed };
+  return { yes, no, passing, endsAt, closed, execBy, lapsed, executable: closed && passing && !prop.executed && !lapsed && !prop.superseded };
 }
 function priceEth(t) {
   const base = floor.credit ? floor.credit * SLOTS : null;
@@ -119,7 +152,7 @@ function view(p) {
     ...p, now: now(), orderApproved: !!p.order, arranger: arrangerOf(p), arrangerElected: !!p.arranger, status: status(p), members: members(p), targetEth: targetEth(p),
     credits: order.map(id => card(byId.get(id), p.deposits.find(d => d.id === id)?.address)),
     proposals: p.proposals.map(x => ({ ...x, ...tally(p, x) })),
-    eligible: [...byId.values()].filter(c => matches(c, p.params.filters)).length,
+    eligible: p.eligible ?? (p.eligible = eligibleCount(p.params.filters)),
     floorEth: floor.credit ? floor.credit * SLOTS : null,
     listingEth: p.listing ? priceEth(p.listing) : null,
   };
@@ -167,8 +200,16 @@ if (!state.parties.length) {
 }
 
 // ---- http ----
-const json = (res, code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
-const body = req => new Promise(r => { let s = ''; req.on('data', d => (s += d)); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r({}); } }); });
+const json = (res, code, body) => { res.writeHead(code, { ...SECURITY, 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
+class HttpError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
+// JSON bodies only, capped at 64 KB.
+const body = req => new Promise((ok, fail) => {
+  if (!String(req.headers['content-type'] || '').startsWith('application/json')) { req.resume(); return fail(new HttpError(415, 'content-type must be application/json')); }
+  let s = '', size = 0;
+  req.on('data', d => { size += d.length; if (size > MAX_BODY) { fail(new HttpError(413, 'request too large')); req.destroy(); } else s += d; });
+  req.on('end', () => { try { const v = JSON.parse(s || '{}'); ok(v && typeof v === 'object' && !Array.isArray(v) ? v : {}); } catch { fail(new HttpError(400, 'bad json')); } });
+});
+const SECURITY = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" };
 const termsOk = a => state.terms?.[a]?.version === TERMS_VERSION;
 const find = id => state.parties.find(p => p.id === id);
 const addr = a => String(a || '').toLowerCase();
@@ -181,14 +222,14 @@ http.createServer(async (req, res) => {
     if (seg[0] !== 'api') {
       const f = path.join(ROOT, 'public', u.pathname === '/' ? 'index.html' : path.normalize(u.pathname));
       if (!f.startsWith(path.join(ROOT, 'public')) || !fs.existsSync(f)) return json(res, 404, { error: 'not found' });
-      res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache' });
+      res.writeHead(200, { ...SECURITY, 'content-type': TYPES[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache' });
       return res.end(fs.readFileSync(f));
     }
     const [, a, b, c] = seg;
     if (a === 'svg') {
       const id = Number(b);
       if (!byId.has(id)) return json(res, 404, { error: 'no credit' });
-      res.writeHead(200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=31536000, immutable' });
+      res.writeHead(200, { ...SECURITY, 'content-security-policy': 'sandbox', 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=31536000, immutable' });
       return res.end(await svg(id));
     }
     if (a === 'stats') {
@@ -198,7 +239,7 @@ http.createServer(async (req, res) => {
         soloStatements: bal.reduce((s, n) => s + Math.floor(n / SLOTS), 0),
         scattered: bal.filter(n => n < SLOTS).reduce((s, n) => s + n, 0),
         ranges: { id: [1, byId.size], rank: [1, byId.size], marks: MARKS, minDeposit: [1, SLOTS], days: [1, 60] },
-        floor: floor.credit, freq: Object.fromEntries(TRAITS.map(k => [k, Object.fromEntries(freq[k])])),
+        dev: DEV, floor: floor.credit, freq: Object.fromEntries(TRAITS.map(k => [k, Object.fromEntries(freq[k])])),
       });
     }
     if (a === 'terms' && req.method === 'GET') return json(res, 200, { version: TERMS_VERSION, accepted: state.terms?.[addr(b)]?.version === TERMS_VERSION });
@@ -211,9 +252,9 @@ http.createServer(async (req, res) => {
       save(); return json(res, 200, { accepted: true });
     }
     if (a === 'gas') return json(res, 200, { ...gas, units: GAS });
-    if (a === 'dev' && b === 'advance' && req.method === 'POST') {
+    if (DEV && a === 'dev' && b === 'advance' && req.method === 'POST') {
       const x = await body(req);
-      state.clockOffset = (state.clockOffset || 0) + Math.max(0, Number(x.hours) || 0) * 36e5;
+      state.clockOffset = (state.clockOffset || 0) + (int(x.hours, 0, 24 * 30) || 0) * 36e5;
       save(); return json(res, 200, { now: now() });
     }
     if (a === 'holders') return json(res, 200, [...holders].sort((x, y) => y[1].length - x[1].length).slice(0, 40).map(([address, ids]) => ({ address, count: ids.length })));
@@ -223,7 +264,7 @@ http.createServer(async (req, res) => {
       return json(res, 200, ids.map(id => ({ ...card(byId.get(id)), deposited: inParty.has(id) })).sort((x, y) => x.rank - y.rank));
     }
     if (a === 'eligible' && req.method === 'POST') {
-      const f = await body(req);
+      const f = cleanFilters(await body(req));
       const list = [...byId.values()].filter(c => matches(c, f));
       const owners = new Set(list.map(c => c.owner));
       return json(res, 200, { count: list.length, owners: owners.size, statements: Math.floor(list.length / SLOTS), sample: list.sort((x, y) => x.rank - y.rank).slice(0, 16).map(c => c.id) });
@@ -235,8 +276,15 @@ http.createServer(async (req, res) => {
       const host = addr(x.address);
       if (!termsOk(host)) return json(res, 403, { error: 'accept the terms first' });
       if (!holders.has(host)) return json(res, 400, { error: 'host must hold at least one Credit' });
-      const id = (x.name || 'party').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 32) + '-' + Date.now().toString(36).slice(-4);
-      const p = { id, name: String(x.name || 'Untitled').slice(0, 60), hosts: [host], createdAt: Date.now(), deadline: Date.now() + (Number(x.days) || 14) * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit: Math.max(1, Math.min(80, Number(x.minDeposit) || 1)), target: x.target || { mode: 'fixed', value: 2.5 }, filters: x.filters || {} }, deposits: [], order: null, arranger: null, proposals: [], chat: [] };
+      if (state.parties.filter(q => q.hosts[0] === host && ['OPEN', 'FULL'].includes(status(q))).length >= 3) return json(res, 429, { error: 'a host can run at most 3 open parties' });
+      const target = cleanTarget(x.target);
+      if (!target) return json(res, 400, { error: 'target price is out of range' });
+      const days = int(x.days, 1, 60); if (!days) return json(res, 400, { error: 'deadline must be 1–60 days' });
+      const minDeposit = int(x.minDeposit, 1, SLOTS); if (!minDeposit) return json(res, 400, { error: 'minimum deposit must be 1–80' });
+      const filters = cleanFilters(x.filters);
+      const name = String(x.name || 'Untitled').replace(/\s+/g, ' ').trim().slice(0, 60) || 'Untitled';
+      const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) + '-' + crypto.randomUUID().slice(0, 8);
+      const p = { id, name, hosts: [host], createdAt: now(), deadline: now() + days * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit, target, filters }, eligible: eligibleCount(filters), deposits: [], order: null, arranger: null, proposals: [], chat: [] };
       state.parties.unshift(p); save();
       return json(res, 200, view(p));
     }
@@ -250,7 +298,7 @@ http.createServer(async (req, res) => {
       const st = status(p);
       if (c === 'deposit') {
         if (st !== 'OPEN') return json(res, 400, { error: 'party is ' + st });
-        const ids = [...new Set((x.ids || []).map(Number))];
+        const ids = [...new Set((Array.isArray(x.ids) ? x.ids.slice(0, SLOTS) : []).map(Number))];
         const remaining = SLOTS - p.deposits.length;
         const min = Math.min(p.params.minDeposit, remaining);
         if (ids.length < min) return json(res, 400, { error: `minimum deposit is ${min}` });
@@ -262,35 +310,44 @@ http.createServer(async (req, res) => {
           if (taken.has(id)) return json(res, 400, { error: `#${id} is already in a party` });
           if (!matches(cr, p.params.filters)) return json(res, 400, { error: `#${id} does not meet this party's filters` });
         }
-        ids.forEach(id => p.deposits.push({ address: who, id, at: Date.now() }));
+        ids.forEach(id => p.deposits.push({ address: who, id, at: now() }));
         save(); return json(res, 200, view(p));
       }
       if (c === 'withdraw') {
         if (st !== 'OPEN' && st !== 'EXPIRED') return json(res, 400, { error: 'withdrawals are closed once a party is full' });
-        p.deposits = p.deposits.filter(d => !(d.address === who && (!x.ids || x.ids.map(Number).includes(d.id))));
+        const only = Array.isArray(x.ids) ? new Set(x.ids.slice(0, SLOTS).map(Number)) : null;
+        p.deposits = p.deposits.filter(d => !(d.address === who && (!only || only.has(d.id))));
         save(); return json(res, 200, view(p));
       }
       if (c === 'chat') {
         const isMember = p.deposits.some(d => d.address === who) || p.hosts.includes(who);
         if (!isMember) return json(res, 403, { error: 'only depositors and hosts can post' });
         const text = String(x.text || '').trim().slice(0, 500);
-        if (text) p.chat.push({ address: who, text, at: Date.now() });
+        const last = [...p.chat].reverse().find(m => m.address === who);
+        if (last && now() - last.at < 3000) return json(res, 429, { error: 'slow down' });
+        if (text) p.chat.push({ address: who, text, at: now() });
+        if (p.chat.length > 1000) p.chat = p.chat.slice(-1000);
         save(); return json(res, 200, view(p));
       }
       if (c === 'propose') {
         if (st !== 'FULL' && st !== 'ASSEMBLED') return json(res, 400, { error: 'proposals open once the party is full' });
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
-        const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'APPROVE_ARRANGEMENT', 'LIST'] : ['LIST', 'CANCEL_LISTING', 'DISTRIBUTE'];
+        // APPROVE_ARRANGEMENT is created only through /arrange, which checks the arranger and the order.
+        const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'LIST'] : ['LIST', 'CANCEL_LISTING', 'DISTRIBUTE'];
+        if (!allowed.includes(x.type)) return json(res, 400, { error: `${String(x.type).slice(0, 40)} not allowed while ${st}` });
+        if (p.proposals.filter(q => q.by === who && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 open proposals per member' });
+        if (x.type === 'NOMINATE_ARRANGER') {
+          const nominee = addr(x.args?.address);
+          if (!isAddr(nominee) || !p.deposits.some(d => d.address === nominee)) return json(res, 400, { error: 'the nominee must be a member' });
+          x.args = { address: nominee };
+        } else if (x.type !== 'LIST') x.args = {};
         if (x.type === 'LIST') {
           // Any price may be proposed, including below the floor. Only a vote sets it.
-          const mode = ['fixed', 'floorEth', 'floorPct'].includes(x.args?.mode) ? x.args.mode : null;
-          const value = Number(x.args?.value);
-          if (!mode || !Number.isFinite(value)) return json(res, 400, { error: 'price needs a mode and a number' });
-          if (mode === 'fixed' && value <= 0) return json(res, 400, { error: 'a fixed price must be above 0' });
-          if (mode !== 'fixed' && !(priceEth({ mode, value }) > 0)) return json(res, 400, { error: 'that price is at or below 0 ETH' });
-          x.args = { mode, value };
+          const t = cleanTarget(x.args);
+          if (!t) return json(res, 400, { error: 'price is out of range' });
+          if (!(priceEth(t) > 0)) return json(res, 400, { error: 'that price is at or below 0 ETH' });
+          x.args = t;
         }
-        if (!allowed.includes(x.type)) return json(res, 400, { error: `${x.type} not allowed while ${st}` });
         const at = now();
         p.proposals.push({ id: p.proposals.length + 1, type: x.type, args: x.args || {}, by: who, at, endsAt: at + windowMs(x.hours, p), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
@@ -309,20 +366,26 @@ http.createServer(async (req, res) => {
         if (!prop) return json(res, 404, { error: 'no proposal' });
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         const t = tally(p, prop);
-        if (!t.executable) return json(res, 400, { error: prop.executed ? 'already executed' : !t.closed ? 'voting is still open' : t.lapsed ? 'lapsed: not executed within 7 days' : 'did not pass' });
-        {
-          prop.executed = true; prop.executedBy = who;
-          if (prop.type === 'NOMINATE_ARRANGER') p.arranger = prop.args.address;
-          if (prop.type === 'APPROVE_ARRANGEMENT') p.order = prop.args.order;
-          if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: now() };
-        }
+        if (!t.executable) return json(res, 400, { error: prop.executed ? 'already executed' : prop.superseded ? 'superseded by a later decision' : !t.closed ? 'voting is still open' : t.lapsed ? 'lapsed: not executed within 7 days' : 'did not pass' });
+        const RUNS_IN = { NOMINATE_ARRANGER: ['FULL'], APPROVE_ARRANGEMENT: ['FULL'], LIST: ['FULL', 'ASSEMBLED'], CANCEL_LISTING: ['ASSEMBLED'], DISTRIBUTE: ['ASSEMBLED'] };
+        if (!RUNS_IN[prop.type]?.includes(st)) return json(res, 400, { error: `${prop.type} cannot run while ${st}` });
+        if (prop.type === 'APPROVE_ARRANGEMENT' && !validOrder(p, prop.args.order)) return json(res, 400, { error: 'order no longer matches the party' });
+        prop.executed = true; prop.executedBy = who;
+        if (prop.type === 'NOMINATE_ARRANGER') p.arranger = prop.args.address;
+        if (prop.type === 'APPROVE_ARRANGEMENT') p.order = prop.args.order;
+        if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: now() };
+        if (prop.type === 'CANCEL_LISTING') p.listing = null;
+        // Executing one proposal supersedes every other pending proposal of the same kind (no stale re-runs).
+        const kind = t => (t === 'CANCEL_LISTING' ? 'LIST' : t);
+        for (const q of p.proposals) if (q !== prop && !q.executed && kind(q.type) === kind(prop.type)) q.superseded = true;
         save(); return json(res, 200, view(p));
       }
       if (c === 'arrange') {
+        if (st !== 'FULL') return json(res, 400, { error: 'arranging happens only while the party is full' });
         if (who !== arrangerOf(p)) return json(res, 403, { error: 'only the arranger can submit an order' });
-        const order = (x.order || []).map(Number);
-        const have = new Set(deposited(p));
-        if (order.length !== SLOTS || new Set(order).size !== SLOTS || !order.every(id => have.has(id))) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });
+        const order = Array.isArray(x.order) ? x.order.slice(0, SLOTS + 1).map(Number) : [];
+        if (!validOrder(p, order)) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });
+        if (p.proposals.filter(q => q.type === 'APPROVE_ARRANGEMENT' && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 arrangements under vote at once' });
         const at = now();
         p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: String(x.preset || 'custom').slice(0, 60) }, by: who, at, endsAt: at + windowMs(x.hours, p), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
@@ -331,7 +394,7 @@ http.createServer(async (req, res) => {
         // Simulated: the Statement contract is not public yet. Any member may call once the order is approved.
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         if (st !== 'FULL') return json(res, 400, { error: 'party is ' + st });
-        if (!p.order) return json(res, 400, { error: 'the arrangement has not been approved' });
+        if (!p.order || !validOrder(p, p.order)) return json(res, 400, { error: 'the arrangement has not been approved' });
         p.assembled = { by: who, at: now(), number: state.parties.filter(q => q.assembled).length + 1 };
         save(); return json(res, 200, view(p));
       }
@@ -346,15 +409,21 @@ http.createServer(async (req, res) => {
       if (c === 'params') {
         if (!p.hosts.includes(who)) return json(res, 403, { error: 'hosts only' });
         if (st !== 'OPEN') return json(res, 400, { error: 'params lock when the party fills' });
-        const next = { ...p.params, ...x.params };
+        const q = x.params && typeof x.params === 'object' ? x.params : {};
+        const next = { ...p.params };
+        if ('minDeposit' in q) { const n = int(q.minDeposit, 1, SLOTS); if (!n) return json(res, 400, { error: 'minimum deposit must be 1–80' }); next.minDeposit = n; }
+        if ('target' in q) { const t = cleanTarget(q.target); if (!t) return json(res, 400, { error: 'target price is out of range' }); next.target = t; }
+        if ('filters' in q) next.filters = cleanFilters(q.filters);
+        if ('voteHours' in q) { if (!WINDOWS.includes(Number(q.voteHours))) return json(res, 400, { error: 'vote window must be 24, 48, 72 or 168 hours' }); next.voteHours = Number(q.voteHours); }
         const breaks = p.deposits.filter(d => !matches(byId.get(d.id), next.filters));
         if (breaks.length) return json(res, 400, { error: `would disqualify ${breaks.length} deposited Credit(s)` });
-        p.params = next; save(); return json(res, 200, view(p));
+        p.params = next; p.eligible = eligibleCount(next.filters); save(); return json(res, 200, view(p));
       }
     }
     json(res, 404, { error: 'unknown route' });
   } catch (e) {
+    if (e instanceof HttpError) return json(res, e.code, { error: e.message });
     console.error(e);
-    json(res, 500, { error: String(e.message || e) });
+    json(res, 500, { error: 'server error' });
   }
-}).listen(PORT, () => console.log(`statement maker on http://localhost:${PORT}  (snapshot block ${block})`));
+}).listen(PORT, '127.0.0.1', () => console.log(`statement maker on http://localhost:${PORT}  (snapshot block ${block})`));
