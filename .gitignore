@@ -10,3 +10,11 @@ research-private
 contracts/out
 contracts/cache
 contracts/broadcast
+data/state.json
+data/floor.json
+data/nonces.json
+data/owners.json
+.vercel
+!data/credits.json.gz
+!data/traits.json.gz
+!data/rarity.json

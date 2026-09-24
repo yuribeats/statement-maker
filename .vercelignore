@@ -1,0 +1,16 @@
+contracts
+research
+research-private
+tools
+docs
+node_modules
+data/svg
+data/state.json
+data/floor.json
+data/nonces.json
+data/owners.json
+data/*.tmp
+server.log
+*.bundle
+data/credits.json
+data/traits.json

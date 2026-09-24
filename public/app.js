@@ -556,7 +556,7 @@ function openTermsModal(address, mode = 'sim') {
         // Your wallet signs a sign-in message whose statement is this acceptance; the server verifies the signature.
         const { nonce, message } = await api('auth/nonce', { address });
         const signature = await window.ethereum.request({ method: 'personal_sign', params: [hex(message), address] });
-        who = (await api('auth/verify', { nonce, signature })).address;
+        who = (await api('auth/verify', { nonce, message, signature })).address;
       } else {
         who = (await api('auth/dev', { address, accept: $('#agree').checked })).address;
       }

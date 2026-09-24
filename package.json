@@ -7,6 +7,8 @@
     "dev": "node server.mjs"
   },
   "dependencies": {
-    "viem": "^2.56.8"
+    "@neondatabase/serverless": "^1.1.0",
+    "viem": "^2.56.8",
+    "ws": "^8.21.3"
   }
 }
