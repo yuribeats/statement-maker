@@ -259,6 +259,46 @@ async function renderFit() {
   });
 }
 
+// ---------- party activity log (public) ----------
+const idList = ids => { const l = (ids || []).map(Number); return l.slice(0, 10).map(i => '#' + i).join(', ') + (l.length > 10 ? ` +${l.length - 10}` : ''); };
+const plural = (k, w) => `${Number(k)} ${w}${Number(k) === 1 ? '' : 's'}`;
+function logLine(e) {
+  const d = {
+    open: () => e.house ? 'House party opened by Statement Maker' : 'Opened the party',
+    deposit: () => `Deposited ${plural(e.ids?.length, 'Credit')} · ${idList(e.ids)}`,
+    redeem: () => `Redeemed ${plural(e.ids?.length, 'Credit')} · ${idList(e.ids)}`,
+    return: () => `Returned ${e.items ? e.items.length : Number(e.count)} Credits to their card holders`,
+    transfer: () => `Sent Credit Card No. ${Number(e.card)} (Credit #${Number(e.credit)}) to ${userLink(e.to)}`,
+    propose: () => e.type === 'LIST' ? `Proposed #${Number(e.id)}: sell for ${priceLabel(e.args || {})} · ${eth(e.priceEth)} · ${Number(e.hours)}h vote${e.args?.buyDelayHours != null ? ` · buy wait ${Number(e.args.buyDelayHours)}h` : ''}${e.override ? ' · deadlock rule' : ''}` : `Proposed #${Number(e.id)}: cancel the listing`,
+    vote: () => `Voted ${e.yes ? 'yes' : 'no'} on #${Number(e.id)} · ${plural(e.weight, 'card')}${e.timeUnknown ? ' <span class="faint">· time not recorded</span>' : ''}`,
+    count: () => `Counted #${Number(e.id)} as blocked`,
+    execute: () => `Executed #${Number(e.id)}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
+    assemble: () => `Burned the 80 · Statement ${Number(e.number)}${e.arrangement ? ' · ' + esc(e.arrangement === 'Manual' ? 'host’s order' : arrLabel({ preset: e.arrangement })) : ''}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
+    raise: () => `Raised the ask to ${eth(e.askEth)}`,
+    buy: () => `Bought Statement ${Number(e.number)} for ${eth(e.price)} · fee ${eth(e.fee)}`,
+    claim: () => `Claimed ${plural(e.cards?.length, 'card')} · ${eth((e.eth || 0) * (e.cards?.length || 0))}`,
+    params: () => `Changed settings${e.keys?.length ? ': ' + esc(e.keys.join(', ')) : ''}`,
+    list: () => `Listed Statement ${Number(e.number)} for ${eth(e.priceEth)}`,
+    unlist: () => `Cancelled the listing of Statement ${Number(e.number)}`,
+    resale: () => `Bought Statement ${Number(e.number)} from ${userLink(e.from)} for ${eth(e.price)}`,
+    order: () => `Posted the burn order${e.reviewEnds ? ' · review until ' + esc(new Date(e.reviewEnds).toLocaleString()) : ''}`,
+    host: () => `Handed hosting to ${userLink(e.to)}`,
+  }[e.t];
+  return `<div><span>${e.at ? ago(e.at) + ' ago' : '—'} · ${e.a ? userLink(e.a) : 'Statement Maker'}</span><strong>${d ? d() : esc(e.t)}</strong></div>`;
+}
+async function logPanel(id, el) {
+  let offset = 0;
+  const draw = async () => {
+    const r = await api(`parties/${encodeURIComponent(id)}/log?offset=${offset}&limit=50`);
+    offset += r.items.length;
+    const rows = el.querySelector('.rows');
+    if (!rows) render(el, `<h2>Log · ${n(r.total)}</h2><p class="muted" style="margin-bottom:10px">Everything that happened in this party, newest first. Public.</p><div class="rows log"></div><div class="actions"><button type="button" class="more" hidden>Show more</button></div>`);
+    el.querySelector('.rows').append(document.createRange().createContextualFragment(r.items.map(logLine).join('') || '<div><span>—</span><strong>Nothing yet.</strong></div>'));
+    const more = el.querySelector('.more'); more.hidden = offset >= r.total; more.textContent = `Show more · ${n(r.total - offset)} left`; more.onclick = draw;
+  };
+  try { await draw(); } catch (e) { render(el, `<p class="error">${esc(e.message)}</p>`); }
+}
+
 const freshUI = () => ({ mode: 'sheet', selected: null, order: null, preset: null, picks: new Set() });
 let partyUI = freshUI();
 async function pageParty(id) {
@@ -432,10 +472,13 @@ async function pageParty(id) {
      ${isMember || isHost ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : `<p class="note">Credit Card holders and hosts can post.</p>`}
      <div class="error" id="chat-err"></div>
     </div>
+
+    <div class="panel" id="log"></div>
    </section>
   </div>`);
 
   const chat = $('#chat'); if (chat) chat.scrollTop = chat.scrollHeight;
+  logPanel(p.id, $('#log'));
   const err = (id, e) => { const el = $('#' + id); if (el) el.textContent = e.message || e; };
   const act = async (path, body, errId) => { try { await api(`parties/${encodeURIComponent(p.id)}/${path}`, body); await route(); return true; } catch (e) { err(errId, e); return false; } };
 
@@ -800,7 +843,7 @@ function openTermsModal(address, mode = 'sim') {
 }
 
 // ---------- gate ----------
-function pageGate() {
+function pageGate(page, arg) {
   render(app, `
   <div class="intro"><div><h1>For Credit holders</h1><p class="muted">Parties are open to wallets that hold a Credit or a Credit Card.</p></div></div>
   <div class="works"><div class="rows terms">
@@ -808,7 +851,9 @@ function pageGate() {
    <div><span>Starting a party</span><strong>You must hold a Credit, and open the party by depositing at least its minimum number of Credits that meet the criteria you set.</strong></div>
    <div><span>Without a Credit</span><strong>You can view and buy Statements, read the rules, and try the simulation.</strong></div>
   </div>
-  <div><div class="actions">${me ? switchBtn : '<button type="button" class="cta" data-switch-wallet style="margin:0">Connect wallet</button>'}<a class="cta" href="#/statements" style="margin:0">View Statements →</a><a href="#/try">Try it →</a></div></div></div>`);
+  <div><div class="actions">${me ? switchBtn : '<button type="button" class="cta" data-switch-wallet style="margin:0">Connect wallet</button>'}<a class="cta" href="#/statements" style="margin:0">View Statements →</a><a href="#/try">Try it →</a></div></div></div>
+  ${page === 'party' && arg ? '<div class="panel" id="log" style="margin-top:64px;max-width:900px"></div>' : ''}`);
+  if (page === 'party' && arg) logPanel(arg, $('#log'));
 }
 
 // ---------- statements ----------
@@ -1133,7 +1178,7 @@ async function route() {
     // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements, Try it and Terms only.
     const gated = !page || page === 'new' || page === 'wallet' || page === 'party';
     if (gated && !rulesAgreed()) { location.hash = '#/rules'; return; }
-    if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page);
+    if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page, arg);
     if (page === 'party') await pageParty(arg);
     else if (page === 'new') await pageNew();
     else if (page === 'wallet') await pageWallet(arg);
