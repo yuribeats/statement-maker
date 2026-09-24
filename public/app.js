@@ -122,7 +122,7 @@ function matchesClient(c, f = {}) {
 async function pageParties() {
   const [parties] = await Promise.all([api('parties'), stats || api('stats').then(s => (stats = s))]);
   render(app, `
-  <div class="intro"><div><h1>Eighty Credits make a Statement.</h1><p class="muted">Most holders have one. Parties pool them.</p></div><p class="muted">Snapshot block ${stats.block.toLocaleString()}</p></div>
+  <div class="intro"><div><h1>Eighty Credits make a Statement.</h1><p class="muted">Most holders have one. Parties pool them.</p></div><p class="muted">Synced to block ${(stats.syncedBlock || stats.block).toLocaleString()}</p></div>
   <div class="stats">
    <div><strong>${stats.credits.toLocaleString()}</strong><span>Credits</span></div>
    <div><strong>${stats.holders.toLocaleString()}</strong><span>Holders</span></div>
