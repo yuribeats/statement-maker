@@ -142,7 +142,7 @@ async function pageParty(id) {
     </div>
     ${partyUI.mode === 'arrange' ? `
      <div class="panel">
-      <p class="muted">Auto-order, then drag to swap. ${isArranger ? 'You are the elected arranger.' : p.arranger ? 'Only the arranger ' + short(p.arranger) + ' can submit. Anyone can preview.' : 'No arranger elected yet. Anyone can preview.'}</p>
+      <p class="muted">Auto-order, then drag to swap. ${isArranger ? `You are the ${p.arrangerElected ? 'elected' : 'default'} arranger.` : `Only the ${p.arrangerElected ? 'elected' : 'default'} arranger ${short(p.arranger)} can submit. Anyone can preview.`}${p.arrangerElected ? '' : ' The host arranges unless members elect someone else.'}</p>
       <div class="modes" style="margin:10px 0">${Object.keys(PRESETS).map(k => `<button type="button" data-preset="${k}" aria-pressed="${(partyUI.preset || '').startsWith(k)}">${k}</button>`).join('')}</div>
       ${isArranger ? `<button class="cta" id="submit-order">Submit arrangement for vote</button>` : ''}
       <div class="error" id="arr-err"></div>
@@ -213,7 +213,7 @@ async function pageParty(id) {
 
     <div class="panel">
      <h2>Members · ${p.members.length}</h2>
-     <table class="table"><tbody>${p.members.slice(0, 30).map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${short(m.address)}${m.host ? ' <span class="muted">host</span>' : ''}${m.address === p.arranger ? ' <span class="muted">arranger</span>' : ''}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
+     <table class="table"><tbody>${p.members.slice(0, 30).map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${short(m.address)}${m.host ? ' <span class="muted">host</span>' : ''}${m.address === p.arranger ? ` <span class="muted">arranger${p.arrangerElected ? '' : ' (default)'}</span>` : ''}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
     </div>
 
     <div class="panel">
@@ -335,7 +335,7 @@ function pageRules() {
    <div><span>01 Open</span><strong>A host opens a party and sets a minimum deposit, a target price, and which Credits qualify.</strong></div>
    <div><span>02 Deposit</span><strong>Holders deposit matching Credits. Withdraw any time before the 80th arrives.</strong></div>
    <div><span>03 Full</span><strong>At 80, each deposited Credit becomes one party token (ERC-20). Tokens trade freely.</strong></div>
-   <div><span>04 Arrange</span><strong>Members elect an arranger. The arranger orders the 8 × 10 sheet. Members approve the order.</strong></div>
+   <div><span>04 Arrange</span><strong>The host arranges the 8 × 10 sheet unless members elect someone else. Members approve the order.</strong></div>
    <div><span>05 Assemble</span><strong>The 80 Credits are burned into one Statement, held by the party.</strong></div>
    <div><span>06 Sell</span><strong>Only at the party's own price, only on Statement Maker. No offers. No auctions. No marketplaces.</strong></div>
    <div><span>07 Price</span><strong>Fixed ETH, or floor plus or minus ETH or percent. Any price can be proposed, below the floor included. A floor-tracking price only moves up; lowering it takes a new vote.</strong></div>

@@ -84,10 +84,12 @@ function targetEth(p) {
   if (!base) return null;
   return t.mode === 'floorPct' ? base * (1 + t.value / 100) : base + t.value;
 }
+// The first host arranges unless members elect someone else.
+const arrangerOf = p => p.arranger || p.hosts[0];
 function view(p) {
   const order = p.order || deposited(p);
   return {
-    ...p, status: status(p), members: members(p), targetEth: targetEth(p),
+    ...p, arranger: arrangerOf(p), arrangerElected: !!p.arranger, status: status(p), members: members(p), targetEth: targetEth(p),
     credits: order.map(id => card(byId.get(id), p.deposits.find(d => d.id === id)?.address)),
     proposals: p.proposals.map(x => ({ ...x, ...tally(p, x) })),
     eligible: [...byId.values()].filter(c => matches(c, p.params.filters)).length,
@@ -260,7 +262,7 @@ http.createServer(async (req, res) => {
         save(); return json(res, 200, view(p));
       }
       if (c === 'arrange') {
-        if (who !== p.arranger) return json(res, 403, { error: 'only the elected arranger can submit an order' });
+        if (who !== arrangerOf(p)) return json(res, 403, { error: 'only the arranger can submit an order' });
         const order = (x.order || []).map(Number);
         const have = new Set(deposited(p));
         if (order.length !== SLOTS || new Set(order).size !== SLOTS || !order.every(id => have.has(id))) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });

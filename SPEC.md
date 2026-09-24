@@ -76,7 +76,7 @@ Proposal types (closed set, no arbitrary calls):
 ## 5. Arrangement (the 8×10 order)
 Burn returns seeds in call order and the preview renders an ordered sheet. Order is likely part of the work (unverified until Statement contract ships).
 Flow:
-1. Group votes NOMINATE_ARRANGER.
+1. The first host is the arranger by default. Members may replace them with a NOMINATE_ARRANGER vote; the elected arranger then takes over.
 2. Arranger drags Credits in the 8×10 editor or starts from an auto-order preset, then submits.
 3. Group votes APPROVE_ARRANGEMENT. The approved 80-id array is stored in the vault; ASSEMBLE can only use that array.
 Auto-order presets:
