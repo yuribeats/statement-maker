@@ -193,7 +193,7 @@ function draw() {
     </div>
     <div class="panel"><h2>Your test Credits · ${S.credits.length}</h2>
      <p class="muted">Select Credits to deposit into the selected party.</p>
-     <div class="actions"><button type="button" id="pick80">Select all</button><button type="button" id="pick0">Clear</button><span>${S.picks.size} selected</span></div>
+     <div class="actions"><button type="button" id="pick80">Select 40</button><button type="button" id="pick0">Clear</button><span>${S.picks.size} selected${S.picks.size > 40 ? ' · up to 40 per transaction; deposit the rest in a second step' : ''}</span></div>
      <div class="rows" style="max-height:220px;overflow:auto">${S.credits.map(id => `<div><span><label class="check"><input type="checkbox" data-pick="${id}" ${S.picks.has(id) ? 'checked' : ''}> Credit #${id}</label></span><strong></strong></div>`).join('')}</div>
     </div>
     <div class="panel"><h2>Statement market</h2>
@@ -249,10 +249,12 @@ function bind() {
   $('#reload')?.addEventListener('click', refresh);
   document.querySelectorAll('[data-sel]').forEach(b => b.onclick = async e => { e.preventDefault(); S.sel = b.dataset.sel; await refresh(); });
   document.querySelectorAll('[data-pick]').forEach(b => b.onchange = () => { const id = Number(b.dataset.pick); b.checked ? S.picks.add(id) : S.picks.delete(id); draw(); });
-  $('#pick80')?.addEventListener('click', () => { S.credits.slice(0, 80).forEach(id => S.picks.add(id)); draw(); });
+  $('#pick80')?.addEventListener('click', () => { S.credits.filter(id => !S.picks.has(id)).slice(0, 40 - Math.min(40, S.picks.size)).forEach(id => S.picks.add(id)); draw(); });
   $('#pick0')?.addEventListener('click', () => { S.picks.clear(); draw(); });
   $('#create')?.addEventListener('click', async () => {
     const ids = [...S.picks].map(BigInt);
+    // Up to 40 Credits per transaction: opening with 80 measured 14.92M gas, near the 16,777,216 per-transaction cap.
+    if (ids.length > 40) return alert('Up to 40 per transaction; deposit the rest in a second step.');
     // The party's address is known before it exists: approve it, create + deposit in one transaction, then revoke.
     const predicted = await read({ address: ADDR.factory, abi: ABIS.Factory }, 'predictParty', [me]);
     if (!(await tx('Approve the new party to move your Credits', { address: ADDR.credits, abi: CREDITS_ABI, functionName: 'setApprovalForAll', args: [predicted, true] }))) return;
@@ -263,11 +265,12 @@ function bind() {
       minAskWei: 0n, buyDelayHours: Number($('#bw').value),
     };
     const before = S.parties.length;
-    if (await tx(`Open party + deposit ${ids.length}`, { address: ADDR.factory, abi: ABIS.Factory, functionName: 'createParty', args: [params, ids, []], gas: 25_000_000n })) { S.picks.clear(); S.sel = predicted; }
+    if (await tx(`Open party + deposit ${ids.length}`, { address: ADDR.factory, abi: ABIS.Factory, functionName: 'createParty', args: [params, ids, []], gas: 16_000_000n })) { S.picks.clear(); S.sel = predicted; }
     await tx('Revoke approval', { address: ADDR.credits, abi: CREDITS_ABI, functionName: 'setApprovalForAll', args: [predicted, false] });
   });
   $('#deposit')?.addEventListener('click', async () => {
     const ids = [...S.picks].map(BigInt);
+    if (ids.length > 40) return alert('Up to 40 per transaction; deposit the rest in a second step.');
     const a = S.party.a;
     if (!(await read({ address: ADDR.credits, abi: CREDITS_ABI }, 'isApprovedForAll', [me, a]))) {
       if (!(await tx('Approve this party to move your Credits', { address: ADDR.credits, abi: CREDITS_ABI, functionName: 'setApprovalForAll', args: [a, true] }))) return;
@@ -279,7 +282,7 @@ function bind() {
   $('#assemble')?.addEventListener('click', async () => {
     if (!FORK && !confirm('Burning is permanent: the 80 test Credits become one Statement. Continue?')) return;
     const order = await buildOrder();
-    tx('Burn the 80', { ...P(S.party.a), functionName: 'assemble', args: [order, noFloor], gas: 20_000_000n });
+    tx('Burn the 80', { ...P(S.party.a), functionName: 'assemble', args: [order, noFloor], gas: 16_000_000n }); // under the 16,777,216 per-transaction cap (EIP-7825)
   });
   $('#propose')?.addEventListener('click', () => tx('Propose price', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: parseEther(String($('#pp').value)) }, false, Number($('#ph').value), Number($('#pbw').value)] }));
   $('#cancel')?.addEventListener('click', () => tx('Propose cancel', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: 0n }, true, 24, 0] }));
