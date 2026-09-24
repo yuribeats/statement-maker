@@ -294,3 +294,5 @@ body.bare main{padding:0;max-width:none}
 .cards-box summary h2::before{content:"+ ";color:var(--faint)}
 .cards-box[open] summary h2::before{content:"− "}
 .landing .view-only{color:var(--muted);margin-top:10px}
+.mgrid.burned .mcell>span:first-child{display:block;aspect-ratio:1;border:1px solid var(--line2)}
+.mgrid[hidden],#mstatement[hidden],#vst[hidden]{display:none}

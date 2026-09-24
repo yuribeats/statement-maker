@@ -1124,7 +1124,9 @@ async function pageStatement(id) {
   <div class="intro"><div><h1>Statement ${Number(p.assembled.number)}</h1><p class="muted">${esc(p.name)} · assembled ${new Date(p.assembled.at).toLocaleDateString()}</p></div><a href="#/party/${esc(p.id)}" class="muted">Party page →</a></div>
   <div class="works">
    <section>
-    ${sheet(p)}
+    <div class="modes view-toggle" style="margin-bottom:12px"><button type="button" data-view="st" aria-pressed="true">Statement</button><button type="button" data-view="cr" aria-pressed="false">Burned Credits</button></div>
+    <div id="vst">${sheet(p)}</div>
+    <div id="vcr" class="mgrid burned" hidden>${p.credits.map(c => `<div class="mcell"><span><img src="${svg(c.id)}" alt="" loading="lazy"></span><span class="l">#${Number(c.id)}</span></div>`).join('')}</div>
     <div class="caption"><span>Statement ${Number(p.assembled.number)}</span><div class="modes"><button type="button" id="png">PNG ↓</button></div></div>
     <p class="note">Preview from the approved order. The final image comes from the Statement contract once Jack publishes it.</p>
    </section>
@@ -1153,8 +1155,8 @@ async function pageStatement(id) {
      <p class="muted">1% to Statement Maker, then ${eth(p.listingEth * 0.99 / SLOTS)} to each of the 80 Credit Cards.</p>
      ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}.</p>` : me ? `<button class="cta" id="buy-s">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
      <div class="error" id="buy-s-err"></div></div>` : ''}
-   <h2 style="margin:48px 0 14px">Holders</h2>
-   <table class="table"><tbody>${p.members.map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${userLink(m.address)}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
+   <details class="cards-box" style="margin-top:48px"><summary><h2>Holders · ${p.members.length}</h2></summary>
+   <table class="table"><tbody>${p.members.map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${userLink(m.address)}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table></details>
    </section>
   </div>`);
   $('#png').onclick = () => statementPNG(p);
@@ -1306,10 +1308,12 @@ async function pageMinute(key) {
     <button type="button" data-cell="${Number(c.id)}" aria-pressed="${partyUI.picks.has(c.id)}" aria-label="Credit ${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>
     <span class="l">#${Number(c.id)}</span><span class="l o">${c.who ? userLink(c.who) : '—'}</span><span class="l s">${c.in ? 'In the party' : 'Not yet'}</span></div>`;
   render(app, `
-  <div class="intro"><div><h1>Minute ${esc(m.time)} UTC</h1><p class="muted">#${Number(m.from)}–${Number(m.to)} · ${Number(m.filled)}/80 in the party · ${n(m.holders)} holders · ${minuteState(m)}</p></div><a href="#/" class="muted">← The Four</a></div>
+  <div class="intro"><div><h1>Minute ${esc(m.time)} UTC</h1><p class="muted">#${Number(m.from)}–${Number(m.to)} · ${Number(m.filled)}/80 in the party · ${n(m.holders)} holders · ${minuteState(m)}</p></div><a href="#/four" class="muted">← The Four</a></div>
   <div class="bar" style="margin-bottom:16px"><i style="width:${m.filled / SLOTS * 100}%"></i></div>
-  <div class="mgrid" id="mgrid">${m.cells.map(cell).join('')}</div>
-  <div class="caption"><span class="muted">Mint order, earliest first: how the Statement will be laid out. <span class="key-in">In the party</span> · <span class="key-out">not yet</span>${me ? ' · <span class="dot y"></span>yours' : ''}</span></div>
+  ${m.assembled ? `<div class="modes view-toggle" style="margin-bottom:12px"><button type="button" data-view="st" aria-pressed="true">Statement</button><button type="button" data-view="cr" aria-pressed="false">Burned Credits</button></div>
+  <div id="mstatement">${sheet({ credits: m.cells })}</div>` : ''}
+  <div class="mgrid" id="mgrid" ${m.assembled ? 'hidden' : ''}>${m.cells.map(cell).join('')}</div>
+  <div class="caption"><span class="muted">${m.assembled ? 'The 80 Credits in their burned order, earliest mint first.' : 'Mint order, earliest first: how the Statement will be laid out.'} <span class="key-in">In the party</span> · <span class="key-out">not yet</span>${me ? ' · <span class="dot y"></span>yours' : ''}</span></div>
   <div class="detail" id="mdetail"><span class="faint">—</span><span class="muted">Select a Credit.</span></div>
   <div class="works" style="margin-top:48px">
    <section>
@@ -1329,8 +1333,10 @@ async function pageMinute(key) {
    </section>
    <section>
     <div class="panel">
-     <h2>Holders · ${holders.length}</h2>
+     <details class="cards-box">
+     <summary><h2>Holders · ${holders.length}</h2><span class="muted">${holders.filter(h => h.d > 0).length} deposited</span></summary>
      <table class="table"><thead><tr><th>Holder</th><th style="text-align:right">Of the 80</th><th style="text-align:right">Deposited</th></tr></thead><tbody>${holders.map(h => `<tr><td>${h.a === me ? '<span class="dot y"></span>' : ''}${userLink(h.a)}</td><td style="text-align:right">${h.n}</td><td style="text-align:right">${h.d}</td></tr>`).join('')}</tbody></table>
+     </details>
     </div>
    </section>
   </div>
@@ -1425,5 +1431,12 @@ async function route() {
     else await pageParties();
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
+// Statement / Burned Credits toggle on burned parties: swaps the composed Statement for the 80 Credits it was made from.
+app.addEventListener('click', e => {
+  const b = e.target.closest?.('.view-toggle [data-view]'); if (!b) return;
+  const st = b.dataset.view === 'st';
+  b.parentElement.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  for (const [s, c] of [['#mstatement', '#mgrid'], ['#vst', '#vcr']]) { const a = $(s), g = $(c); if (a && g) { a.hidden = !st; g.hidden = st; } }
+});
 window.addEventListener('hashchange', route);
 Promise.all([api('auth/me').then(async m => { me = m.address && m.terms ? m.address : ''; access = m; await syncRules(); }), api('stats').then(x => (stats = x))]).then(async () => { const a = await Wallets.restore(CHAIN); const w = Wallets.wallet(); if (w) try { chainNow = Number(await w.provider.request({ method: 'eth_chainId' })) || CHAIN; } catch {} if (me && a && a !== me) { await api('auth/logout', {}).catch(() => {}); me = ''; access = await api('auth/me').catch(() => access); } }).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
