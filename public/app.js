@@ -677,7 +677,7 @@ async function pageNew() {
   if (!stats.partiesUnlocked) {
     const mins = [['1349', '13:49'], ['1505', '15:05'], ['1528', '15:28'], ['1622', '16:22']];
     render(app, `
-    <div class="intro"><div><h1>Start a party</h1><p class="muted">Not open yet. At launch there are four parties: the four minutes of the Credits mint in which exactly 80 Credits were bought. Starting your own party opens once one of them has made its Statement.</p></div></div>
+    <div class="intro"><div><h1>Start a party</h1><p class="muted">Not open yet. At launch there are four parties: the four minutes of the Credits mint in which exactly 80 Credits were bought. Starting your own party opens once one of their Statements has been made and sold at auction.</p></div></div>
     <div class="panel" style="max-width:900px"><h2>The four parties</h2><div class="rows">${mins.map(([id, t]) => `<div><span><a href="#/party/minute-${id}">Minute ${t} UTC</a></span><strong><a href="#/party/minute-${id}">Open →</a></strong></div>`).join('')}</div></div>`);
     return;
   }
@@ -904,7 +904,7 @@ async function pageUser(addr) {
 // Signed in, the server's record is what counts (it rejects every party action without it); the browser flag only
 // carries an agreement made before connecting, and is copied to the wallet's record at sign-in.
 // Launch and full launch have separate rules (and versions); the flag is kept per version.
-const RULES_V = { launch: '2026-09-24.L6', full: '2026-09-24.5' }, TERMS_V = { launch: '2026-09-24.L6', full: '2026-09-24.6' };
+const RULES_V = { launch: '2026-09-24.L7', full: '2026-09-24.5' }, TERMS_V = { launch: '2026-09-24.L6', full: '2026-09-24.6' };
 const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? RULES_V.launch : RULES_V.full);
 const localRules = () => { try { return localStorage.getItem(rulesKey()) === '1'; } catch { return false; } };
 const rulesAgreed = () => (me ? !!access.rules : localRules());
@@ -933,9 +933,10 @@ function launchRuleRows() {
    ['08 The split', 'Any creator royalty the Statement contract declares, up to 1%, is paid first. Then 1% of the sale goes to Statement Maker. The rest goes to card holders, 1/80 per card.'],
    ['09 Deadline', `If a party is not burned by ${dl ? dl : 'its deadline'}, every card can be redeemed for its Credit.`],
    ['10 Preview', 'Nothing here moves Credits or ETH. Deposits, cards, bids and sales are records kept by Statement Maker only. Two things must exist first: Jack’s Statement contract, and Statement Maker’s contracts for the four parties and the auction, which are not deployed yet.'],
+   ['11 What comes next', 'Once one of these four Statements has been made and sold at auction, anyone holding a Credit can start a party: a group that pools 80 Credits, chosen by criteria its starter sets, to make one Statement.'],
   ];
 }
-const launchRulesRows = () => launchRuleRows().map(([h, t]) => `<div><span>${esc(h)}</span><strong>${esc(t)}${h.endsWith(' Burn') ? burnAlert('Time') : ''}</strong></div>`).join('');
+const launchRulesRows = (all = true) => launchRuleRows().filter(([h]) => all || !h.startsWith('11 ')).map(([h, t]) => `<div><span>${esc(h)}</span><strong>${esc(t)}${h.endsWith(' Burn') ? burnAlert('Time') : ''}</strong></div>`).join('');
 function pageRulesLaunch() {
   render(app, `
   <div class="intro"><div><h1>Rules</h1><p class="muted">How the four parties work. Read these first.</p></div></div>
@@ -1265,7 +1266,7 @@ function addDefs(root = app) {
 }
 new MutationObserver(() => addDefs()).observe(app, { childList: true, subtree: true });
 
-// ---------- launch phase: only the four Minute parties, until one of them makes its Statement ----------
+// ---------- launch phase: only the four Minute parties, until one of their Statements is made and sold at auction ----------
 // While stats.partiesUnlocked is false the site shows The Four instead of the parties list, a Minute page per party,
 // and hides starting parties and the Credits lookup. The full-launch pages above stay as they are and return by themselves.
 const launchPhase = () => !stats?.partiesUnlocked;
@@ -1381,7 +1382,7 @@ async function pageMinute(key) {
    </section>
   </div>
   <div id="more" style="margin-top:48px"></div>
-  ${launchPhase() ? '' : `<div class="panel" style="margin-top:48px;max-width:900px"><h2>Rules for the four</h2><p class="muted" style="margin-bottom:10px">The four Minute parties keep their launch rules, including the auction.</p><div class="rows terms no-defs">${launchRulesRows()}</div></div>`}
+  ${launchPhase() ? '' : `<div class="panel" style="margin-top:48px;max-width:900px"><h2>Rules for the four</h2><p class="muted" style="margin-bottom:10px">The four Minute parties keep their launch rules, including the auction.</p><div class="rows terms no-defs">${launchRulesRows(false)}</div></div>`}
   <div class="panel" id="log" style="margin-top:48px;max-width:900px"></div>`);
 
   const byCell = new Map(m.cells.map(c => [c.id, c]));
@@ -1447,7 +1448,7 @@ async function route() {
   lastParty = uiKey;
   try {
     // Launch phase: The Four (home, after the rules) and the Minute pages are public; starting parties, the parties
-    // list, other party pages and the Credits lookup open after the first Statement.
+    // list, other party pages and the Credits lookup open after the first Statement is sold.
     // Party pages (The Four, Minute and party pages, Start a party, Credits) need the Rules agreement first.
     // View-only visitors (no wallet) read them without it; every action needs a wallet, then the agreement.
     const housePage = page === 'minute' || (page === 'party' && /^minute-\d{4}$/.test(arg || ''));
