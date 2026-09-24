@@ -468,8 +468,6 @@ async function pageWallet(addr) {
 }
 
 function pageRules() {
-  // Seen once, the site opens on Parties next time (per-browser convenience only).
-  try { localStorage.setItem('sm-rules-seen', '1'); } catch {}
   render(app, `
   <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div><a class="cta" href="#/" style="margin:0">Continue to parties →</a></div>
   <div class="works"><div class="rows terms">
@@ -624,9 +622,8 @@ async function pageStatement(id) {
 let lastParty = null;
 async function route() {
   const [, page, arg] = location.hash.replace(/^#?\/?/, '#/').split('/');
-  // First visit: show the rules before anything else.
-  let seen = false; try { seen = localStorage.getItem('sm-rules-seen') === '1'; } catch {}
-  if (!seen && !page && location.hash !== '#/rules') { location.hash = '#/rules'; return; }
+  // The site lands on the rules: a bare URL (no hash) opens Rules; "#/" is the parties list.
+  if (!location.hash) { location.replace('#/rules'); return; }
   document.querySelectorAll('[data-nav]').forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === (page || 'parties') || (page === 'party' && a.dataset.nav === 'parties')));
   if (page !== 'party' || arg !== lastParty) partyUI = freshUI();
   lastParty = page === 'party' ? arg : null;
