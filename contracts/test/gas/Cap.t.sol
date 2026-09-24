@@ -13,7 +13,7 @@ contract GasCapTest is Base {
         uint256[] memory ids = take(holdings(WHALE), 0, 80);
         Party.Params memory p = params(arr);
         vm.startPrank(WHALE);
-        CREDITS.setApprovalForAll(factory.predictParty(WHALE), true);
+        CREDITS.setApprovalForAll(address(factory), true);
         uint256 g = gasleft();
         party = factory.createParty(p, ids, new bytes32[][](0));
         gasOpen = g - gasleft();

@@ -78,7 +78,7 @@ contract Findings3Test is FixesBase {
         uint256[] memory ids = first(holders[0], 1);
         address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         vm.expectRevert(bad("buyDelay"));
         factory.createParty(p, ids, new bytes32[][](0));
         p.defaultPrice = _delta(0);

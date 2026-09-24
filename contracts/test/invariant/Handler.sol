@@ -269,7 +269,7 @@ contract Handler is Test {
             pokes[1] = abi.encodeCall(Party.redeem, (mine));
             pokes[2] = abi.encodeCall(Party.redeemFor, (mine));
             pokes[3] = abi.encodeCall(Party.execute, (0, f));
-            pokes[4] = abi.encodeCall(Party.deposit, (new uint256[](1), new bytes32[][](0)));
+            pokes[4] = abi.encodeCall(Party.onDeposit, (who, new uint256[](1), new bytes32[][](0))); // factory only
         } else {
             pokes = new bytes[](0);
         }
@@ -372,9 +372,9 @@ contract Handler is Test {
         if (curParty != address(0)) curSt = Party(payable(curParty)).status();
         address predicted = factory.predictParty(who);
         uint256 firstCard = cards.nextId();
-        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", predicted, true));
+        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", address(factory), true));
         (bool ok, bytes memory ret) = _as(who, address(factory), 0, abi.encodeCall(PartyFactory.createParty, (p, ids, new bytes32[][](0))));
-        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", predicted, false));
+        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", address(factory), false));
         curOk = ok;
         if (ok != expected) return _fail(ok ? "createParty: invalid party accepted" : "createParty with valid params failed");
         if (!ok) return;
@@ -435,9 +435,9 @@ contract Handler is Test {
         curParty = address(p);
         curActor = who;
         if (curParty != address(0)) curSt = Party(payable(curParty)).status();
-        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", address(p), true));
-        (bool ok,) = _as(who, address(p), 0, abi.encodeCall(Party.deposit, (ids, new bytes32[][](0))));
-        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", address(p), false));
+        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", address(factory), true));
+        (bool ok,) = _as(who, address(factory), 0, abi.encodeCall(PartyFactory.deposit, (p, ids, new bytes32[][](0))));
+        _as(who, address(credits), 0, abi.encodeWithSignature("setApprovalForAll(address,bool)", address(factory), false));
         curOk = curOk || ok;
         if (ok != expected) return _fail(ok ? "deposit: invalid deposit accepted" : "deposit: valid deposit rejected");
         if (!ok) return;

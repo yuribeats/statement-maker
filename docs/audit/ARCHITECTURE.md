@@ -54,8 +54,8 @@ else                              -> OPEN
 | From | To | Trigger | Who |
 |---|---|---|---|
 | (none) | OPEN | `PartyFactory.createParty(params)` → clone, `CreditCards.registerParty`, `initialize` | Anyone (becomes host) |
-| OPEN | OPEN | `deposit(ids, proofs)` below 80; `redeem(cardIds)` | Depositor: the Credit owner themselves. Redeem: the current card holder. |
-| OPEN | FULL | `deposit` that brings `_order.length` to 80 (sets `fullAt`) | Any Credit owner |
+| OPEN | OPEN | `factory.deposit(party, ids, proofs)` below 80; `redeem(cardIds)` | Depositor: the Credit owner themselves (approves the factory, never the party). Redeem: the current card holder. |
+| OPEN | FULL | `factory.deposit` that brings `_order.length` to 80 (sets `fullAt`) | Any Credit owner |
 | OPEN | EXPIRED | Time: `block.timestamp > deadline` | Nobody. Passive. |
 | FULL | ASSEMBLED | `assemble(order, floor)`: permutation and preset check, price resolved, `Statement.make`, burn verified | Manual preset: host only for 1 day after FULL, then any card holder with the Time order. Other presets: anyone holding ≥ 1 of this party's cards now. |
 | FULL | EXPIRED | Time: `block.timestamp > deadline` before assembly | Passive |
@@ -194,7 +194,8 @@ Trust: the signer is fully trusted for floor values. See THREAT_MODEL.md §3 for
 | Function | Caller | State / conditions | Reentrancy lock |
 |---|---|---|---|
 | `initialize(host, params)` | factory (the first caller; `initializer`) | Once. The implementation is locked by `_disableInitializers`. | none |
-| `deposit(ids, proofs)` | the Credit owner (`transferFrom(msg.sender, …)`), who has approved the party | OPEN. Count between min(minDeposit, remaining) and remaining. Merkle proof if a root is set. No duplicates. | yes |
+| `PartyFactory.deposit(party, ids, proofs)` | the Credit owner, who has approved the **factory** (`setApprovalForAll(factory)` or per-token `approve(factory)`) | `isParty[party]`. The factory calls `credits.transferFrom(msg.sender, party, id)` for each id, then `party.onDeposit(msg.sender, ids, proofs)`. |
+| `onDeposit(from, ids, proofs)` | the factory only | OPEN. Count between min(minDeposit, remaining) and remaining. Merkle proof if a root is set. No duplicate. `credits.ownerOf(id) == party` for each (received). Mints one card per Credit to `from`. The host's opening deposit takes the same path inside `createParty`. |
 | `redeem(cardIds)` | holder of each card | OPEN or EXPIRED | yes |
 | `redeemFor(cardIds)` | anyone; Credit goes to the current card holder | EXPIRED | yes |
 | `assemble(order, floor)` | Manual within 1 day of FULL: `host`. Otherwise: card holder now (Manual falls back to the Time order). | FULL. Valid permutation and preset order. Price resolvable. | yes |

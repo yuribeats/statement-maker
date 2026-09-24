@@ -20,7 +20,7 @@ contract Findings2Test is UnitBase {
         uint256[] memory ids = first(holders[0], 1);
         address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         try factory.createParty(p, ids, new bytes32[][](0)) {}
         catch {
             vm.stopPrank();

@@ -62,9 +62,9 @@ abstract contract Base is Test {
     function openParty(Party.Params memory p, address host, uint256[] memory ids) internal returns (Party party) {
         address predicted = factory.predictParty(host);
         vm.startPrank(host);
-        CREDITS.setApprovalForAll(predicted, true);
+        CREDITS.setApprovalForAll(address(factory), true);
         party = factory.createParty(p, ids, new bytes32[][](0));
-        CREDITS.setApprovalForAll(predicted, false);
+        CREDITS.setApprovalForAll(address(factory), false);
         vm.stopPrank();
         require(address(party) == predicted, "harness: predicted address");
     }
@@ -82,9 +82,9 @@ abstract contract Base is Test {
 
     function depositFrom(Party party, address who, uint256[] memory ids) internal {
         vm.startPrank(who);
-        CREDITS.setApprovalForAll(address(party), true);
-        party.deposit(ids, new bytes32[][](0));
-        CREDITS.setApprovalForAll(address(party), false);
+        CREDITS.setApprovalForAll(address(factory), true);
+        factory.deposit(party, ids, new bytes32[][](0));
+        CREDITS.setApprovalForAll(address(factory), false);
         vm.stopPrank();
     }
 

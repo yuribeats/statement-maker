@@ -23,6 +23,8 @@ Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 
 Credits are never burned before assembly. If the Statement contract rejects contract callers, nothing is lost: parties expire and Credits return.
 
+Approvals: a user approves exactly one contract, the PartyFactory (`Credits.setApprovalForAll(factory, true)`, once), never a party or a predicted party address. The factory moves Credits only from its own caller into one of its own parties (`isParty`), and the party records the deposit (`onDeposit`, callable only by the factory) after checking it received each Credit. Opening: `factory.createParty(params, ids, proofs)`. Later deposits: `factory.deposit(party, ids, proofs)`.
+
 ## 3. Hosts and party params
 - The address that opens a party is its first host. Hosts can add or remove hosts (last host cannot leave without naming a replacement).
 - Host privileges:
@@ -92,8 +94,8 @@ Every state change is a transaction: someone calls it and pays gas. Rule: once a
 
 | Function | Who may call | When | Gas (measured on a mainnet fork 2026-09-23 unless marked) |
 |---|---|---|---|
-| openParty(params) | any Credit holder (becomes host) | any time | est. ~250k (vault clone; cards share one ERC-721 collection) |
-| deposit(ids) | the Credits' owner | OPEN | ~126k per Credit transfer (measured 125,815) + card mint (est. ~60–90k) |
+| factory.createParty(params, ids, proofs) | any Credit holder (becomes host), after approving the factory once | any time | est. ~250k (vault clone; cards share one ERC-721 collection) + the opening deposit |
+| factory.deposit(party, ids, proofs) | the Credits' owner, after approving the factory once | OPEN | ~126k per Credit transfer (measured 125,815) + card mint (est. ~60–90k) |
 | withdraw(ids) | the depositor | OPEN or EXPIRED | ~ same as deposit |
 | propose(type, args) | any member | per state | est. ~80–150k |
 | vote(id, yes) | any member | voting window open | est. ~50–70k |

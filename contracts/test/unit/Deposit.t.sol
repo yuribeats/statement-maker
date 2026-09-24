@@ -9,16 +9,16 @@ import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.s
 contract DepositTest is UnitBase {
     function _dep(Party party, address who, uint256[] memory ids, bytes32[][] memory proofs) internal {
         vm.startPrank(who);
-        credits.setApprovalForAll(address(party), true);
-        party.deposit(ids, proofs);
+        credits.setApprovalForAll(address(factory), true);
+        factory.deposit(party, ids, proofs);
         vm.stopPrank();
     }
 
     function _depExpect(Party party, address who, uint256[] memory ids, bytes32[][] memory proofs, bytes memory err) internal {
         vm.startPrank(who);
-        credits.setApprovalForAll(address(party), true);
+        credits.setApprovalForAll(address(factory), true);
         vm.expectRevert(err);
-        party.deposit(ids, proofs);
+        factory.deposit(party, ids, proofs);
         vm.stopPrank();
     }
 
@@ -91,13 +91,10 @@ contract DepositTest is UnitBase {
     }
 
     function test_over80_rejected() public {
-        Party party = _open(params(CreditKeys.Preset.Deposit));
-        uint256[] memory a = first(holders[0], 60);
-        uint256[] memory b = first(holders[1], 21);
-        uint256[] memory ids = new uint256[](81);
-        for (uint256 i; i < 60; ++i) ids[i] = a[i];
-        for (uint256 i; i < 21; ++i) ids[60 + i] = b[i];
-        _depExpect(party, holders[0], ids, _none(), bad("count"));
+        Party party = _open(params(CreditKeys.Preset.Deposit)); // 1
+        _dep(party, holders[0], first(holders[0], 59), _none()); // 60
+        _dep(party, holders[1], first(holders[1], 19), _none()); // 79
+        _depExpect(party, holders[2], first(holders[2], 2), _none(), bad("count")); // 81 > 80
     }
 
     function test_empty_rejected() public {
@@ -108,14 +105,20 @@ contract DepositTest is UnitBase {
     function test_duplicateInOneCall() public {
         Party party = _open(params(CreditKeys.Preset.Deposit));
         uint256[] memory a = first(holders[0], 2);
-        _depExpect(party, holders[0], c3(a[0], a[1], a[0]), _none(), bad("duplicate"));
+        // the factory pulls each id from the caller: the repeat is refused by Credits (the party owns it by then)
+        _depExpect(party, holders[0], c3(a[0], a[1], a[0]), _none(),
+            abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(factory), a[0]));
     }
 
     function test_alreadyInParty() public {
         Party party = _open(params(CreditKeys.Preset.Deposit));
         uint256[] memory a = first(holders[0], 2);
         _dep(party, holders[0], a, _none());
-        _depExpect(party, holders[0], one(a[0]), _none(), bad("duplicate"));
+        _depExpect(party, holders[0], one(a[0]), _none(),
+            abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(factory), a[0]));
+        vm.prank(address(factory)); // the party's own check, if a call ever reached it with a recorded id
+        vm.expectRevert(bad("duplicate"));
+        party.onDeposit(holders[0], one(a[0]), _none());
     }
 
     function test_notOwner() public {
@@ -123,7 +126,7 @@ contract DepositTest is UnitBase {
         uint256 theirs = first(holders[1], 1)[0];
         // holders[1] approved the party too, so the only thing stopping holders[0] is ownership
         vm.prank(holders[1]);
-        credits.setApprovalForAll(address(party), true);
+        credits.setApprovalForAll(address(factory), true);
         _depExpect(
             party,
             holders[0],
@@ -138,16 +141,16 @@ contract DepositTest is UnitBase {
         Party party = _open(params(CreditKeys.Preset.Deposit));
         uint256 id = first(holders[0], 1)[0];
         vm.prank(holders[0]);
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(party), id));
-        party.deposit(one(id), _none());
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(factory), id));
+        factory.deposit(party, one(id), _none());
     }
 
     function test_singleTokenApprovalWorks() public {
         Party party = _open(params(CreditKeys.Preset.Deposit));
         uint256 id = first(holders[0], 1)[0];
         vm.startPrank(holders[0]);
-        credits.approve(address(party), id);
-        party.deposit(one(id), _none());
+        credits.approve(address(factory), id); // a single-token approval of the factory is enough
+        factory.deposit(party, one(id), _none());
         vm.stopPrank();
         assertEq(party.count(), 2);
     }
@@ -180,8 +183,8 @@ contract DepositTest is UnitBase {
         vm.prank(holders[0]);
         credits.transferFrom(holders[0], address(ph), id);
         vm.startPrank(address(ph));
-        credits.setApprovalForAll(address(party), true);
-        party.deposit(one(id), _none());
+        credits.setApprovalForAll(address(factory), true);
+        factory.deposit(party, one(id), _none());
         vm.stopPrank();
         assertEq(cards.balanceOf(address(ph)), 1);
     }
@@ -236,7 +239,7 @@ contract DepositTest is UnitBase {
         // the host cannot even open with it: the opening deposit is checked against the same root
         address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         vm.expectRevert(bad("not eligible"));
         factory.createParty(p, one(ids[0]), proofs);
         vm.stopPrank();

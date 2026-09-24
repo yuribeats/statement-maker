@@ -373,7 +373,7 @@ contract FixesTest is FixesBase {
         uint256[] memory ids = first(holders[0], 1);
         address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         vm.expectRevert(bad("buyDelay"));
         factory.createParty(p, ids, new bytes32[][](0));
         vm.stopPrank();
@@ -499,7 +499,7 @@ contract FixesTest is FixesBase {
         uint256[] memory ids = first(holders[0], 1);
         address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         p.defaultPrice = _pct(0);
         vm.expectRevert(bad("minAsk"));
         factory.createParty(p, ids, new bytes32[][](0));
@@ -903,39 +903,54 @@ contract FixesSaleTest is FixesBase {
 
     // ================================================================== opening deposit
 
-    function test_opening_onlyFactory_once_hostOnly() public {
+    function test_onDeposit_onlyFactory() public {
         Party party = newParty(params(CreditKeys.Preset.Deposit));
         uint256[] memory ids = first(holders[0], 1);
         vm.prank(holders[0]);
-        vm.expectRevert(bad("opening"));
-        party.openDeposit(holders[0], ids, new bytes32[][](0));
-        vm.prank(address(factory));
-        vm.expectRevert(bad("opening")); // already opened
-        party.openDeposit(holders[0], ids, new bytes32[][](0));
+        vm.expectRevert(bad("factory only"));
+        party.onDeposit(holders[0], ids, new bytes32[][](0));
+        vm.prank(address(factory)); // even the factory cannot record a Credit the party did not receive
+        vm.expectRevert(bad("not received"));
+        party.onDeposit(holders[0], ids, new bytes32[][](0));
     }
 
-    function test_opening_depositBeforeOpeningRejected() public {
-        // a clone initialized by the factory but never opened (only possible outside createParty)
+    /// Only the factory can record a deposit; it moves Credits only from its own caller.
+    function test_onDeposit_factoryOnly_strayCannotBeClaimed() public {
+        Party party = newParty(params(CreditKeys.Preset.Deposit));
+        uint256 id = first(holders[1], 1)[0];
+        vm.prank(holders[1]);
+        credits.transferFrom(holders[1], address(party), id); // a stray Credit sent straight to the party
+        vm.prank(holders[1]);
+        vm.expectRevert(bad("factory only"));
+        party.onDeposit(holders[1], one(id), new bytes32[][](0));
+        vm.startPrank(holders[1]);
+        credits.setApprovalForAll(address(factory), true);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(factory), id));
+        factory.deposit(party, one(id), new bytes32[][](0)); // the factory pulls from the caller, who no longer owns it
+        vm.stopPrank();
+        assertEq(party.count(), 1);
+    }
+
+    function test_factoryDeposit_rejectsUnknownParty() public {
         Party raw = Party(payable(Clones.clone(address(factory.implementation()))));
-        vm.prank(address(factory));
-        raw.initialize(holders[0], params(CreditKeys.Preset.Deposit));
         uint256[] memory ids = first(holders[1], 1);
         vm.startPrank(holders[1]);
-        credits.setApprovalForAll(address(raw), true);
-        vm.expectRevert(bad("not opened"));
-        raw.deposit(ids, new bytes32[][](0));
+        credits.setApprovalForAll(address(factory), true);
+        vm.expectRevert(bytes("not a party"));
+        factory.deposit(raw, ids, new bytes32[][](0));
+        vm.expectRevert(bytes("not a party"));
+        factory.deposit(Party(payable(makeAddr("eoa"))), ids, new bytes32[][](0));
         vm.stopPrank();
-        vm.prank(address(factory));
-        vm.expectRevert(bad("opening")); // from != host
-        raw.openDeposit(holders[1], ids, new bytes32[][](0));
+        assertEq(credits.ownerOf(ids[0]), holders[1]);
     }
 
-    function test_opening_requiresApprovalOfPredictedAddress() public {
+    /// Approving the (predicted) party address, the old flow, no longer does anything: only the factory is approved.
+    function test_opening_requiresApprovalOfFactory() public {
         uint256[] memory ids = first(holders[0], 1);
-        address wrong = makeAddr("notTheParty");
+        address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(wrong, true);
-        vm.expectRevert(); // Credits refuses the transfer: the clone was never approved
+        credits.setApprovalForAll(predicted, true);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(factory), ids[0]));
         factory.createParty(params(CreditKeys.Preset.Deposit), ids, new bytes32[][](0));
         vm.stopPrank();
         assertEq(factory.partiesCount(), 0);
@@ -948,7 +963,7 @@ contract FixesSaleTest is FixesBase {
         uint256[] memory ids = first(holders[0], 4);
         address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         vm.expectRevert(bad("count"));
         factory.createParty(p, ids, new bytes32[][](0));
         vm.expectRevert(bad("count"));

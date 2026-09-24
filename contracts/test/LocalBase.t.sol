@@ -129,9 +129,9 @@ abstract contract LocalBase is Test {
         if (address(f) != address(factory)) _etchMutants(f);
         address predicted = f.predictParty(host);
         vm.startPrank(host);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(f), true); // the only approval: the factory, never a party
         party = f.createParty(p, ids, proofs);
-        credits.setApprovalForAll(predicted, false);
+        credits.setApprovalForAll(address(f), false);
         vm.stopPrank();
         require(address(party) == predicted, "harness: predicted address");
     }
@@ -142,9 +142,10 @@ abstract contract LocalBase is Test {
 
     function deposit(Party party, address who, uint256[] memory ids) internal {
         vm.startPrank(who);
-        credits.setApprovalForAll(address(party), true);
-        party.deposit(ids, new bytes32[][](0));
-        credits.setApprovalForAll(address(party), false);
+        PartyFactory f = PartyFactory(address(party.factory()));
+        credits.setApprovalForAll(address(f), true);
+        f.deposit(party, ids, new bytes32[][](0));
+        credits.setApprovalForAll(address(f), false);
         vm.stopPrank();
     }
 

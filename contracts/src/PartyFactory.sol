@@ -23,6 +23,7 @@ contract PartyFactory is EIP712 {
     bytes32 public constant FLOOR_TYPEHASH = keccak256("Floor(uint256 floorWei,uint8 mode,uint64 issuedAt)");
 
     address[] public parties;
+    mapping(address => bool) public isParty;
     mapping(address host => uint256) public nonces;
     event PartyCreated(address indexed party, address indexed host, uint256 index);
 
@@ -38,14 +39,28 @@ contract PartyFactory is EIP712 {
     }
 
     /// @notice Opens a party and makes the host's opening deposit in one transaction: at least the party's minimum,
-    ///         every Credit meeting its criteria. Approve `predictParty(msg.sender)` on Credits first.
+    ///         every Credit meeting its criteria. The only approval users ever give is setApprovalForAll(this factory)
+    ///         on Credits; the factory moves Credits only from its own caller, and only into one of its parties.
     function createParty(Party.Params calldata p, uint256[] calldata ids, bytes32[][] calldata proofs) external returns (Party party) {
         party = Party(payable(Clones.cloneDeterministic(address(implementation), _salt(msg.sender, nonces[msg.sender]++))));
+        isParty[address(party)] = true;
         cards.registerParty(address(party));
         party.initialize(msg.sender, p);
-        party.openDeposit(msg.sender, ids, proofs);
+        _deposit(party, ids, proofs);
         parties.push(address(party));
         emit PartyCreated(address(party), msg.sender, parties.length - 1);
+    }
+
+    /// @notice Deposit `ids` from the caller into `party` (one of this factory's parties): one Credit Card per Credit.
+    ///         Needs setApprovalForAll(this factory) on Credits.
+    function deposit(Party party, uint256[] calldata ids, bytes32[][] calldata proofs) external {
+        require(isParty[address(party)], "not a party");
+        _deposit(party, ids, proofs);
+    }
+
+    function _deposit(Party party, uint256[] calldata ids, bytes32[][] calldata proofs) internal {
+        for (uint256 i; i < ids.length; ++i) credits.transferFrom(msg.sender, address(party), ids[i]); // caller's own only
+        party.onDeposit(msg.sender, ids, proofs); // eligibility, slots, status, receipt; mints the cards
     }
 
     /// @notice Seconds per "hour" for party rule windows. Always 1 hour here; TestnetPartyFactory overrides it.
@@ -53,7 +68,7 @@ contract PartyFactory is EIP712 {
         return 1 hours;
     }
 
-    /// @notice The address `host`'s next party will have, so it can be approved on Credits before creation.
+    /// @notice The address `host`'s next party will have (informational; nothing is ever approved to a party).
     function predictParty(address host) external view returns (address) {
         return Clones.predictDeterministicAddress(address(implementation), _salt(host, nonces[host]), address(this));
     }

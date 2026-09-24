@@ -77,10 +77,10 @@ contract MutationKillsTest is UnitBase {
         Party party = newParty(params(CreditKeys.Preset.Deposit)); // card 1 -> holders[0]
         uint256 id = first(holders[1], 1)[0];
         vm.startPrank(holders[1]);
-        credits.setApprovalForAll(address(party), true);
+        credits.setApprovalForAll(address(factory), true);
         vm.expectEmit(address(party));
         emit Party.Deposited(holders[1], id, 2);
-        party.deposit(one(id), new bytes32[][](0));
+        factory.deposit(party, one(id), new bytes32[][](0));
         vm.expectEmit(address(party));
         emit Party.Redeemed(holders[1], id, 2);
         party.redeem(one(2));

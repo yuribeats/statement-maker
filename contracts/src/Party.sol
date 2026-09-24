@@ -107,7 +107,6 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint64 public fullAt;
     uint64 public assembledAt;
     uint64 public lastFloorAt; // floor readings may never go back in time
-    bool internal _opened; // the host's opening deposit has been made
     /// @notice Seconds per "hour" for every rule window (buy delay, votes, lapse, deadlock, deadline). 3600 on mainnet;
     ///         a testnet factory may set it lower so a full party can be rehearsed in minutes. Floor-signature age is
     ///         always real time.
@@ -210,21 +209,11 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
     // ------------------------------------------------------------------ deposits
 
-    /// @notice The host's opening deposit, made by the factory in the same transaction that creates the party.
-    ///         The host must have approved this (predicted) party address on Credits beforehand.
-    function openDeposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
-        if (msg.sender != address(factory) || _opened || from != host) revert Bad("opening");
-        _opened = true;
-        _deposit(from, ids, proofs);
-    }
-
-    /// @notice Pull `ids` from the caller (needs setApprovalForAll on Credits for this party) and mint one card each.
-    function deposit(uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
-        if (!_opened) revert Bad("not opened");
-        _deposit(msg.sender, ids, proofs);
-    }
-
-    function _deposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) internal {
+    /// @notice Records a deposit the factory has just moved here: `from` (the factory's caller) sent `ids` to this party
+    ///         through PartyFactory.createParty (the host's opening deposit) or PartyFactory.deposit. Users approve only
+    ///         the factory on Credits, never a party. Mints one card per Credit to `from`.
+    function onDeposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
+        if (msg.sender != address(factory)) revert Bad("factory only");
         if (status() != Status.OPEN) revert Bad("not open");
         uint256 remaining = SLOTS - _order.length;
         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
@@ -237,8 +226,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
                 bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(id))));
                 if (!MerkleProof.verifyCalldata(proofs[i], _params.eligibleRoot, leaf)) revert Bad("not eligible");
             }
-            credits.transferFrom(from, address(this), id); // reverts unless `from` owns it and approved us
-            if (credits.ownerOf(id) != address(this)) revert Bad("not received");
+            if (credits.ownerOf(id) != address(this)) revert Bad("not received"); // the factory moved it from `from`
             uint256 card = cards.mint(from);
             cardOfCredit[id] = card;
             creditOfCard[card] = id;

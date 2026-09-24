@@ -72,7 +72,7 @@ contract FactoryTest is UnitBase {
         address host = holders[0];
         address predicted = factory.predictParty(host);
         vm.prank(host);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         uint256[] memory ids = first(host, 1); // before the prank: first() makes an external call
         Party.Params memory ps = params(CreditKeys.Preset.Deposit);
         vm.expectEmit(address(cards));
@@ -82,7 +82,7 @@ contract FactoryTest is UnitBase {
         vm.prank(host);
         Party p = factory.createParty(ps, ids, new bytes32[][](0));
         vm.prank(host);
-        credits.setApprovalForAll(predicted, false);
+        credits.setApprovalForAll(address(factory), false);
         assertEq(address(p), predicted, "deterministic clone at the predicted address");
         assertEq(p.host(), host);
         assertEq(factory.nonces(host), 1);
@@ -105,10 +105,10 @@ contract FactoryTest is UnitBase {
         uint256[] memory ids = first(holders[0], n > own ? own : n);
         address predicted = factory.predictParty(holders[0]);
         vm.startPrank(holders[0]);
-        credits.setApprovalForAll(predicted, true);
+        credits.setApprovalForAll(address(factory), true);
         vm.expectRevert(bad(why));
         factory.createParty(p, ids, new bytes32[][](0));
-        credits.setApprovalForAll(predicted, false);
+        credits.setApprovalForAll(address(factory), false);
         vm.stopPrank();
     }
 
