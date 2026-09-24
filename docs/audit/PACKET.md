@@ -246,7 +246,7 @@ Status keys: **FIXED** (commit), **IN PROGRESS** (work started, not landed), **O
 | Audit 3 #3 | external review 3 | Burn check accepted a Statement that kept/moved the Credits | FIXED `7a9766e` (`0x7e273289` check, `Party.sol:317-322`) |
 | Audit 3 #4 | external review 3 | StatementMarket stale listing revival | FIXED `7a9766e` (expiry + `cancelAll`), `7c33264` (cancel when `ownerOf` reverts). Residual revival within expiry: ACCEPTED (documented) |
 | Royalty | owner decision | Creator royalty (ERC-2981) leg in Party and StatementMarket | Removed `f06b3c5` (cap lowered `8a98007` before). All royalty findings MOOT. |
-| **H1** | Pashov solidity-auditor, `contracts/.solidity-auditor/runs/20260924-135350/full-report.md` #1 [90] | `countBlocked` fast path: a coalition's own NO counts and 41 (not the real threshold) qualifies; with 1 h windows, 60 cards can reach deadlock and sell below floor/for the minimum within about 2 h of the burn | **OPEN, fix PENDING USER DECISION.** Proposed fix: drop the "3 blocked proposals" trigger, keep only the 30-day clock. Not in the tree. |
+| **H1** | Pashov solidity-auditor, `contracts/.solidity-auditor/runs/20260924-135350/full-report.md` #1 [90] | `countBlocked` fast path: a coalition's own NO counts and 41 (not the real threshold) qualifies; with 1 h windows, 60 cards can reach deadlock and sell below floor/for the minimum within about 2 h of the burn | **OPEN, fix ACCEPTED (user decision 2026-09-24).** The existing trigger stays: after 3 blocked price proposals or 30 days, 54 YES passes and NO is ignored (60 below floor). Consequence accepted: a holder group with 54+ cards (60 for below-floor) can self-block with its own NO and reach the override quickly. |
 | **H2** | Pashov #2 [85] (THREAT_MODEL R-7) | Assemble supersedes a passed-but-unexecuted FULL-phase price: one card holder burns first, the host default goes live (`priceEpoch++`, `:307`), and with a 0 h wait buys at once | OPEN; fix reported in progress by other agents, **not in the working tree** at `165a33e` + WT |
 | **M3** | Pashov #3 [80] | `_resolveWith` reverts on `r ≤ 0` before `_clampMin` (`:576`), so a floor ≤ a negative FloorDelta (or FloorPct rounding to 0) blocks assemble/execute/raiseAsk; `test_minAsk_nonPositiveResolveStillReverts` (Fixes.t.sol:596) documents current behavior | OPEN; fix in progress, not landed |
 | **L4** | Pashov #4 [60] | Proposal in the block that fills slot 80 snapshots `block.number − 1`, so the last depositors have no weight (cannot veto) on it | OPEN; fix in progress, not landed |
@@ -304,7 +304,7 @@ Status keys: **FIXED** (commit), **IN PROGRESS** (work started, not landed), **O
 1. **House-party contracts** (hostless creation, auction, launch lock): not implemented; SPEC §4d design only; D-2…D-8,
    D-10 open. Until built, launch mode exists only in the preview.
 2. **D-1** reserve never met: ACCEPTED (auction waits indefinitely for the first bid).
-3. **Deadlock trigger change** (H1 fix: remove the 3-blocked-proposals trigger, keep 30 days): PENDING USER DECISION.
+3. **Deadlock trigger** (H1): ACCEPTED as designed by the user; no change.
 4. **H2, M3, L4**: fixes in progress, not landed.
 5. **Burn gas vs EIP-7825 cap (16,777,216):** cold fork measurements Deposit 7.37M, Time 7.61M, Rarity ≈ 12.78M, all
    excluding the real Statement `make`, whose cost is **unknown**. Rarity leaves ≈ 4M for `make`. The trait-table
