@@ -1124,7 +1124,8 @@ async function statementPNG(p) {
 // Every listing looks the same whatever its source; only a small label differs.
 const SOURCE = { party: 'Party sale', holder: 'Holder listing', opensea: 'Listing', auction: 'Auction' };
 // A running auction, in one line: the high bid (or the opening bid before any bid) and its clock.
-const auctionLine = a => `${a.high || a.bid ? 'high bid' : 'opening bid'} · ${a.ended ? 'ended, ready to settle' : a.endsAt != null ? 'ends in ' + hrs(a.endsAt - Date.now()) : 'no timer until the first bid'}`;
+const auctionClock = a => (a.ended ? 'ended, ready to settle' : a.endsAt != null ? 'ends in ' + hrs(a.endsAt - Date.now()) : 'no timer until the first bid');
+const auctionLine = a => `${a.high || a.bid ? 'high bid' : 'opening bid'} · ${auctionClock(a)}`;
 const minuteHref = id => '#/minute/' + String(id).replace(/^minute-/, '');
 function listingCard(it, byId) {
   const p = byId[it.id];
@@ -1188,7 +1189,7 @@ async function pageStatement(id) {
    </div>
    ${!p.sold && p.auction && !p.auction.settled ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Auction</h2><strong class="big">${ethx(p.auction.high ? p.auction.high.eth : p.auction.reserveEth)}</strong></div>
-     <p class="muted">${p.auction.high ? `High bid by ${userLink(p.auction.high.bidder)} · ${Number(p.auction.bids.length)} bid${p.auction.bids.length === 1 ? '' : 's'}` : 'Opening bid · no bids yet'} · ${esc(auctionLine(p.auction))}.</p>
+     <p class="muted">${p.auction.high ? `High bid by ${userLink(p.auction.high.bidder)} · ${Number(p.auction.bids.length)} bid${p.auction.bids.length === 1 ? '' : 's'}` : 'Opening bid · no bids yet'} · ${esc(auctionClock(p.auction))}.</p>
      <a class="cta" href="${p.house ? esc(minuteHref(p.id)) : '#/party/' + esc(p.id)}" style="margin:0">${p.auction.ended ? 'Settle' : 'Bid'} on the ${p.house ? 'Minute' : 'party'} page →</a></div>` : ''}
    ${p.sold && p.resale ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy · holder listing</h2><strong class="big">${eth(p.resale.priceEth)}</strong></div>
