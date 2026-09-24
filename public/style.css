@@ -292,7 +292,7 @@ body.bare main{padding:0;max-width:none}
  .mcell .o,.mcell .s{display:none}
  .detail{grid-template-columns:72px 1fr}.detail img{width:72px;height:72px}
 }
-.burn-gas{text-transform:none;font-size:12px;line-height:1.5;margin:10px 0}
+.burn-gas{display:block;text-transform:none;font-size:12px;line-height:1.5;margin:10px 0}
 .rows strong .burn-gas{margin:0;text-align:left}
 .cards-box summary{display:flex;justify-content:space-between;align-items:baseline;gap:16px;cursor:pointer;list-style:none;flex-wrap:wrap}
 .cards-box summary::-webkit-details-marker{display:none}
