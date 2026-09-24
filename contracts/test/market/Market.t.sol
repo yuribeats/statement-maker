@@ -14,14 +14,7 @@ contract Stmt is ERC721 {
     function burn(uint256 id) external { _burn(id); }
     function setRoyalty(address to, uint256 bps) external { royaltyTo = to; royaltyBps = bps; }
     function setRaw(bytes calldata b) external { rawRoyalty = b; }
-    uint256 public burnReads; // cold SLOADs royaltyInfo makes first (~2.2k gas each), standing in for a delegating lookup
-    function setBurn(uint256 n) external { burnReads = n; }
     function royaltyInfo(uint256, uint256 price) external view returns (address, uint256) {
-        uint256 x;
-        for (uint256 i; i < burnReads; ++i) {
-            assembly { x := add(x, sload(add(i, 0x1000))) } // used below, so the optimizer keeps the reads
-        }
-        if (x == type(uint256).max) revert();
         bytes memory r = rawRoyalty;
         if (r.length > 0) assembly { return(add(r, 32), mload(r)) }
         return (royaltyTo, price * royaltyBps / 10_000);
@@ -131,20 +124,14 @@ contract MarketTest is Test {
         assertEq(m.owed(address(r)), 0.99 ether);
     }
 
-    function test_royaltyCappedAt1pct_andMalformedIgnored() public {
+    /// A declared ERC-2981 royalty (even 50%) is not paid: seller gets price minus the 1% fee.
+    function test_declaredRoyaltyIgnored() public {
         st.setRoyalty(makeAddr("artist"), 5000);
         _list(1 ether);
         vm.prank(buyer);
         m.buy{value: 1 ether}(1, 1 ether);
-        assertEq(m.owed(makeAddr("artist")), 0.01 ether, "50% asked, capped at 1%");
-        // malformed 32-byte royaltyInfo answer: sale still works, no royalty
-        st.mint(seller, 3);
-        st.setRaw(abi.encode(uint256(1)));
-        vm.prank(seller);
-        m.list(3, 1 ether);
-        vm.prank(buyer);
-        m.buy{value: 1 ether}(3, 1 ether);
-        assertEq(st.ownerOf(3), buyer);
+        assertEq(m.owed(makeAddr("artist")), 0);
+        assertEq(seller.balance, 0.99 ether);
     }
 
     function test_reentrantBuyerCannotDoubleSpend() public {
@@ -170,12 +157,14 @@ contract MarketTest is Test {
 
     function testFuzz_splitAlwaysSums(uint96 price, uint16 bps) public {
         vm.assume(price > 0 && price < 1e27);
-        st.setRoyalty(makeAddr("artist"), bps % 10_001);
+        st.setRoyalty(makeAddr("artist"), bps % 10_001); // declared, never paid
         _list(price);
         vm.deal(buyer, uint256(price) + 1);
         vm.prank(buyer);
         m.buy{value: price}(1, price);
-        assertEq(seller.balance + m.owed(fee) + m.owed(makeAddr("artist")), price);
+        assertEq(m.owed(makeAddr("artist")), 0);
+        assertEq(m.owed(fee), uint256(price) / 100);
+        assertEq(seller.balance + m.owed(fee), price);
     }
 
     // ------------------------------------------------------------------ stale listings (audit 3, finding 4)
@@ -235,26 +224,6 @@ contract MarketTest is Test {
         vm.prank(seller);
         m.listFor(1, 1 ether, 180 days);
         assertTrue(m.isLive(1));
-    }
-
-    /// A royaltyInfo that delegates (~100k gas) is honoured; the 1% cap still applies.
-    function test_royalty_delegatingImplementationPaid() public {
-        st.setRoyalty(makeAddr("artist"), 50);
-        st.setBurn(45);
-        _list(2 ether);
-        vm.prank(buyer);
-        m.buy{value: 2 ether}(1, 2 ether);
-        assertEq(m.owed(makeAddr("artist")), 0.01 ether);
-    }
-
-    function test_royalty_tooHungryIgnored() public {
-        st.setRoyalty(makeAddr("artist"), 500);
-        st.setBurn(150); // ~330k gas: over the stipend, counted as no royalty, sale still completes
-        _list(2 ether);
-        vm.prank(buyer);
-        m.buy{value: 2 ether}(1, 2 ether);
-        assertEq(m.owed(makeAddr("artist")), 0);
-        assertEq(st.ownerOf(1), buyer);
     }
 
     /// A listing on a burned token (ownerOf reverts) can be cleared by anyone, not only the seller.

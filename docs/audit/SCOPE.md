@@ -32,7 +32,7 @@ ce2ff1dc71441941240cdf58b60f3804466fb280d742c8293d3565ee7ce8b686  contracts/src/
 | `contracts/src/PartyFactory.sol` | 59 | 45 | Deploys party clones, owns the shared card collection, verifies EIP-712 floor signatures. No admin. |
 | `contracts/src/CreditCards.sol` | 120 | 96 | Shared ERC-721 for all parties. Per-party vote checkpoints. On-chain SVG/JSON metadata. |
 | `contracts/src/CreditKeys.sol` | 143 | 121 | Library: arrangement presets, sort keys from on-chain Credits data, rarity table, seeded shuffle. |
-| `contracts/src/interfaces/IExternal.sol` | 45 | 34 | Interfaces for Credits, CreditArt, the unpublished Statement contract, ERC-2981. |
+| `contracts/src/interfaces/IExternal.sol` | 45 | 34 | Interfaces for Credits, CreditArt, the unpublished Statement contract. |
 | **Total** | **931** | **752** | |
 
 ## 3. Out of scope
@@ -121,7 +121,7 @@ Behavior assumed by `Party.assemble` / `Party.buy`:
 3. The order of `creditIds` is meaningful to the artwork. Unverified: order semantics are unknown.
 4. Contract callers are allowed. If the real contract rejects contract callers (`tx.origin` checks, EOA-only, a signature from the owner), no party can assemble. Parties then expire and every Credit is redeemable (SPEC §2).
 5. The Statement is a standard ERC-721 that `transferFrom(party, buyer, id)` can move with no restrictions. If transfers are restricted, `buy` reverts and the Statement stays in the party forever, because no other exit exists.
-6. Optional `royaltyInfo(tokenId, price)` (ERC-2981) on the Statement contract. It is called by raw `staticcall` with a 150,000-gas stipend (room for a delegating implementation); a revert, a short or dirty answer, or running out of that gas counts as no royalty. The result is capped at 1%.
+6. `royaltyInfo` is not used: no creator royalty is paid, whatever the Statement contract declares.
 7. `make` does not re-enter the party. Every state-changing entry point except `propose`/`vote`/`countBlocked`/`raiseAsk`/`transferHost` shares one transient reentrancy lock.
 
 `MockStatement` implements exactly 1, 2, 5, and 6. Its `make` requires `ids.length == 80`.

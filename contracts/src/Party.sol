@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import {ICredits, ICreditArt, IStatement, IERC2981Like} from "./interfaces/IExternal.sol";
+import {ICredits, ICreditArt, IStatement} from "./interfaces/IExternal.sol";
 import {CreditKeys} from "./CreditKeys.sol";
 import {CreditCards} from "./CreditCards.sol";
 
@@ -37,8 +37,8 @@ interface IFactory {
 ///    1/24/48/72/168 hours; passed proposals must be executed within 7 days; executing one supersedes the rest.
 ///  - The Statement leaves only through buy(), at the current ask, once that price's wait has passed (voted with
 ///    the price; the host sets the default, 0..72 hours). No offers, auctions or other transfer path exist.
-///  - Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 1%), 1% fee, and the rest
-///    in 80 equal shares; rounding dust goes to the fee recipient. Fee and royalty are pull payments.
+///  - Sale split: 1% fee, and the rest in 80 equal shares; rounding dust goes to the fee recipient (pull payment).
+///    No creator royalty is paid (the Sold event keeps its royalty field for indexers; it is always 0).
 contract Party is Initializable, ReentrancyGuardTransient {
     using CreditKeys for CreditKeys.Preset;
 
@@ -54,8 +54,6 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint256 public constant MANUAL_GRACE = 1 days; // a Manual host's time to burn after FULL; then anyone, Time order
     /// @notice A signed floor reading is accepted for 10 minutes (real time), and never one older than the last used here.
     uint256 public constant FLOOR_MAX_AGE = 10 minutes;
-    uint256 public constant ROYALTY_CAP_BPS = 100; // 1%
-    uint256 public constant ROYALTY_GAS = 150_000;
     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
 
     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
@@ -132,7 +130,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     bool public sold;
     uint256 public perCard;
     uint256 public cardsOutstanding; // cards not yet redeemed or claimed
-    mapping(address => uint256) public owed; // pull payments: fee, royalty, dust
+    mapping(address => uint256) public owed; // pull payments: fee + dust, and holders that could not receive ETH
 
     // governance
     Proposal[] internal _proposals;
@@ -481,16 +479,14 @@ contract Party is Initializable, ReentrancyGuardTransient {
         uint256 price = ask;
         if (price > maxPrice || msg.value < price) revert Bad("price");
 
-        (address royaltyTo, uint256 royalty) = _royalty(price);
         uint256 fee = price * factory.FEE_BPS() / 10_000;
-        uint256 pot = price - royalty - fee;
+        uint256 pot = price - fee;
         uint256 share = pot / SLOTS;
         uint256 dust = pot - share * SLOTS;
 
         sold = true;
         perCard = share;
         ask = 0;
-        if (royalty > 0) owed[royaltyTo] += royalty;
         owed[factory.feeRecipient()] += fee + dust;
 
         factory.statement().transferFrom(address(this), msg.sender, statementId);
@@ -498,7 +494,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
             (bool ok,) = msg.sender.call{value: msg.value - price}("");
             if (!ok) revert Bad("refund");
         }
-        emit Sold(msg.sender, price, royalty, fee, share);
+        emit Sold(msg.sender, price, 0, fee, share); // royalty field kept for indexers, always 0
     }
 
     /// @notice The holder of each card claims 1/80 of the net sale; the card is burned.
@@ -535,7 +531,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         }
     }
 
-    /// @notice Pull payment for the fee recipient, royalty receiver, rounding dust, and holders that could not receive ETH.
+    /// @notice Pull payment for the fee recipient (fee + rounding dust) and holders that could not receive ETH.
     function withdraw() external nonReentrant {
         uint256 amt = owed[msg.sender];
         if (amt == 0) revert Bad("nothing");
@@ -601,18 +597,6 @@ contract Party is Initializable, ReentrancyGuardTransient {
         return h == 1 || h == 24 || h == 48 || h == 72 || h == 168;
     }
 
-    /// @dev Raw staticcall: a reverting, gas-hungry or malformed royaltyInfo never blocks a sale. The 150k-gas stipend
-    ///      leaves room for an implementation that delegates (proxy, royalty registry or splitter lookup); an answer
-    ///      that needs more is treated as no royalty. A buyer cannot starve the call on purpose: with less than the
-    ///      stipend left, the 1/64 kept back is far too little to finish buy().
-    function _royalty(uint256 price) internal view returns (address to, uint256 amt) {
-        (bool ok, bytes memory r) = address(factory.statement()).staticcall{gas: ROYALTY_GAS}(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", statementId, price));
-        if (!ok || r.length < 64) return (address(0), 0);
-        (uint256 a, uint256 v) = abi.decode(r, (uint256, uint256));
-        if (a == 0 || a >> 160 != 0) return (address(0), 0);
-        uint256 cap = price * ROYALTY_CAP_BPS / 10_000;
-        return (address(uint160(a)), v > cap ? cap : v);
-    }
 
     receive() external payable {
         revert Bad("no direct ETH");

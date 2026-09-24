@@ -19,16 +19,15 @@ interface IERC721Min {
 ///         30 days, at most 180), and cancelAll() voids every listing the caller has ever made (per-seller counter).
 ///         Re-acquiring a token revives its listing only within that listing's own expiry and only if the seller has
 ///         not called cancelAll() since; re-list after re-acquiring (list overwrites the old price).
-///         Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 1%), 1% fee, the rest to
+///         Sale split: 1% fee, the rest to
 ///         the seller. The seller is paid directly; if that transfer fails the amount is held for withdrawal, so a
-///         seller cannot block their own sale path. Fee and royalty are always pull payments.
+///         seller cannot block their own sale path. The fee is a pull payment. No creator royalty is paid (the Sold
+///         event keeps its royalty field for indexers; it is always 0).
 ///         No owner, no admin, no upgrade path.
 contract StatementMarket is ReentrancyGuardTransient {
     IERC721Min public immutable statement;
     address public immutable feeRecipient;
     uint256 public constant FEE_BPS = 100;
-    uint256 public constant ROYALTY_CAP_BPS = 100; // 1%
-    uint256 public constant ROYALTY_GAS = 150_000;
     uint256 public constant DEFAULT_DURATION = 30 days;
     uint256 public constant MAX_DURATION = 180 days;
 
@@ -112,12 +111,10 @@ contract StatementMarket is ReentrancyGuardTransient {
         if (price > maxPrice || msg.value < price) revert Bad("price");
         if (msg.sender == l.seller) revert Bad("own listing");
 
-        (address royaltyTo, uint256 royalty) = _royalty(tokenId, price);
         uint256 fee = price * FEE_BPS / 10_000;
-        uint256 toSeller = price - royalty - fee;
+        uint256 toSeller = price - fee;
 
         delete listings[tokenId];
-        if (royalty > 0) owed[royaltyTo] += royalty;
         owed[feeRecipient] += fee;
 
         statement.safeTransferFrom(l.seller, msg.sender, tokenId);
@@ -127,7 +124,7 @@ contract StatementMarket is ReentrancyGuardTransient {
             (bool r,) = msg.sender.call{value: msg.value - price}("");
             if (!r) revert Bad("refund");
         }
-        emit Sold(tokenId, l.seller, msg.sender, price, royalty, fee);
+        emit Sold(tokenId, l.seller, msg.sender, price, 0, fee); // royalty field kept for indexers, always 0
     }
 
     function withdraw() external nonReentrant {
@@ -143,17 +140,6 @@ contract StatementMarket is ReentrancyGuardTransient {
         return statement.isApprovedForAll(owner, address(this)) || statement.getApproved(tokenId) == address(this);
     }
 
-    /// @dev Raw staticcall so a malformed or reverting royaltyInfo never blocks a sale (see audit finding T-5/F4). The
-    ///      150k-gas stipend leaves room for a royaltyInfo that delegates (proxy, registry, splitter); an answer needing
-    ///      more counts as no royalty. A buyer cannot starve it on purpose: the 1/64 kept back could not finish buy().
-    function _royalty(uint256 tokenId, uint256 price) internal view returns (address to, uint256 amt) {
-        (bool ok, bytes memory r) = address(statement).staticcall{gas: ROYALTY_GAS}(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", tokenId, price));
-        if (!ok || r.length < 64) return (address(0), 0);
-        (uint256 a, uint256 v) = abi.decode(r, (uint256, uint256));
-        if (a == 0 || a >> 160 != 0) return (address(0), 0);
-        uint256 cap = price * ROYALTY_CAP_BPS / 10_000;
-        return (address(uint160(a)), v > cap ? cap : v);
-    }
 
     receive() external payable {
         revert Bad("no direct ETH");

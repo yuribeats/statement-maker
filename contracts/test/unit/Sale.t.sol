@@ -100,18 +100,16 @@ contract SaleTest is UnitBase {
 
     // ------------------------------------------------------------------ split
 
-    function _checkSplit(Party p, uint256 price, uint256 royaltyBps, address royaltyTo) internal {
-        uint256 cap = price * 100 / 10_000; // ROYALTY_CAP_BPS = 1%
-        uint256 royalty = price * royaltyBps / 10_000;
-        if (royaltyTo == address(0)) royalty = 0;
-        if (royalty > cap) royalty = cap;
+    /// No creator royalty: the split is 1% fee (+ dust) and 80 equal shares, whatever the Statement declares.
+    function _checkSplit(Party p, uint256 price, uint256, address royaltyTo) internal {
+        uint256 royalty = 0;
         uint256 fee = price * 100 / 10_000;
         uint256 pot = price - royalty - fee;
         uint256 share = pot / 80;
         uint256 dust = pot - share * 80;
         assertEq(p.perCard(), share, "perCard");
         assertEq(p.owed(feeTo), fee + dust, "fee + dust");
-        if (royaltyTo != address(0)) assertEq(p.owed(royaltyTo), royalty, "royalty");
+        if (royaltyTo != address(0) && royaltyTo != feeTo) assertEq(p.owed(royaltyTo), 0, "no royalty paid");
         assertEq(royalty + fee + dust + share * 80, price, "conservation");
         assertEq(address(p).balance, price, "held");
     }
@@ -135,23 +133,14 @@ contract SaleTest is UnitBase {
         p.assemble(dep, noFloor());
     }
 
-    function test_split_royaltyHalfPct_underCap() public {
+    /// The Statement contract declares a 5% ERC-2981 royalty; nothing is paid to it.
+    function test_split_declaredRoyaltyIgnored() public {
         address artist = makeAddr("artist");
-        statement.setRoyalty(artist, 50);
+        statement.setRoyalty(artist, 500);
         _open();
         _buy(3 ether, 3 ether);
-        _checkSplit(party, 3 ether, 50, artist);
-        assertEq(party.owed(artist), 0.015 ether);
-        assertEq(party.perCard(), 0.0369375 ether); // (3 - 0.015 - 0.03) / 80
-    }
-
-    function test_split_royaltyCappedAt1pct() public {
-        address artist = makeAddr("artist");
-        statement.setRoyalty(artist, 500); // 5% asked
-        _open();
-        _buy(3 ether, 3 ether);
-        assertEq(party.owed(artist), 0.03 ether, "capped at 1%");
-        assertEq(party.perCard(), 0.03675 ether, "spec example: 0.03 artist, 0.03 platform, 2.94 to holders");
+        assertEq(party.owed(artist), 0);
+        assertEq(party.perCard(), 0.037125 ether, "spec example: 0.03 platform, 2.97 to holders");
         _checkSplit(party, 3 ether, 500, artist);
     }
 
@@ -161,23 +150,6 @@ contract SaleTest is UnitBase {
         _buy(3 ether, 3 ether);
         assertEq(party.owed(address(0)), 0);
         _checkSplit(party, 3 ether, 0, address(0));
-    }
-
-    function test_royaltyReceiverReverts_doesNotBlockBuy() public {
-        EthRejecter r = new EthRejecter();
-        statement.setRoyalty(address(r), 500);
-        _open();
-        _buy(3 ether, 3 ether);
-        assertEq(party.owed(address(r)), 0.03 ether);
-        vm.prank(address(r));
-        vm.expectRevert(bad("send"));
-        party.withdraw();
-        assertEq(party.owed(address(r)), 0.03 ether, "still owed");
-        // holders unaffected
-        uint256[] memory mine = cardsOf(party, holders[1]);
-        vm.prank(holders[1]);
-        party.claim(mine);
-        assertEq(holders[1].balance, party.perCard() * 20);
     }
 
     // ------------------------------------------------------------------ claim / withdraw
@@ -258,7 +230,8 @@ contract SaleTest is UnitBase {
         assertEq(party.cardsOutstanding(), 0);
         vm.prank(feeTo);
         party.withdraw();
-        vm.prank(artist);
+        vm.prank(artist); // a declared royalty receiver is owed nothing
+        vm.expectRevert(bad("nothing"));
         party.withdraw();
         assertEq(address(party).balance, 0, "nothing stuck");
         assertEq(holders[0].balance, party.perCard() * 60);

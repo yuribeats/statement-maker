@@ -39,7 +39,3 @@ interface IStatement {
     function ownerOf(uint256 id) external view returns (address);
     function transferFrom(address from, address to, uint256 id) external;
 }
-
-interface IERC2981Like {
-    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address receiver, uint256 amount);
-}

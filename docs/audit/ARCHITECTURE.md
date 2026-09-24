@@ -61,7 +61,7 @@ else                              -> OPEN
 | FULL | EXPIRED | Time: `block.timestamp > deadline` before assembly | Passive |
 | ASSEMBLED | SOLD | `buy(maxPrice)` with `ask > 0`, `now ≥ askLiveAt + 24h`, `msg.value ≥ ask ≤ maxPrice` | Anyone |
 | EXPIRED | (terminal) | `redeem` (holder) / `redeemFor` (anyone, pays the holder) until every Credit is back | Card holders / anyone |
-| SOLD | (terminal) | `claim(cardIds)` burns cards and pays `perCard`. `withdraw()` pays fee, royalty, and dust. | Card holder / owed address |
+| SOLD | (terminal) | `claim(cardIds)` burns cards and pays `perCard`. `withdraw()` pays fee and dust (and holders a `claimFor` push could not reach). | Card holder / owed address |
 
 Notes:
 - FULL cannot go back to OPEN, because redemption is locked in FULL.
@@ -73,23 +73,21 @@ Notes:
 
 ```
 price = ask (buyer pays msg.value ≥ price; excess refunded by call at the end)
-royalty = min(royaltyInfo(statementId, price).amount, price × 1%)   if the Statement contract answers within 150k gas (ROYALTY_GAS) and receiver ≠ 0
 fee     = price × FEE_BPS / 10_000                                   (FEE_BPS = 100 → 1%)
-pot     = price − royalty − fee
+pot     = price − fee
 perCard = pot / 80
 dust    = pot − perCard × 80                                         (< 80 wei)
 
-owed[royaltyReceiver] += royalty           (pull, withdraw())
 owed[feeRecipient]    += fee + dust        (pull, withdraw())
 each of the 80 cards  -> perCard           (pull, claim(), card burned)
 Statement: party -> buyer via transferFrom (no receiver callback)
 ```
 
-Conservation: `royalty + fee + dust + 80 × perCard == price`. Party ETH balance after the sale equals `price`, which is paid out entirely through `withdraw` and `claim`. The SPEC example is 3 ETH with a 5% royalty: 0.15 royalty, 0.03 fee, 2.82 pot, 0.03525 per card.
+Conservation: `fee + dust + 80 × perCard == price`. No creator royalty is paid; `royaltyInfo` is never called and `Sold.royalty` is always 0. Party ETH balance after the sale equals `price`, which is paid out entirely through `withdraw` and `claim`. The SPEC example is 3 ETH: 0.03 fee, 2.97 pot, 0.037125 per card.
 
 `receive()` reverts, so the only ETH that enters is `buy`'s `msg.value` (plus forced ETH, which no accounting reads).
 
-Differences from SPEC §4b: the royalty is read only from the Statement contract's ERC-2981. There is no Royalty Registry fallback, and the cap is 1% (`ROYALTY_CAP_BPS = 100`), not "e.g. 25%".
+Royalty: none. The contracts pay no creator royalty (removed; the SPEC says the same).
 
 ## 6. Price governance
 
@@ -174,8 +172,8 @@ Trust: the signer is fully trusted for floor values. See THREAT_MODEL.md §3 for
 | Deadlock "of a kind"; "30 days since FULL/assembly" | One counter for LIST only, never reset. Clock runs from FULL or the last execution; assembly does not reset it. |
 | "Executing supersedes every other pending proposal of the same kind" | Supersedes all proposals of both kinds, and assembly supersedes too |
 | "Any party member" can execute / assemble | Must hold ≥ 1 card **now** (`heldNow`). Depositors who moved their cards cannot. |
-| Royalty: ERC-2981, then Royalty Registry; cap e.g. 25% | ERC-2981 on the Statement contract only; cap 1% |
-| `claimFor(holder)`: push, anyone calls | `claim` by the holder only. The fee recipient and royalty receiver withdraw. |
+| Royalty: ERC-2981, then Royalty Registry | No royalty paid (removed) |
+| `claimFor(holder)`: push, anyone calls | `claim` by the holder only. The fee recipient withdraws. |
 | Rarity from OpenSea OpenRarity | On-chain table from sealed-supply trait frequencies |
 | openParty by "any Credit holder" | Anyone |
 
@@ -207,7 +205,7 @@ Trust: the signer is fully trusted for floor values. See THREAT_MODEL.md §3 for
 | `raiseAsk(floor)` | anyone | ASSEMBLED, `ask > 0`, floor-relative `askSpec`, new ask strictly higher | **no** |
 | `buy(maxPrice)` | anyone | ASSEMBLED, `ask > 0`, `now ≥ askLiveAt + 24h`, `ask ≤ maxPrice`, `msg.value ≥ ask` | yes |
 | `claim(cardIds)` | holder of each card | SOLD | yes |
-| `withdraw()` | any address with `owed > 0` (fee recipient, royalty receiver) | any | yes |
+| `withdraw()` | any address with `owed > 0` (fee recipient; holders a `claimFor` push could not pay) | any | yes |
 | `transferHost(to)` | `host` | `to ≠ 0`, any state | no |
 | `receive()` | always reverts | | |
 | views: `status`, `params`, `depositOrder`, `burnOrder`, `count`, `proposalCount`, `proposal`, `needFor`, `cardView`, public getters | anyone | | |

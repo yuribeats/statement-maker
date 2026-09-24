@@ -27,7 +27,7 @@ Subject: Audit request: Statement Maker (≈750 nSLOC Solidity, Ethereum mainnet
 > We're requesting a quote for a private security review of Statement Maker, a small set of contracts that pools holders' Credits (Jack Butcher's sealed ERC-721 at 0x97630aa70ab14ed9883b41dafccbc11349723043), burns 80 of them into one Statement through the artist's Statement contract, sells it at a price the pool voted for, and pays out 1/80 per Credit.
 >
 > - Scope: 5 files, 931 lines / about 752 code lines. Party.sol (456), CreditKeys.sol (121), CreditCards.sol (96), PartyFactory.sol (45), IExternal.sol (34). Solidity 0.8.28, via-IR, Cancun, OpenZeppelin 5.4.0. No proxies beyond EIP-1167 clones, and no admin keys.
-> - Main areas: custody of pooled ERC-721s, snapshot voting with a zero-NO veto and deadlock escape, on-chain verification of 10 sort presets, an EIP-712 floor oracle, and ETH sale splitting (royalty, 1% fee, 80 shares).
+> - Main areas: custody of pooled ERC-721s, snapshot voting with a zero-NO veto and deadlock escape, on-chain verification of 10 sort presets, an EIP-712 floor oracle, and ETH sale splitting (1% fee, 80 shares; no royalty).
 > - External dependency: the artist's Statement contract is not published yet (expected about [date]). We test against a stand-in and would like the review to cover the integration once the real ABI ships. That may mean a short follow-up.
 > - Materials: a scope doc, architecture, 41 numbered invariants, a threat model with known open issues, Foundry unit, fork, differential, and Halmos tests, and Slither/Aderyn output.
 > - Repo: [github.com/yuribeats/statement-maker @ tag] (we can grant private access).

@@ -715,7 +715,7 @@ contract FixesTest is FixesBase {
 
 /// Royalty call, claimFor, fill grace, time unit, opening deposit, order verification.
 contract FixesSaleTest is FixesBase {
-    // ================================================================== T-5: raw royalty call
+    // ================================================================== T-5: royaltyInfo is never called (no royalty leg)
 
     function _weirdParty(uint8 mode, address r, uint256 a) internal returns (Party party, WeirdStatement st) {
         st = new WeirdStatement(address(credits));
@@ -751,18 +751,17 @@ contract FixesSaleTest is FixesBase {
         }
     }
 
-    function test_royalty_wellFormed_longAnswer_zeroReceiver_cap() public {
+    /// No creator royalty is paid, even for a well-formed ERC-2981 answer (any length, any amount).
+    function test_royalty_wellFormedAnswerNeverPaid() public {
         address artist = makeAddr("artist");
-        uint256 snap = vm.snapshotState();
-        Party party = _buyWeird(5, artist, 0.02 ether); // 96-byte answer: first two words used
-        assertEq(party.owed(artist), 0.02 ether);
-        vm.revertToState(snap);
-        party = _buyWeird(0, artist, 1 ether); // 33% asked, capped at 1%
-        assertEq(party.owed(artist), 0.03 ether);
-        vm.revertToState(snap);
-        party = _buyWeird(0, address(0), 0.1 ether); // zero receiver: ignored
-        assertEq(party.owed(address(0)), 0);
-        assertEq(party.perCard(), (3 ether - 3 ether / 100) / 80);
+        uint8[2] memory modes = [uint8(0), 5];
+        for (uint256 i; i < 2; ++i) {
+            uint256 snap = vm.snapshotState();
+            Party party = _buyWeird(modes[i], artist, 0.1 ether);
+            assertEq(party.owed(artist), 0);
+            assertEq(party.perCard(), (3 ether - 3 ether / 100) / 80);
+            vm.revertToState(snap);
+        }
     }
 
     // ================================================================== T-6: claimFor

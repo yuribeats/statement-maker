@@ -32,7 +32,7 @@ contract KeepingStatement is ERC721 {
 }
 
 /// Regression tests for the third external audit: floor freshness and the floor-relative buy wait (finding 2),
-/// post-burn verification (finding 3), the royalty gas stipend (b). The market (finding 4) is in test/market.
+/// post-burn verification (finding 3). (The royalty stipend tests were removed with the royalty leg.) The market (finding 4) is in test/market.
 contract Findings3Test is FixesBase {
     // ================================================================== 2: floor cherry-picking
 
@@ -157,71 +157,5 @@ contract Findings3Test is FixesBase {
             assertFalse(party.assembled());
             vm.revertToState(snap);
         }
-    }
-
-    // ================================================================== b: royalty gas stipend
-
-    /// A royaltyInfo that needs ~100k gas (e.g. it delegates to a registry) is paid; one needing ~330k still counts
-    /// as no royalty and the sale goes through.
-    function test_royalty_delegatingImplementationPaid() public {
-        address artist = makeAddr("artist");
-        uint256 snap = vm.snapshotState();
-        Party party = _buyWeird3(6, artist, 0.02 ether); // under the 1% cap of 3 ETH
-        assertEq(party.owed(artist), 0.02 ether);
-        vm.revertToState(snap);
-        party = _buyWeird3(7, artist, 0.02 ether);
-        assertEq(party.owed(artist), 0);
-        assertEq(party.perCard(), (3 ether - 3 ether / 100) / 80);
-    }
-
-    function _buyWeird3(uint8 mode, address r, uint256 a) internal returns (Party party) {
-        WeirdStatement3 st = new WeirdStatement3(address(credits), mode, r, a);
-        PartyFactory f2 = new PartyFactory(ICredits(address(credits)), IStatement(address(st)), feeTo, vm.addr(signerKey), collectionOwner);
-        party = openPartyWith(f2, params(CreditKeys.Preset.Deposit), holders[0], first(holders[0], 60), new bytes32[][](0));
-        deposit(party, holders[1], first(holders[1], 20));
-        uint256[] memory dep = party.depositOrder();
-        vm.prank(holders[0]);
-        party.assemble(dep, noFloor());
-        vm.warp(party.buyableAt());
-        address b = _buyer(3 ether);
-        vm.prank(b);
-        party.buy{value: 3 ether}(3 ether);
-    }
-}
-
-interface ICreditsBurn3 {
-    function burn(address owner_, uint256[] calldata ids) external returns (bytes21[] memory);
-}
-
-/// Burns properly; royaltyInfo spends ~100k (mode 6) or ~330k (mode 7) gas on cold reads before answering.
-contract WeirdStatement3 is ERC721 {
-    ICreditsBurn3 immutable credits;
-    uint8 immutable mode;
-    address immutable recv;
-    uint256 immutable amt;
-    uint256 next = 1;
-
-    constructor(address c, uint8 m, address r, uint256 a) ERC721("W3", "W3") {
-        credits = ICreditsBurn3(c);
-        mode = m;
-        recv = r;
-        amt = a;
-    }
-
-    function make(uint256[] calldata ids) external returns (uint256 id) {
-        credits.burn(msg.sender, ids);
-        id = next++;
-        _mint(msg.sender, id);
-    }
-
-    function royaltyInfo(uint256, uint256) external view returns (address, uint256) {
-        uint256 n = mode == 6 ? 45 : 150; // ~2.2k gas per cold SLOAD
-        uint256 base = uint256(mode) << 32; // distinct slots per mode: a snapshot revert does not re-cool warm slots
-        uint256 x;
-        for (uint256 i; i < n; ++i) {
-            assembly { x := add(x, sload(add(i, base))) } // used below, so the optimizer keeps the reads
-        }
-        if (x == type(uint256).max) revert();
-        return (recv, amt);
     }
 }

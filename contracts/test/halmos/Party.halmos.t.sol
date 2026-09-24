@@ -11,7 +11,6 @@ contract PartyLogic {
     uint256 public constant PASS = 41; // :44
     uint256 public constant PASS_BELOW_FLOOR = 60; // :45
     uint256 public constant PASS_DEADLOCK = 54; // :46
-    uint256 public constant ROYALTY_CAP_BPS = 100; // Party.sol (1%)
     uint16 public constant FEE_BPS = 100; // PartyFactory.sol FEE_BPS constant
 
     enum PriceMode { Fixed, FloorPct, FloorDelta }
@@ -23,17 +22,14 @@ contract PartyLogic {
 
     function setMinAsk(uint256 m) external { minAskWei = m; }
 
-    // Party.sol:593-594 (_royalty after a well-formed answer with a nonzero receiver) + :474-477 (buy).
-    // hasReceiver=false covers every other _royalty outcome, which returns (0, 0).
+    // Party._sell: no creator royalty is paid any more, so the royalty term is always 0 (hasReceiver/v are ignored
+    // inputs, kept so the proof signatures stay stable).
     function split(uint256 price, bool hasReceiver, uint256 v)
         external
         pure
         returns (uint256 royalty, uint256 fee, uint256 share, uint256 dust)
     {
-        if (hasReceiver) {
-            uint256 cap = price * ROYALTY_CAP_BPS / 10_000;
-            royalty = v > cap ? cap : v;
-        }
+        (hasReceiver, v, royalty);
         fee = price * FEE_BPS / 10_000;
         uint256 pot = price - royalty - fee;
         share = pot / SLOTS;
@@ -105,7 +101,7 @@ contract PartyHalmos is Test {
 
     function _split(uint256 price, bool hasReceiver, uint256 amt) internal view {
         try L.split(price, hasReceiver, amt) returns (uint256 royalty, uint256 fee, uint256 share, uint256 dust) {
-            assert(royalty <= price * 100 / 10_000); // cap holds
+            assert(royalty == 0); // no royalty leg
             assert(fee == price / 100);
             assert(dust < 80);
             assert(royalty + fee + 80 * share + dust == price); // exact conservation, nothing minted or lost
@@ -257,11 +253,11 @@ contract SplitLemmaHalmos is Test {
         pure
     {
         vm.assume(price >= 1 && price <= 1e30);
-        // cap = price * 1000 / 10_000   (Party.sol:593)
-        vm.assume(price * 1000 == cap * 10_000 + rc && rc < 10_000);
+        (v, cap, rc); // royalty leg removed: no cap witness needed
         // fee = price * 100 / 10_000    (Party.sol:474, FEE_BPS = 100)
         vm.assume(price * 100 == fee * 10_000 + rf && rf < 10_000);
-        uint256 royalty = hasReceiver ? (v > cap ? cap : v) : 0; // Party.sol:92-96
+        uint256 royalty = 0; // no creator royalty (hasReceiver ignored)
+        hasReceiver;
         // no underflow in pot = price - royalty - fee (Party.sol:475)
         assert(royalty <= price && fee <= price - royalty);
         uint256 pot = price - royalty - fee;

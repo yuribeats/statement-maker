@@ -23,7 +23,7 @@ The system never holds ETH before a sale. No Statement Maker key can move Credit
 | **Buyers** | `buy` at the ask after the delay | Untrusted. They can front-run, back-run, and collude with card holders. |
 | **Floor signer** (off-chain key + server) | Signs `(floorWei, mode, issuedAt)`. The signature is accepted by every party of the factory for 10 minutes (and never after a newer one was used in that party). | **Trusted for floor values and liveness** (§3). Immutable. It cannot be rotated without a new factory. |
 | **Fee recipient** | Pulls 1% plus rounding dust through `withdraw` on each party | Trusted only to be able to receive ETH. It has no control powers. |
-| **Statement contract** (Jack Butcher, unpublished) | During `make`, holds operator approval over all of the party's Credits. Mints the Statement. Answers `royaltyInfo`. Its `transferFrom` gates the sale. | **Trusted.** Immutable in the factory. Behavior assumed in SCOPE.md §5.3. |
+| **Statement contract** (Jack Butcher, unpublished) | During `make`, holds operator approval over all of the party's Credits. Mints the Statement. Its `transferFrom` gates the sale. | **Trusted.** Immutable in the factory. Behavior assumed in SCOPE.md §5.3. |
 | **Credits contract** | Live, sealed, owner has no remaining powers over tokens | Trusted (verified source) |
 | **Merkle root publisher** (indexer) | Computes `eligibleRoot` from the host's filters | Trusted by the host. Anyone can verify the root off-chain from public traits. The rarity-rank filter relies on OpenSea data. |
 | **Arbitrary contracts** | Can hold cards, deposit, buy, and receive refunds or payouts. They can revert on ETH receipt and re-enter through callbacks. | Untrusted |
@@ -34,7 +34,7 @@ The system never holds ETH before a sale. No Statement Maker key can move Credit
 |---|---|
 | The floor signer reports honest floors | **Compromise, low floor:** in a party with a floor-relative default price and an auto preset, anyone holding one card can assemble with `floorWei = 1 wei`, setting `ask ≈ 0`. After 24 h they (or an accomplice) buy the Statement for about nothing. Cancelling needs a CANCEL vote with zero NO, so the attacker's single card blocks it (R-3). The same key makes a below-floor LIST pass at 41 instead of 60. **Compromise, high floor:** `raiseAsk` pushes the ask out of reach, which blocks sales but does not steal. Members can recover with CANCEL plus a Fixed LIST, which needs the vote (see R-3). |
 | The floor signer is live | Every LIST execution needs a fresh signature, **including Fixed prices** (R-5). Floor-relative default prices cannot assemble without one, so those parties expire. `raiseAsk` stops, which is harmless. |
-| The Statement contract behaves as SCOPE.md §5.3 describes | Rejects contract callers: `assemble` reverts and parties expire (Credits safe). Restricts transfers: `buy` reverts forever and the Statement is stuck (no other exit). Malformed `royaltyInfo` return data: Solidity `try/catch` does not catch ABI-decode failures of the return value, so `buy` would revert. Moves Credits instead of burning them: the burn check passes because it only requires `ownerOf ≠ party`. Malicious `make`: it has operator rights over the party's Credits for the duration of the call. |
+| The Statement contract behaves as SCOPE.md §5.3 describes | Rejects contract callers: `assemble` reverts and parties expire (Credits safe). Restricts transfers: `buy` reverts forever and the Statement is stuck (no other exit). Moves Credits instead of burning them: the burn check passes because it only requires `ownerOf ≠ party`. Malicious `make`: it has operator rights over the party's Credits for the duration of the call. |
 | Hosts publish sensible params | Default price is not checked against the floor. A depositor who did not read the default can see their Credit sold at it. This is the accepted SPEC model: "depositing accepts the defaults". |
 | The Credits owner has no post-seal powers | Verified in source: `distribute` and `seal` revert once sealed, and there is no pause or admin burn. |
 
@@ -64,7 +64,7 @@ Severity is the preparer's estimate, for triage. Auditors should re-grade. Items
 | R-18 | **Eligibility.** The `filters` string is informational. Only `eligibleRoot` is enforced, and it is computed off-chain. The rarity-rank filter uses OpenSea data. | Accepted (SPEC §3) |
 | R-19 | **Static analysis.** Slither and Aderyn output is in `contracts/audit/static/`. Aderyn H-3 ("storage array edited with memory", Party L406/L457) is a false positive: the price spec is only read. Aderyn H-1/H-2 and Slither reentrancy items concern calls to trusted tokens under `nonReentrant`. Divide-before-multiply in `buy` is intentional (the remainder is sent to the fee recipient as dust). | For auditor confirmation |
 | R-20 | **StatementMarket stale listings.** A listing cannot see transfers; if the token left the seller and came back, the old listing (old price) became buyable again forever. | Fixed (audit 3, finding 4): listings expire (`list` 30 days, `listFor` up to 180 days) and `cancelAll()` bumps a per-seller counter that voids every older listing. Residual: a round trip inside the listing's lifetime with no `cancelAll()` or re-list still revives it; the site should prompt sellers to re-list or `cancelAll()` after moving Statements. Tests: market/Market `test_staleListing_*`, `test_listFor_durationBounds`. |
-| R-21 | **Royalty stipend.** 50k gas could zero a legitimate royalty that delegates. | Raised to 150k (`ROYALTY_GAS`) in Party and StatementMarket; malformed/reverting/over-budget answers still count as no royalty. A buyer cannot starve the call on purpose: below the stipend, the 1/64 kept back cannot finish `buy`. Tests: `test_royalty_delegatingImplementationPaid`, `test_royalty_tooHungryIgnored`. |
+| R-21 | **Royalty lookup.** | Removed: no creator royalty is paid and `royaltyInfo` is never called (Party and StatementMarket), so a malformed, reverting or gas-hungry royalty implementation cannot affect a sale. `Sold.royalty` is kept and always 0. |
 
 ## 5. Earlier reviews
 
@@ -78,7 +78,7 @@ No written audit report exists in the repository, and **the Solidity contracts h
 | Buy-vote-sell and flash-loan voting | Snapshot weight at the block before proposal creation |
 | Floor manipulation (list a cheap Statement to drag the ask down, then buy) | 24 h average floor, asks that only ratchet up, below-floor LIST needs 60/80 |
 | Predatory lowball offers on thin parties | Asks only. No offers, auctions, or marketplace listings, and no code path for them. |
-| Royalty lookup draining a sale | Capped royalty, read at sale time |
+| Royalty lookup draining a sale | No royalty leg: `royaltyInfo` is never called |
 | Keeper or floor-key abuse | Key can only raise the ask (partly true in code; see R-4) |
 | Statement contract may reject contract callers | Credits are never burned before assembly, and parties expire with Credits returned |
 | Arranger stall and extra votes | Host-only arranger, one-step arrange + burn, auto presets verified on-chain |

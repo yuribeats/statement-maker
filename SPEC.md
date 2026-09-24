@@ -69,15 +69,11 @@ Proposal types (closed set, no arbitrary calls):
 - The party sells in exactly one place: the vault's `buy()` at the approved price, surfaced on the party page. No OpenSea or other marketplace listings. No offers. No auctions. None of these have a code path in the contracts.
 - Reason: offer-taking and marketplace mechanics invite predatory lowballs aimed at thin or inattentive parties.
 - Buyer pays the ask in ETH; the Statement transfers in the same transaction; party moves to SOLD.
-- Artist royalty: honored on every sale, paid out of the price in the same `buy()` transaction, before members' proceeds.
-  - Lookup: the Statement contract's own ERC-2981 `royaltyInfo(tokenId, price)` only (as implemented; the Royalty Registry engine is not queried directly). The call gets a 150,000-gas stipend, enough for an implementation that delegates (proxy, registry or splitter lookup); a reverting, malformed or more gas-hungry answer counts as no royalty and never blocks the sale.
-  - Read at sale time, not at assembly, so a later change by the artist is followed.
-  - Hard cap: 1% of the price (`ROYALTY_CAP_BPS = 100`, Party and StatementMarket), so a faulty or hostile royalty lookup cannot drain the sale.
-  - Credits itself has none: no ERC-2981 (supportsInterface false) and the engine returns no recipients.
+- No creator royalty: the contracts pay none (Party and StatementMarket never call `royaltyInfo`; a royalty the Statement contract may declare under ERC-2981 is ignored). The `Sold` events keep their `royalty` field for indexers; it is always 0.
 - Platform fee: 1% of the sale price, paid in the same `buy()` transaction to the fee recipient address.
   - Rate is fixed per party when the party is created; it can never rise for an existing party.
-- Split of each sale: price → artist royalty (per lookup) → 1% platform fee → remainder to Credit Card holders pro rata.
-  Example at 3 ETH with a declared 5% royalty (capped at 1%): 0.03 artist, 0.03 platform, 2.94 to holders (0.03675 per Credit Card).
+- Split of each sale: price → 1% platform fee (+ rounding dust) → remainder to Credit Card holders in 80 equal shares. StatementMarket resale: 1% fee, the rest to the seller.
+  Example at 3 ETH: 0.03 platform, 2.97 to holders (0.037125 per Credit Card).
 - Floor-relative asks:
   - Floor data is read off-chain (marketplace APIs, since other Statements will trade there) and averaged over 24 h. This is a data input only; we list nothing there.
   - A keeper updates the on-chain ask as the floor rises. The contract accepts only increases: the ask never goes down. Lowering the price requires a new LIST vote.
@@ -96,7 +92,7 @@ Applies only to the four house parties (hostless, created at deployment). Hosted
 - Timer: 24 h (time-unit scaled on testnet) from the first bid. A bid in the last 5 minutes moves the end to bid time + 5 minutes.
 - Bids: first bid ≥ reserve; each later bid ≥ current high bid + 0.1 ETH.
 - Outbid refunds: the outbid bidder is refunded immediately in the same transaction (push with a gas stipend). If that push fails, the amount is credited to a pull balance the bidder can withdraw at any time, including while the auction is still live. A failing refund never blocks a new bid.
-- Settle: after the end, anyone settles once: the Statement to the winner, the winning bid paid into the party and split exactly like a sale (ERC-2981 royalty capped at 1%, 1% fee, the rest 1/80 per card via claims).
+- Settle: after the end, anyone settles once: the Statement to the winner, the winning bid paid into the party and split exactly like a sale (1% fee, the rest 1/80 per card via claims; no royalty).
 - During the auction: no price proposals, no raiseAsk, no buy on the party.
 - Accounting invariants: auction balance == current high bid + all pull balances; the Statement is always with the auction, the winner, or (before the burn completes) the party.
 
@@ -114,7 +110,7 @@ Every state change is a transaction: someone calls it and pays gas. Rule: once a
 | submitArrangement(order) | the arranger (host by default) | FULL | est. ~2M (stores 80 ids) |
 | assemble() | **any member** | arrangement approved + Statement contract open | burn of 80 measured: 2,576,314, plus the Statement contract's own mint (unknown until it ships) |
 | raiseAsk(floorAttestation) | **any member** | LISTED, floor-relative ask | est. ~60k |
-| buy() | anyone (buyer) | LISTED | est. ~150–250k (royalty lookup + fee + transfer) |
+| buy() | anyone (buyer) | LISTED | est. ~100–200k (fee + transfer) |
 | claimFor(holder) | **anyone**, pays out to the holder | SOLD | est. ~60k per holder |
 | returnCredits(depositor) | **any member**, returns to the depositor | EXPIRED | ~126k per Credit |
 
