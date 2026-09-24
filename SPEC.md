@@ -1,4 +1,4 @@
-# STATEMENT POOL — spec draft v0.7 (2026-09-23)
+# STATEMENT MAKER — spec draft v0.8 (2026-09-23)
 
 Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 

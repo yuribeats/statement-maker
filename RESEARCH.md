@@ -1,4 +1,4 @@
-# Credits → Statement: research (2026-09-23)
+# Statement Maker — research (2026-09-23)
 
 ## Verified facts
 - Contract: Credits (CREDIT), Ethereum mainnet, 0x97630aa70ab14ed9883b41dafccbc11349723043, ERC-721, source verified on Sourcify (copy in research/Credits.sol).
