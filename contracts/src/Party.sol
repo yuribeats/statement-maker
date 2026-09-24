@@ -56,6 +56,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     /// @notice A signed floor reading is accepted for 10 minutes (real time), and never one older than the last used here.
     uint256 public constant FLOOR_MAX_AGE = 10 minutes;
     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+    uint256 public constant BURN_CANDIDATES = 8; // the burn judges at most the 8 latest LISTs to reach 41 YES (per epoch)
 
     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
     enum PriceMode { Fixed, FloorPct, FloorDelta } // FloorPct value in basis points; FloorDelta in wei
@@ -126,8 +127,8 @@ contract Party is Initializable, ReentrancyGuardTransient {
     PriceSpec public askSpec;
     uint64 public askLiveAt;
     uint64 public buyableAt; // buying opens at this time
-    uint16 internal _pendingBuyDelay;
-    PriceSpec public pendingPrice; // price voted while FULL, applied at assembly
+    uint256 internal _pendingId; // the LIST executed while FULL (re-judged at the burn floor)
+    PriceSpec public pendingPrice; // price executed while FULL; applied at assembly only if it still passes there
     bool public hasPendingPrice;
     bool public sold;
     uint256 public perCard;
@@ -142,7 +143,9 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint64 public lastPriceExecutedAt;
     uint256 public blockedPriceProposals;
     mapping(uint256 id => bool) public blockedCounted;
-    mapping(address => uint256[]) internal _openIds; // each proposer's open proposals (at most MAX_OPEN_PER_PROPOSER)
+    mapping(address => uint256[]) internal _openIds;
+    mapping(uint64 epoch => uint256[]) internal _passedIds; // LISTs that reached 41 YES while FULL, in that order
+    mapping(uint256 id => bool) internal _listed; // each proposer's open proposals (at most MAX_OPEN_PER_PROPOSER)
 
     event Deposited(address indexed by, uint256 indexed creditId, uint256 indexed cardId);
     event Redeemed(address indexed to, uint256 indexed creditId, uint256 indexed cardId);
@@ -294,27 +297,29 @@ contract Party is Initializable, ReentrancyGuardTransient {
         }
         CreditKeys.verifyOrder(p, factory.traits(), _order, cardOfCredit, order, _params.seed);
 
-        // Price that goes live (Pashov H2): the most recent LIST that passed while FULL but was not executed yet is
-        // applied as if executed; else the price executed while FULL; else the host default. Resolved before any
-        // external call. Every price that goes live at the burn waits at least 1 hour before buying opens.
-        (bool voted, uint256 vid, uint256 vprice) = _passedUnexecuted(floor);
+        // Price that goes live, every voted price judged again at THIS burn's floor (Pashov H2, M-1, M-2): the newest
+        // (highest id) current-epoch LIST among the latest BURN_CANDIDATES to reach 41 YES that is closed, inside its
+        // execute window and still passes here (applied as if executed); else the LIST executed while FULL if it
+        // still passes here; else the host default. Bounded work: at most BURN_CANDIDATES + 1 judgements.
+        (bool voted, uint256 vid, uint256 vprice) = _burnPrice(floor);
         PriceSpec memory spec;
         uint256 price;
         uint256 wait;
         if (voted) {
             Proposal storage q = _proposals[vid];
-            q.executed = true;
-            lastPriceExecutedAt = uint64(block.timestamp);
-            blockedPriceProposals = 0;
+            if (!q.executed) {
+                q.executed = true;
+                lastPriceExecutedAt = uint64(block.timestamp);
+                blockedPriceProposals = 0;
+                emit Executed(vid, msg.sender);
+            }
             spec = q.price;
             price = vprice;
             wait = q.buyDelayHours;
-            emit Executed(vid, msg.sender);
         } else {
-            spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
+            spec = _params.defaultPrice;
             price = _resolve(spec, floor);
-            wait = hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours;
-            voted = hasPendingPrice;
+            wait = _params.buyDelayHours;
         }
         if (wait == 0) wait = 1;
 
@@ -347,22 +352,34 @@ contract Party is Initializable, ReentrancyGuardTransient {
         emit AskSet(price, voted);
     }
 
-    /// @dev The most recent current-epoch LIST that has closed, is inside its execute window, is not executed, and
-    ///      passes exactly as execute() would judge it with `floor`. Scans back from the newest proposal and stops at
-    ///      the first older epoch (ids are appended in epoch order). A Fixed candidate that could pass above the floor
-    ///      cannot be judged without a reading, so the burn then requires one ("floor needed"): omitting the floor can
-    ///      never be used to skip a passed price.
-    function _passedUnexecuted(Floor calldata floor) internal returns (bool, uint256, uint256) {
-        for (uint256 i = _proposals.length; i > 0; --i) {
-            Proposal storage q = _proposals[i - 1];
-            if (q.epoch != priceEpoch) break;
-            if (q.cancel || q.executed || block.timestamp < q.endsAt || block.timestamp > uint256(q.endsAt) + _t(EXECUTE_WINDOW)) continue;
-            if ((q.no > 0 && !q.deadlock) || q.yes < (q.deadlock ? PASS_DEADLOCK : PASS)) continue; // cannot pass at any floor
-            (uint256 price, uint256 floorWei) = _judgePrice(q.price, floor);
-            if (q.yes >= needFor(i - 1, price, floorWei)) return (true, i - 1, price);
-            if (floor.sig.length == 0) revert Bad("floor needed");
+    /// @dev See assemble(). Candidates are recorded in _vote when a LIST first reaches 41 YES while FULL; only holders
+    ///      of 41 votes can add one, and only the latest BURN_CANDIDATES are judged, so proposal spam cannot make the
+    ///      burn expensive. A Fixed candidate that could pass above the floor cannot be skipped by omitting the floor
+    ///      reading ("floor needed").
+    function _burnPrice(Floor calldata floor) internal returns (bool found, uint256 id, uint256 price) {
+        uint256[] storage c = _passedIds[priceEpoch];
+        uint256 n = c.length;
+        for (uint256 i = n; i > (n > BURN_CANDIDATES ? n - BURN_CANDIDATES : 0); --i) {
+            uint256 cid = c[i - 1];
+            Proposal storage q = _proposals[cid];
+            if ((found && cid < id) || q.executed || block.timestamp < q.endsAt || block.timestamp > uint256(q.endsAt) + _t(EXECUTE_WINDOW)) continue;
+            (bool ok, uint256 pr) = _passesHere(cid, floor);
+            if (ok) (found, id, price) = (true, cid, pr);
         }
-        return (false, 0, 0);
+        if (!found && hasPendingPrice) {
+            (bool ok, uint256 pr) = _passesHere(_pendingId, floor);
+            if (ok) (found, id, price) = (true, _pendingId, pr);
+        }
+    }
+
+    /// @dev Whether LIST `id` passes with its final tally at this price/floor (as execute() judges), and its price.
+    function _passesHere(uint256 id, Floor calldata floor) internal returns (bool, uint256) {
+        Proposal storage q = _proposals[id];
+        if ((q.no > 0 && !q.deadlock) || q.yes < PASS) return (false, 0); // cannot pass at any floor
+        (uint256 price, uint256 floorWei) = _judgePrice(q.price, floor);
+        if (q.yes >= needFor(id, price, floorWei)) return (true, price);
+        if (floor.sig.length == 0) revert Bad("floor needed");
+        return (false, 0);
     }
 
     /// @dev A LIST price and the floor it is judged against, as execute() does: with no floor reading a Fixed price is
@@ -426,6 +443,11 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (prev == 1) p.yes -= w; else if (prev == 2) p.no -= w;
         if (support) p.yes += w; else p.no += w;
         voteOf[id][voter] = support ? 1 : 2;
+        // A LIST reaching 41 YES before the burn becomes a burn candidate (once; see _burnPrice).
+        if (!assembled && !p.cancel && p.yes >= PASS && !_listed[id]) {
+            _listed[id] = true;
+            _passedIds[p.epoch].push(id);
+        }
         emit Voted(id, voter, support, w);
     }
 
@@ -463,7 +485,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
             askLiveAt = 0;
         } else if (s == Status.FULL) {
             pendingPrice = p.price;
-            _pendingBuyDelay = p.buyDelayHours;
+            _pendingId = id;
             hasPendingPrice = true;
             emit PendingPriceSet(id, p.price.mode, p.price.value);
         } else {
