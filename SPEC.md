@@ -1,4 +1,4 @@
-# STATEMENT POOL — spec draft v0.5 (2026-09-23)
+# STATEMENT POOL — spec draft v0.6 (2026-09-23)
 
 Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 
@@ -56,6 +56,11 @@ Proposal types (closed set, no arbitrary calls):
 - The party sells in exactly one place: the vault's `buy()` at the approved price, surfaced on the party page. No OpenSea or other marketplace listings. No offers. No auctions. None of these have a code path in the contracts.
 - Reason: offer-taking and marketplace mechanics invite predatory lowballs aimed at thin or inattentive parties.
 - Buyer pays the ask in ETH; the Statement transfers in the same transaction; party moves to SOLD.
+- Artist royalty: honored on every sale, paid out of the price in the same `buy()` transaction, before members' proceeds.
+  - Lookup order: the Statement contract's own ERC-2981 `royaltyInfo(tokenId, price)`; if absent, the Royalty Registry engine on mainnet (0x0385603ab55642cb4Dd5De3aE9e306809991804f, verified live on chain), which also covers Manifold/Rarible-style royalty settings and registry overrides.
+  - Read at sale time, not at assembly, so a later change by the artist is followed.
+  - Hard cap on the total paid (e.g. 25%) so a faulty or hostile royalty lookup cannot drain the sale.
+  - Credits itself has none: no ERC-2981 (supportsInterface false) and the engine returns no recipients.
 - Floor-relative asks:
   - Floor data is read off-chain (marketplace APIs, since other Statements will trade there) and averaged over 24 h. This is a data input only; we list nothing there.
   - A keeper updates the on-chain ask as the floor rises. The contract accepts only increases: the ask never goes down. Lowering the price requires a new LIST vote.
