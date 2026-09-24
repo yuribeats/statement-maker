@@ -221,7 +221,7 @@ async function pageParty(id) {
       <div><span>Defaults</span><strong class="muted">Set by the host and applied automatically. Card holders can vote a different price; arrangement is the host’s alone.</strong></div>
       <div><span>Floor · ${p.params.floorMode === 'latest' ? 'latest reading' : '24-hour average'}</span><strong>${eth(p.floorEth)} <span class="faint">${floorNote(p.floor)}</span></strong></div>
       ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div>` : ''}
-      <div><span>Sale split</span><strong>Artist royalty · 1% Statement Maker · rest to the 80 Credit Cards</strong></div>
+      <div><span>Sale split</span><strong>1% Statement Maker · the rest to the 80 Credit Cards</strong></div>
       ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 Credit Cards</strong></div>` : ''}
      </div>
     </div>
@@ -242,13 +242,12 @@ async function pageParty(id) {
 
     ${p.status === 'ASSEMBLED' && p.listing ? `
     <div class="panel"><h2>Buy</h2>
-     <div class="rows"><div><span>Price</span><strong>${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div><div><span>Split</span><strong>Artist royalty · 1% Statement Maker · ${eth(p.listingEth ? p.listingEth * 0.99 / SLOTS : null)} per Credit Card</strong></div></div>
-     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves · royalty 0 until the Statement contract is known</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
+     <div class="rows"><div><span>Price</span><strong>${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div><div><span>Split</span><strong>1% Statement Maker · ${eth(p.listingEth ? p.listingEth * 0.99 / SLOTS : null)} per Credit Card</strong></div></div>
+     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
      <div class="error" id="buy-err"></div></div>` : ''}
     ${p.status === 'SOLD' ? `
     <div class="panel"><h2>Sold</h2><div class="rows">
      <div><span>Price</span><strong>${eth(p.sold.price)} to ${short(p.sold.buyer)}</strong></div>
-     <div><span>Artist royalty</span><strong>${eth(p.sold.royalty)}</strong></div>
      <div><span>Statement Maker 1%</span><strong>${eth(p.sold.fee)}</strong></div>
      <div><span>Per Credit Card</span><strong>${eth(p.perCard)}</strong></div>
      <div><span>Claimed</span><strong>${p.credits.filter(c => c.claimed).length} / 80 cards</strong></div></div></div>` : ''}
@@ -484,7 +483,7 @@ function pageRules() {
    <div><span>05 Arrange</span><strong>The host is the only arranger. The arrangement is a party setting: an auto-order, or Manual, where the host orders the 80 by hand. There is no vote on arrangement.</strong></div>
    <div><span>06 Assemble</span><strong>Arranging and burning are one step. With an auto-order, any card holder can burn; with Manual, the host burns with their order. The Statement is held by the party and the default price goes live.</strong></div>
    <div><span>07 Sell</span><strong>Only at the party's own price, only on Statement Maker. No offers, no auctions, no marketplaces. Buying opens 24 hours after a price goes live. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host's choice).</strong></div>
-   <div><span>08 Split</span><strong>Artist royalty first, then 1% to Statement Maker, then the rest to the 80 Credit Cards.</strong></div>
+   <div><span>08 Split</span><strong>1% to Statement Maker, the rest split across the 80 Credit Cards.</strong></div>
    <div><span>09 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
    <div><span>10 Time</span><strong>Votes run 24 hours to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
    <div><span>11 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
@@ -499,7 +498,7 @@ function pageRules() {
 }
 
 // ---------- terms ----------
-const TERMS_VERSION = '2026-09-23.3';
+const TERMS_VERSION = '2026-09-23.4';
 const TERMS = [
  ['What Statement Maker is', 'Statement Maker is a tool that lets holders of Credits pool them in groups called parties. When a party collects 80 Credits, the party can burn them to create one Statement and then sell it. Statement Maker provides the website and the smart contracts. It does not hold your Credits or your money; the party contracts do.'],
  ['Not affiliated with Jack Butcher', 'Statement Maker is independent. It is not made, endorsed, or operated by Jack Butcher, jack.art, the Credits project, or X. Credits and Statements are Jack Butcher’s work. We only coordinate holders who choose to use the burn function his contracts provide.'],
@@ -508,7 +507,7 @@ const TERMS = [
  ['Credit Cards', 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has that Credit’s vote, the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of any sale. Credit Cards can be transferred or traded by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.'],
  ['Voting', 'Every Credit Card is one vote. A proposal passes when more than 40 Credit Cards vote yes and none vote no within its voting window, which lasts 24 hours to 7 days. Any member must then execute it within 7 days or it lapses. A single no vote blocks a proposal, so a party can stay deadlocked and its Statement can go unsold indefinitely.'],
  ['Selling', 'A party sells its Statement only on Statement Maker, only at the price its members approved, to the first buyer who pays it. There are no offers, no auctions, and no marketplace listings. Members may approve any price, including below the floor. A floor-based price can rise automatically but never falls without a new vote.'],
- ['Fees, royalties, gas', 'Each sale pays the artist royalty set by the Statement contract first, then a 1% Statement Maker fee, and the rest goes to Credit Card holders pro rata. Every action on-chain (depositing, voting, executing, assembling, claiming) costs gas, paid by whoever calls it. Statement Maker does not refund gas.'],
+ ['Fees and gas', 'Each sale pays a 1% Statement Maker fee and the rest to Credit Card holders, 1/80 per card. Every action on-chain (depositing, voting, executing, assembling, claiming) costs gas, paid by whoever calls it. Statement Maker does not refund gas.'],
  ['Risks', 'Smart contracts can have bugs, and ours have not been audited yet. The Statement contract has not been published; it may work differently from what this site assumes, or may not accept parties at all. Prices can fall. Transactions cannot be reversed. If you lose access to your wallet, nobody can recover your Credits, Credit Cards, or proceeds. Laws about tokens like Credit Cards may change or differ where you live.'],
  ['No advice', 'Nothing on this site is financial, investment, legal, or tax advice. You decide what to deposit, how to vote, and whether to sell.'],
  ['Your responsibilities', 'You control your own wallet and keys. You confirm you are legally allowed to use this service where you live, are not subject to sanctions, and will handle your own taxes. You will not use Statement Maker to manipulate votes, prices, or other members.'],
@@ -629,7 +628,7 @@ async function pageStatement(id) {
    </div>
    ${!p.sold && p.listing ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy</h2><strong class="big">${eth(p.listingEth)}</strong></div>
-     <p class="muted">Artist royalty, then 1% to Statement Maker, then ${eth(p.listingEth * 0.99 / SLOTS)} to each of the 80 Credit Cards.</p>
+     <p class="muted">1% to Statement Maker, then ${eth(p.listingEth * 0.99 / SLOTS)} to each of the 80 Credit Cards.</p>
      ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}.</p>` : me ? `<button class="cta" id="buy-s">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
      <div class="error" id="buy-s-err"></div></div>` : ''}
    <h2 style="margin:48px 0 14px">Holders</h2>
@@ -732,7 +731,7 @@ async function pageSim() {
       <p>Live price: ${eth(listEth)}${sim.listing.value < 0 ? ' (voted, below floor)' : ' (your default)'}.</p>
       <div class="actions"><button class="cta" id="s-buy">Advance 24 hours · a buyer pays</button></div>`
     : `
-      <p>Sold for ${eth(sim.sold.price)}. Artist royalty (unknown until the Statement contract ships, 0 here), then 1% to Statement Maker (${eth(sim.sold.price * 0.01)}), then ${eth(perCard)} per Credit Card.</p>
+      <p>Sold for ${eth(sim.sold.price)}. 1% to Statement Maker (${eth(sim.sold.price * 0.01)}), then ${eth(perCard)} per Credit Card.</p>
       ${mine.some(c => !sim.claimed.has(c.card)) ? `<button class="cta" id="s-claim">Claim for your ${mine.filter(c => !sim.claimed.has(c.card)).length} cards · ${eth(perCard * mine.filter(c => !sim.claimed.has(c.card)).length)}</button>` : `<p><span class="dot y"></span>Claimed ${eth(perCard * mine.length)}. Your cards are burned. That is the whole cycle.</p><a class="cta" href="#/new">Start a real party →</a>`}`}
     </div>
     ${mine.length ? `<div class="panel"><h2>Your Credit Cards · ${mine.length}</h2><div class="sim-cards">${mine.map(c => `

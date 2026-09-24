@@ -14,7 +14,7 @@ const DEV = process.env.NODE_ENV !== 'production'; // dev clock only outside pro
 const MAX_BODY = 64 * 1024;
 const SLOTS = 80;
 const ZERO = '0x0000000000000000000000000000000000000000';
-const TERMS_VERSION = '2026-09-23.3';
+const TERMS_VERSION = '2026-09-23.4';
 const VOTE_WINDOW = 48 * 36e5;
 const WINDOWS = [24, 48, 72, 168]; // allowed voting windows, hours
 const EXEC_WINDOW = 7 * 864e5;
