@@ -154,7 +154,13 @@ const noFloor = { floorWei: 0n, issuedAt: 0n, sig: '0x' };
 async function buildOrder() {
   const p = S.party, preset = p.params.arrangement;
   const ids = [...p.order];
-  if (preset === 0 || preset === 10) return ids; // Deposit order; Manual uses deposit order here (host may reorder in a later version)
+  if (preset === 0) return ids; // Deposit order
+  if (preset === 10) {
+    // Manual: the host burns in deposit order here (hand ordering may come in a later version) until MANUAL_GRACE (1 day,
+    // scaled by timeUnit) after FULL; from then on Party.assemble requires the Time order, which is ascending id.
+    const fullAt = Number(await read(P(p.a), 'fullAt'));
+    return now() > fullAt + 86400 * p.timeUnit / 3600 ? ids.sort((x, y) => (x < y ? -1 : x > y ? 1 : 0)) : ids;
+  }
   if (preset === 9) return [...(await read({ address: ADDR.probe, abi: ABIS.KeyProbe }, 'shuffle', [ids, p.params.seed]))];
   const keys = await read({ address: ADDR.probe, abi: ABIS.KeyProbe }, 'keys', [preset, ADDR.credits, ids]);
   return ids.map((id, i) => [id, keys[i]]).sort((x, y) => (x[1] < y[1] ? -1 : 1)).map(x => x[0]);
@@ -282,7 +288,10 @@ function bind() {
   $('#assemble')?.addEventListener('click', async () => {
     if (!FORK && !confirm('Burning is permanent: the 80 test Credits become one Statement. Continue?')) return;
     const order = await buildOrder();
-    tx('Burn the 80', { ...P(S.party.a), functionName: 'assemble', args: [order, noFloor], gas: 16_000_000n }); // under the 16,777,216 per-transaction cap (EIP-7825)
+    // A price voted while FULL is judged at the burn's floor (Party._burnPrice): send a reading when one is available.
+    let f = noFloor;
+    try { f = await floorSig(S.party.params.floorMode); } catch {}
+    tx('Burn the 80', { ...P(S.party.a), functionName: 'assemble', args: [order, f], gas: 16_000_000n }); // under the 16,777,216 per-transaction cap (EIP-7825)
   });
   $('#propose')?.addEventListener('click', () => tx('Propose price', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: parseEther(String($('#pp').value)) }, false, Number($('#ph').value), Number($('#pbw').value)] }));
   $('#cancel')?.addEventListener('click', () => tx('Propose cancel', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: 0n }, true, 24, 0] }));
