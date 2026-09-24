@@ -17,29 +17,36 @@ const api = async (path, body) => {
   return j;
 };
 let stats = null;
-let me = (() => { try { return localStorage.getItem('sm-acting') || ''; } catch { return ''; } })();
-if (!/^0x[0-9a-f]{40}$/.test(me)) me = '';
+let me = ''; // set from the server session (GET /api/auth/me), never from local state
 
-// ---------- acting-as wallet (stand-in for wallet connect) ----------
+// ---------- wallet: real sign-in with a browser wallet; simulated wallets only in dev builds ----------
 async function fillActing() {
   const sel = $('#acting');
-  const top = await api('holders');
+  const real = !!window.ethereum;
+  const top = stats?.dev ? await api('holders') : [];
   const seen = new Set();
-  // Simulated connect: pick a real holder wallet. Real build uses a wallet + Sign-In with Ethereum.
-  const opts = [...(me ? [{ address: me, count: '·' }] : []), ...top].filter(o => !seen.has(o.address) && seen.add(o.address));
-  render(sel, (me ? '' : '<option value="" selected>Connect wallet</option>') + '<optgroup label="Simulated wallets">' + opts.map(o => `<option value="${esc(o.address)}" ${o.address === me ? 'selected' : ''}>${short(o.address) + ' · ' + esc(o.count)}</option>`).join('') + '<option value="__paste">Paste address…</option></optgroup>' + (me ? '<option value="__off">Disconnect</option>' : ''));
+  const sims = top.filter(o => o.address !== me && !seen.has(o.address) && seen.add(o.address));
+  render(sel,
+    (me ? `<option value="${esc(me)}" selected>${short(me)}</option><option value="__off">Disconnect</option>` : '<option value="" selected>Connect wallet</option>') +
+    (real && !me ? '<option value="__wallet">Browser wallet…</option>' : '') +
+    (!real && !me && !stats?.dev ? '<option value="" disabled>No wallet found in this browser</option>' : '') +
+    (stats?.dev ? '<optgroup label="Simulated wallets (dev)">' + sims.map(o => `<option value="${esc(o.address)}">${short(o.address) + ' · ' + Number(o.count)}</option>`).join('') + '<option value="__paste">Paste address…</option></optgroup>' : ''));
 }
-$('#acting').addEventListener('change', e => {
+$('#acting').addEventListener('change', async e => {
   let v = e.target.value;
-  if (v === '__paste') { v = (prompt('Wallet address') || '').trim().toLowerCase(); if (!/^0x[0-9a-f]{40}$/.test(v)) v = me; }
-  if (v === '__off') v = '';
-  if (!v) { setMe(''); return; }
-  api('terms/' + v).then(t => {
-    if (t.accepted) setMe(v);
-    else { fillActing(); openTermsModal(v); }
-  });
+  if (v === '__off') { await api('auth/logout', {}); setMe(''); return; }
+  if (v === '__wallet') {
+    try {
+      const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      fillActing(); openTermsModal(account.toLowerCase(), 'wallet');
+    } catch { fillActing(); }
+    return;
+  }
+  if (v === '__paste') { v = (prompt('Wallet address') || '').trim().toLowerCase(); if (!/^0x[0-9a-f]{40}$/.test(v)) { fillActing(); return; } }
+  if (v) { fillActing(); openTermsModal(v, 'sim'); }
 });
-function setMe(v) { me = v; try { localStorage.setItem('sm-acting', me); } catch {} fillActing(); route(); }
+function setMe(v) { me = v; fillActing(); route(); }
+const hex = str => '0x' + [...new TextEncoder().encode(str)].map(b => b.toString(16).padStart(2, '0')).join('');
 
 // ---------- ordering presets ----------
 const COLOR_ORDER = ['C', 'M', 'Y', 'K', 'CM', 'CY', 'MY', 'CK', 'MK', 'YK', 'CMY', 'CMK', 'CYK', 'MYK', 'CMYK'];
@@ -327,7 +334,7 @@ async function pageParty(id) {
 
   const chat = $('#chat'); if (chat) chat.scrollTop = chat.scrollHeight;
   const err = (id, e) => { const el = $('#' + id); if (el) el.textContent = e.message || e; };
-  const act = async (path, body, errId) => { try { await api(`parties/${encodeURIComponent(p.id)}/${path}`, { address: me, ...body }); await route(); return true; } catch (e) { err(errId, e); return false; } };
+  const act = async (path, body, errId) => { try { await api(`parties/${encodeURIComponent(p.id)}/${path}`, body); await route(); return true; } catch (e) { err(errId, e); return false; } };
 
   app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { partyUI.mode = b.dataset.mode; if (partyUI.mode === 'arrange' && !partyUI.order) partyUI.order = [...p.credits]; route(); });
   app.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => { partyUI.order = PRESETS[b.dataset.preset](partyUI.order || p.credits); partyUI.preset = b.dataset.preset + (partyUI.order.seed ? ' #' + partyUI.order.seed : ''); route(); });
@@ -439,7 +446,7 @@ async function pageNew() {
   app.querySelectorAll('[data-tm]').forEach(b => b.onclick = () => { draft.target.mode = b.dataset.tm; app.querySelectorAll('[data-tm]').forEach(x => x.setAttribute('aria-pressed', x === b)); tvHint(); });
   tvHint();
   app.querySelectorAll('input, textarea').forEach(i => i.oninput = refresh);
-  $('#create').onclick = async () => { read(); try { const p = await api('parties', { address: me, ...draft }); location.hash = '#/party/' + p.id; } catch (e) { $('#new-err').textContent = e.message; } };
+  $('#create').onclick = async () => { read(); try { const p = await api('parties', draft); location.hash = '#/party/' + p.id; } catch (e) { $('#new-err').textContent = e.message; } };
   refresh();
 }
 
@@ -466,7 +473,7 @@ function pageRules() {
   <div class="works"><div class="rows">
    <div><span>01 Open</span><strong>A host opens a party and sets a minimum deposit, a target price, and which Credits qualify.</strong></div>
    <div><span>02 Deposit</span><strong>Holders deposit matching Credits. Withdraw any time before the 80th arrives.</strong></div>
-   <div><span>03 Full</span><strong>At 80, each deposited Credit returns one Credit Card to its depositor: the party's ERC-20 share. Credit Cards trade freely and carry the vote.</strong></div>
+   <div><span>03 Full</span><strong>At 80, Each deposited Credit returns one Credit Card (an ERC-721, one per Credit) the moment it is deposited. Whoever holds a card has its vote, its Credit before the burn, and 1/80 of the sale.</strong></div>
    <div><span>04 Arrange</span><strong>The host is the default arranger: an auto-order or a manual one, in force at once, no vote needed. Any card holder can challenge it with a vote, or propose a different arranger.</strong></div>
    <div><span>05 Assemble</span><strong>The 80 Credits are burned into one Statement, held by the party.</strong></div>
    <div><span>06 Sell</span><strong>Only at the party's own price, only on Statement Maker. No offers. No auctions. No marketplaces.</strong></div>
@@ -490,7 +497,7 @@ const TERMS = [
  ['Not affiliated with Jack Butcher', 'Statement Maker is independent. It is not made, endorsed, or operated by Jack Butcher, jack.art, the Credits project, or X. Credits and Statements are Jack Butcher’s work. We only coordinate holders who choose to use the burn function his contracts provide.'],
  ['How a party works', 'A host opens a party and sets its rules: minimum deposit, eligible Credits, target price, and default voting window. Holders deposit Credits. You can withdraw your Credits at any time until the party reaches 80. At 80, deposits lock and each depositor receives one Credit Card per Credit. The host arranges the 8 × 10 order unless members elect someone else, and members vote to approve it. Any member can then assemble the Statement.'],
  ['Burning is permanent', 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party never fills, or never assembles before its deadline, every Credit goes back to its depositor.'],
- ['Credit Cards', 'A Credit Card is an ERC-20 token. One Credit Card stands for one deposited Credit’s share of that party: its vote and its share of any sale. Credit Cards can be transferred or traded by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.'],
+ ['Credit Cards', 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has that Credit’s vote, the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of any sale. Credit Cards can be transferred or traded by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.'],
  ['Voting', 'Every Credit Card is one vote. A proposal passes when more than 40 Credit Cards vote yes and none vote no within its voting window, which lasts 24 hours to 7 days. Any member must then execute it within 7 days or it lapses. A single no vote blocks a proposal, so a party can stay deadlocked and its Statement can go unsold indefinitely.'],
  ['Selling', 'A party sells its Statement only on Statement Maker, only at the price its members approved, to the first buyer who pays it. There are no offers, no auctions, and no marketplace listings. Members may approve any price, including below the floor. A floor-based price can rise automatically but never falls without a new vote.'],
  ['Fees, royalties, gas', 'Each sale pays the artist royalty set by the Statement contract first, then a 1% Statement Maker fee, and the rest goes to Credit Card holders pro rata. Every action on-chain (depositing, voting, executing, assembling, claiming) costs gas, paid by whoever calls it. Statement Maker does not refund gas.'],
@@ -507,7 +514,7 @@ function pageTerms() {
   <div style="max-width:900px">${termsBody()}</div>`);
 }
 // Connecting a wallet opens the terms as a scrollable modal over the site. Accepting is required to connect.
-function openTermsModal(address) {
+function openTermsModal(address, mode = 'sim') {
   const root = $('#modal-root');
   const close = () => { root.replaceChildren(); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); };
   const onKey = e => { if (e.key === 'Escape') close(); };
@@ -521,7 +528,7 @@ function openTermsModal(address) {
     </div>
     <div class="modal-foot">
      <label class="check"><input type="checkbox" id="agree" disabled> <span>I have read these terms. I understand that deposits lock at 80, that assembly burns my Credits permanently, that a single no vote can block a sale, and that Credit Cards may be worth nothing. I accept these terms.</span></label>
-     <div class="actions" style="margin-top:14px;align-items:center"><button class="cta" id="accept" disabled style="margin-top:0">Accept and connect</button><button type="button" id="decline">Cancel</button><span class="hint" id="scroll-hint">Scroll to the end to enable the checkbox</span></div>
+     <div class="actions" style="margin-top:14px;align-items:center"><button class="cta" id="accept" disabled style="margin-top:0">${mode === 'wallet' ? 'Sign and connect' : 'Accept and connect (simulated)'}</button><button type="button" id="decline">Cancel</button><span class="hint" id="scroll-hint">Scroll to the end to enable the checkbox</span></div>
      <div class="error" id="t-err"></div>
     </div>
    </div>
@@ -537,8 +544,16 @@ function openTermsModal(address) {
   $('#decline').onclick = close;
   $('#accept').onclick = async () => {
     try {
-      await api('terms', { address, version: TERMS_VERSION, accept: $('#agree').checked });
-      close(); setMe(address);
+      let who;
+      if (mode === 'wallet') {
+        // Your wallet signs a sign-in message whose statement is this acceptance; the server verifies the signature.
+        const { nonce, message } = await api('auth/nonce', { address });
+        const signature = await window.ethereum.request({ method: 'personal_sign', params: [hex(message), address] });
+        who = (await api('auth/verify', { nonce, signature })).address;
+      } else {
+        who = (await api('auth/dev', { address, accept: $('#agree').checked })).address;
+      }
+      close(); setMe(who);
     } catch (e) { $('#t-err').textContent = e.message; }
   };
   $('#agree').focus?.();
@@ -620,4 +635,4 @@ async function route() {
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
 window.addEventListener('hashchange', route);
-(me ? api('terms/' + me).then(t => { if (!t.accepted) me = ''; }) : Promise.resolve()).then(() => Promise.all([fillActing(), api('stats').then(x => (stats = x)), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
+Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; }), api('stats').then(x => (stats = x))]).then(() => Promise.all([fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);

@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { startEvm, ART, artAbi } from './scripts/evm.mjs';
+import { createPublicClient, http as viemHttp, getAddress, parseAbi } from 'viem';
+import { mainnet } from 'viem/chains';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
 const DATA = path.join(ROOT, 'data');
@@ -41,6 +43,58 @@ for (const c of byId.values()) MARKS = [Math.min(MARKS[0], c.marks), Math.max(MA
 const holders = new Map();
 for (const c of byId.values()) if (c.owner && c.owner !== ZERO) (holders.get(c.owner) || holders.set(c.owner, []).get(c.owner)).push(c.id);
 
+// ---- live ownership: follow Credits Transfer events from the snapshot block onward ----
+const CREDITS = '0x97630aa70ab14ed9883b41dafccbc11349723043';
+const RPC = process.env.ETH_RPC || 'https://ethereum-rpc.publicnode.com';
+const chain = createPublicClient({ chain: mainnet, transport: viemHttp(RPC) });
+const TRANSFER = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+let syncedBlock = block;
+function moveCredit(id, to) {
+  const c = byId.get(id); if (!c) return;
+  const from = c.owner;
+  if (from && holders.has(from)) { const l = holders.get(from).filter(x => x !== id); l.length ? holders.set(from, l) : holders.delete(from); }
+  c.owner = to;
+  if (to && to !== ZERO) (holders.get(to) || holders.set(to, []).get(to)).push(id);
+}
+async function syncTransfers() {
+  try {
+    const head = Number(await chain.getBlockNumber());
+    while (syncedBlock < head) {
+      const to = Math.min(syncedBlock + 500, head);
+      const logs = await chain.request({ method: 'eth_getLogs', params: [{ address: CREDITS, topics: [TRANSFER], fromBlock: '0x' + (syncedBlock + 1).toString(16), toBlock: '0x' + to.toString(16) }] });
+      for (const l of logs) moveCredit(parseInt(l.topics[3], 16), '0x' + l.topics[2].slice(26).toLowerCase());
+      syncedBlock = to;
+    }
+  } catch (e) { console.error('transfer sync', e.shortMessage || e.message); }
+}
+syncTransfers(); setInterval(syncTransfers, 30_000);
+const ownerAbi = parseAbi(['function ownerOf(uint256) view returns (address)']);
+// Belt and braces at deposit: read ownerOf on-chain for each Credit. (The real vault only counts Credits it actually receives.)
+async function liveOwners(ids) {
+  const r = await Promise.all(ids.map(id => chain.readContract({ address: CREDITS, abi: ownerAbi, functionName: 'ownerOf', args: [BigInt(id)] }).then(a => a.toLowerCase(), () => ZERO)));
+  return new Map(ids.map((id, i) => [id, r[i]]));
+}
+
+// ---- sign-in: EIP-4361 message whose statement is the terms acceptance; session cookie after verification ----
+const sessions = new Map(); // token -> { address, exp }
+const nonces = new Map();   // nonce -> { address, message, exp }
+const SESSION_MS = 7 * 864e5;
+const cookies = req => Object.fromEntries(String(req.headers.cookie || '').split(';').map(c => c.trim().split('=')).filter(x => x[0]).map(([k, ...v]) => [k, decodeURIComponent(v.join('='))]));
+function sessionOf(req) {
+  const t = cookies(req).sm_session; const s = t && sessions.get(t);
+  if (!s || s.exp < Date.now()) return null;
+  return s.address;
+}
+function startSession(res, address) {
+  const token = crypto.randomBytes(32).toString('hex');
+  sessions.set(token, { address, exp: Date.now() + SESSION_MS });
+  res.setHeader('set-cookie', `sm_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_MS / 1000}${DEV ? '' : '; Secure'}`);
+}
+const TERMS_STATEMENT = `I accept the Statement Maker terms and conditions, version ${TERMS_VERSION}. I understand that deposits lock at 80, that assembly burns my Credits permanently, that a single no vote can block a sale, and that Credit Cards may be worth nothing.`;
+function siweMessage(host, origin, address, nonce) {
+  return `${host} wants you to sign in with your Ethereum account:\n${address}\n\n${TERMS_STATEMENT}\n\nURI: ${origin}\nVersion: 1\nChain ID: 1\nNonce: ${nonce}\nIssued At: ${new Date().toISOString()}`;
+}
+
 // ---- floor (data input only; nothing is listed anywhere) ----
 let floor = { credit: null, at: 0 };
 async function refreshFloor() {
@@ -69,6 +123,8 @@ let state = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE)) : { partie
 // `depositor` is who put the Credit in. Everything (votes, withdrawals, returns, proceeds) follows the holder.
 state.nextCard ||= 1;
 for (const p of state.parties) for (const d of p.deposits) { d.depositor ||= d.address; d.card ||= state.nextCard++; }
+// Proposals from before snapshots existed get one frozen at load, so current holders never vote on them.
+for (const p of state.parties) for (const q of p.proposals) if (!q.snapshot) { const m = {}; for (const d of p.deposits) m[d.address] = (m[d.address] || 0) + 1; q.snapshot = m; }
 for (const p of state.parties) if (p.deposits.length >= 80 && !p.fullAt) p.fullAt = Math.max(...p.deposits.map(d => d.at));
 // Dev clock: lets the prototype skip ahead through voting windows and deadlines.
 const now = () => Date.now() + (state.clockOffset || 0);
@@ -161,7 +217,7 @@ function status(p) {
 }
 function tally(p, prop) {
   // Weight comes from the cards each address held when the proposal was created (no buy-vote-sell).
-  const w = new Map(Object.entries(prop.snapshot || Object.fromEntries(members(p).map(m => [m.address, m.count]))));
+  const w = new Map(Object.entries(prop.snapshot || {})); // no snapshot, no weight (never fall back to current holders)
   let yes = 0, no = 0;
   for (const [a, v] of Object.entries(prop.votes)) (v ? (yes += w.get(a) || 0) : (no += w.get(a) || 0));
   const endsAt = prop.endsAt || prop.at + VOTE_WINDOW;
@@ -357,6 +413,11 @@ http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   const seg = u.pathname.split('/').filter(Boolean);
   try {
+    if (req.method === 'POST') {
+      // Same-origin POSTs only (with SameSite=Strict cookies this blocks cross-site requests).
+      const o = req.headers.origin;
+      if (o && new URL(o).host !== req.headers.host) return json(res, 403, { error: 'cross-origin request refused' });
+    }
     if (seg[0] !== 'api') {
       const f = path.join(ROOT, 'public', u.pathname === '/' ? 'index.html' : path.normalize(u.pathname));
       if (!f.startsWith(path.join(ROOT, 'public')) || !fs.existsSync(f)) return json(res, 404, { error: 'not found' });
@@ -377,17 +438,49 @@ http.createServer(async (req, res) => {
         soloStatements: bal.reduce((s, n) => s + Math.floor(n / SLOTS), 0),
         scattered: bal.filter(n => n < SLOTS).reduce((s, n) => s + n, 0),
         ranges: { id: [1, byId.size], rank: [1, byId.size], marks: MARKS, minDeposit: [1, SLOTS], days: [1, 60] },
-        dev: DEV, floor: floor.credit, freq: Object.fromEntries(TRAITS.map(k => [k, Object.fromEntries(freq[k])])),
+        dev: DEV, syncedBlock, floor: floor.credit, freq: Object.fromEntries(TRAITS.map(k => [k, Object.fromEntries(freq[k])])),
       });
     }
     if (a === 'terms' && req.method === 'GET') return json(res, 200, { version: TERMS_VERSION, accepted: state.terms?.[addr(b)]?.version === TERMS_VERSION });
-    if (a === 'terms' && req.method === 'POST') {
+    if (a === 'auth' && b === 'me') { const who = sessionOf(req); return json(res, 200, { address: who, terms: !!who && termsOk(who), version: TERMS_VERSION }); }
+    if (a === 'auth' && b === 'nonce' && req.method === 'POST') {
+      const x = await body(req);
+      let address; try { address = getAddress(String(x.address || '')); } catch { return json(res, 400, { error: 'bad address' }); }
+      const host = String(req.headers.host || ''), origin = `${DEV ? 'http' : 'https'}://${host}`;
+      const nonce = crypto.randomBytes(12).toString('hex');
+      const message = siweMessage(host, origin, address, nonce);
+      nonces.set(nonce, { address, message, exp: Date.now() + 10 * 6e4 });
+      if (nonces.size > 5000) nonces.delete(nonces.keys().next().value);
+      return json(res, 200, { nonce, message });
+    }
+    if (a === 'auth' && b === 'verify' && req.method === 'POST') {
+      const x = await body(req);
+      const n = nonces.get(String(x.nonce || ''));
+      nonces.delete(String(x.nonce || ''));
+      if (!n || n.exp < Date.now()) return json(res, 400, { error: 'sign-in expired, try again' });
+      if (!/^0x[0-9a-fA-F]+$/.test(String(x.signature || ''))) return json(res, 400, { error: 'bad signature' });
+      // verifyMessage covers plain wallets and smart-contract wallets (EIP-1271 / 6492).
+      const ok = await chain.verifyMessage({ address: n.address, message: n.message, signature: x.signature }).catch(() => false);
+      if (!ok) return json(res, 401, { error: 'signature does not match' });
+      const who = n.address.toLowerCase();
+      (state.terms ||= {})[who] = { version: TERMS_VERSION, at: now(), message: n.message, signature: x.signature };
+      save(); startSession(res, who);
+      return json(res, 200, { address: who, terms: true });
+    }
+    if (a === 'auth' && b === 'logout' && req.method === 'POST') {
+      const t = cookies(req).sm_session; if (t) sessions.delete(t);
+      res.setHeader('set-cookie', 'sm_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');
+      return json(res, 200, { address: null });
+    }
+    if (DEV && a === 'auth' && b === 'dev' && req.method === 'POST') {
+      // Prototype only: sign in as a simulated wallet without a signature. Not registered in production.
       const x = await body(req);
       const who = addr(x.address);
-      if (!/^0x[0-9a-f]{40}$/.test(who)) return json(res, 400, { error: 'bad address' });
-      if (x.version !== TERMS_VERSION || x.accept !== true) return json(res, 400, { error: 'terms must be accepted in full' });
-      (state.terms ||= {})[who] = { version: TERMS_VERSION, at: now() };
-      save(); return json(res, 200, { accepted: true });
+      if (!isAddr(who)) return json(res, 400, { error: 'bad address' });
+      if (x.accept !== true) return json(res, 400, { error: 'terms must be accepted' });
+      (state.terms ||= {})[who] = { version: TERMS_VERSION, at: now(), simulated: true };
+      save(); startSession(res, who);
+      return json(res, 200, { address: who, terms: true });
     }
     if (a === 'card' && b) {
       const n = Number(String(b).replace(/\.svg$/, ''));
@@ -453,10 +546,15 @@ http.createServer(async (req, res) => {
       return json(res, 200, { count: list.length, owners: owners.size, statements: Math.floor(list.length / SLOTS), sample: list.sort((x, y) => x.rank - y.rank).slice(0, 16).map(c => c.id) });
     }
     if (a === 'statements') return json(res, 200, state.parties.filter(q => q.assembled).sort((x, y) => x.assembled.number - y.assembled.number).map(view));
-    if (a === 'parties' && !b && req.method === 'GET') return json(res, 200, state.parties.map(view));
+    if (a === 'parties' && !b && req.method === 'GET') {
+      const limit = int(u.searchParams.get('limit'), 1, 100) || 60, offset = int(u.searchParams.get('offset'), 0, 1e6) || 0;
+      res.setHeader('x-total-count', String(state.parties.length));
+      return json(res, 200, state.parties.slice(offset, offset + limit).map(view));
+    }
     if (a === 'parties' && !b && req.method === 'POST') {
       const x = await body(req);
-      const host = addr(x.address);
+      const host = sessionOf(req);
+      if (!host) return json(res, 401, { error: 'connect a wallet first' });
       if (!termsOk(host)) return json(res, 403, { error: 'accept the terms first' });
       if (!holders.has(host)) return json(res, 400, { error: 'host must hold at least one Credit' });
       if (state.parties.filter(q => q.hosts[0] === host && ['OPEN', 'FULL'].includes(status(q))).length >= 3) return json(res, 429, { error: 'a host can run at most 3 open parties' });
@@ -477,7 +575,8 @@ http.createServer(async (req, res) => {
     if (p && !c) return json(res, 200, view(p));
     if (p && req.method === 'POST') {
       const x = await body(req);
-      const who = addr(x.address);
+      const who = sessionOf(req);
+      if (!who) return json(res, 401, { error: 'connect a wallet first' });
       if (!termsOk(who)) return json(res, 403, { error: 'accept the terms first' });
       const st = status(p);
       if (c === 'deposit') {
@@ -487,6 +586,9 @@ http.createServer(async (req, res) => {
         const min = Math.min(p.params.minDeposit, remaining);
         if (ids.length < min) return json(res, 400, { error: `minimum deposit is ${min}` });
         if (ids.length > remaining) return json(res, 400, { error: `only ${remaining} slots left` });
+        const live = await liveOwners(ids).catch(() => null);
+        if (!live) return json(res, 503, { error: 'could not read ownership from the chain, try again' });
+        for (const id of ids) if (byId.has(id) && live.get(id) !== byId.get(id).owner) moveCredit(id, live.get(id));
         const taken = new Set(state.parties.flatMap(deposited));
         for (const id of ids) {
           const cr = byId.get(id);
@@ -520,7 +622,7 @@ http.createServer(async (req, res) => {
         if (st !== 'FULL' && st !== 'ASSEMBLED') return json(res, 400, { error: 'proposals open once the party is full' });
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
         // APPROVE_ARRANGEMENT is created only through /arrange, which checks the arranger and the order.
-        const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'LIST'] : ['LIST', 'CANCEL_LISTING', 'DISTRIBUTE'];
+        const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'LIST'] : ['LIST', 'CANCEL_LISTING']; // proceeds are claimed per card after a sale; no DISTRIBUTE vote
         if (!allowed.includes(x.type)) return json(res, 400, { error: `${String(x.type).slice(0, 40)} not allowed while ${st}` });
         if (p.proposals.filter(q => q.by === who && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 open proposals per member' });
         if (x.type === 'NOMINATE_ARRANGER') {
@@ -554,7 +656,7 @@ http.createServer(async (req, res) => {
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         const t = tally(p, prop);
         if (!t.executable) return json(res, 400, { error: prop.executed ? 'already executed' : prop.superseded ? 'superseded by a later decision' : !t.closed ? 'voting is still open' : t.lapsed ? 'lapsed: not executed within 7 days' : 'did not pass' });
-        const RUNS_IN = { NOMINATE_ARRANGER: ['FULL'], APPROVE_ARRANGEMENT: ['FULL'], LIST: ['FULL', 'ASSEMBLED'], CANCEL_LISTING: ['ASSEMBLED'], DISTRIBUTE: ['ASSEMBLED'] };
+        const RUNS_IN = { NOMINATE_ARRANGER: ['FULL'], APPROVE_ARRANGEMENT: ['FULL'], LIST: ['FULL', 'ASSEMBLED'], CANCEL_LISTING: ['ASSEMBLED'], };
         if (!RUNS_IN[prop.type]?.includes(st)) return json(res, 400, { error: `${prop.type} cannot run while ${st}` });
         if (prop.type === 'APPROVE_ARRANGEMENT' && !validOrder(p, prop.args.order)) return json(res, 400, { error: 'order no longer matches the party' });
         prop.executed = true; prop.executedBy = who;
@@ -576,7 +678,7 @@ http.createServer(async (req, res) => {
           p.order = order; p.orderSource = 'arranger'; p.orderPreset = String(x.preset || 'Manual').slice(0, 60);
           save(); return json(res, 200, view(p));
         }
-        if (p.proposals.filter(q => q.type === 'APPROVE_ARRANGEMENT' && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 arrangements under vote at once' });
+        if (p.proposals.filter(q => q.type === 'APPROVE_ARRANGEMENT' && q.by === who && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 open challenges per member' });
         const at = now();
         p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: String(x.preset || 'custom').slice(0, 60) }, by: who, at, endsAt: at + windowMs(x.hours, p), override: deadlocked(p, 'APPROVE_ARRANGEMENT'), snapshot: Object.fromEntries(members(p).map(m => [m.address, m.count])), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
