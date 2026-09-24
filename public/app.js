@@ -1314,7 +1314,7 @@ async function pageMinute(key) {
   <div id="mstatement">${sheet({ credits: m.cells })}</div>` : ''}
   <div class="mgrid" id="mgrid" ${m.assembled ? 'hidden' : ''}>${m.cells.map(cell).join('')}</div>
   <div class="caption"><span class="muted">${m.assembled ? 'The 80 Credits in their burned order, earliest mint first.' : 'Mint order, earliest first: how the Statement will be laid out.'} <span class="key-in">In the party</span> · <span class="key-out">not yet</span>${me ? ' · <span class="dot y"></span>yours' : ''}</span></div>
-  <div class="detail" id="mdetail"><span class="faint">—</span><span class="muted">Select a Credit.</span></div>
+  <div class="detail" id="mdetail" ${m.assembled ? 'hidden' : ''}><span class="faint">—</span><span class="muted">Select a Credit.</span></div>
   <div class="works" style="margin-top:48px">
    <section>
     ${open ? `<div class="panel">
@@ -1437,6 +1437,7 @@ app.addEventListener('click', e => {
   const st = b.dataset.view === 'st';
   b.parentElement.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   for (const [s, c] of [['#mstatement', '#mgrid'], ['#vst', '#vcr']]) { const a = $(s), g = $(c); if (a && g) { a.hidden = !st; g.hidden = st; } }
+  if ($('#mdetail')) $('#mdetail').hidden = st; // "Select a Credit" only applies to the Credits view
 });
 window.addEventListener('hashchange', route);
 Promise.all([api('auth/me').then(async m => { me = m.address && m.terms ? m.address : ''; access = m; await syncRules(); }), api('stats').then(x => (stats = x))]).then(async () => { const a = await Wallets.restore(CHAIN); const w = Wallets.wallet(); if (w) try { chainNow = Number(await w.provider.request({ method: 'eth_chainId' })) || CHAIN; } catch {} if (me && a && a !== me) { await api('auth/logout', {}).catch(() => {}); me = ''; access = await api('auth/me').catch(() => access); } }).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);

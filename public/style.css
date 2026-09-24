@@ -296,3 +296,4 @@ body.bare main{padding:0;max-width:none}
 .landing .view-only{color:var(--muted);margin-top:10px}
 .mgrid.burned .mcell>span:first-child{display:block;aspect-ratio:1;border:1px solid var(--line2)}
 .mgrid[hidden],#mstatement[hidden],#vst[hidden]{display:none}
+#mdetail[hidden]{display:none}
