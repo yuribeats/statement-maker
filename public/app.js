@@ -543,7 +543,7 @@ async function pageUser(addr) {
   const mini = ids => `<span class="mini">${ids.map(id => `<img src="${svg(id)}" alt="">`).join('')}</span>`;
   const statementLink = (id, number, name) => `<a href="#/statement/${esc(id)}">Statement ${Number(number)}</a> <span class="faint">${esc(name)}</span>`;
   const creditCell = c => `<span class="${c.party ? 'in-party' : ''}" title="#${Number(c.id)} · ${esc(c.colors)} · ${esc(c.print)} · ${esc(c.weight)} · rarity ${Number(c.rank).toLocaleString()}${c.party ? ' · in ' + esc(c.party.name) : ''}"><img src="${svg(c.id)}" alt="Credit ${Number(c.id)}" loading="lazy"></span>`;
-  const past = u.past.map(q => `<div><span>${statementLink(q.id, q.number, q.name)}</span><strong>${q.deposited ? `${Number(q.deposited)} deposited` : ''}${q.deposited && q.held ? ' · ' : ''}${q.held ? `${Number(q.held)} card${q.held === 1 ? '' : 's'} held` : ''} · ${q.soldPrice != null ? `sold ${eth(q.soldPrice)}` : 'not sold'}${q.claimed ? ` · <span class="dot y"></span>claimed ${eth(q.claimedEth)}` : ''}${q.claimable ? ` · ${Number(q.claimable)} claimable · <a href="#/party/${esc(q.id)}">Claim →</a>` : ''}</strong></div>`).join('');
+  const past = u.past.map(q => `<div><span>${statementLink(q.id, q.number, q.name)}${q.demo ? ' <span class="demo">Demo</span>' : ''}</span><strong>${q.deposited ? `${Number(q.deposited)} deposited` : ''}${q.deposited && q.held ? ' · ' : ''}${q.held ? `${Number(q.held)} card${q.held === 1 ? '' : 's'} held` : ''} · ${q.soldPrice != null ? `sold ${eth(q.soldPrice)}` : 'not sold'}${q.claimed ? ` · <span class="dot y"></span>claimed ${eth(q.claimedEth)}` : ''}${q.claimable ? ` · ${Number(q.claimable)} claimable · <a href="#/party/${esc(q.id)}">Claim →</a>` : ''}</strong></div>`).join('');
   const listed = u.statements.filter(p => p.resale && p.resale.seller === addr);
   render(app, `
   <div class="intro"><div><h1>${short(addr)}${you ? ' <span class="muted">· you</span>' : ''}</h1><p class="muted">${esc(addr)}</p></div>
@@ -559,7 +559,7 @@ async function pageUser(addr) {
   ${u.statements.length ? `<div class="parties" style="margin-bottom:64px">${u.statements.map(p => `
    <a class="party-card" href="#/statement/${esc(p.id)}">
     ${sheet(p)}
-    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.resale ? 'Holder listing' : 'Owned'}</span></div>
+    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.demo ? '<span class="demo">Demo</span> ' : ''}${p.resale ? 'Holder listing' : 'Owned'}</span></div>
     <div class="price-line"><strong>${p.resale ? eth(p.resale.priceEth) : eth(p.sold?.price)}</strong><span class="muted">${p.resale ? 'listed' : 'last sale'}</span></div>
    </a>`).join('')}</div>` : '<p class="muted" style="margin-bottom:64px">No Statements owned.</p>'}
 
@@ -747,14 +747,14 @@ function listingCard(it, byId) {
   return `
    <a class="party-card" href="${href}" ${it.source === 'opensea' ? 'target="_blank" rel="noopener noreferrer"' : ''}>
     ${pic}
-    <div class="caption"><span><strong>Statement ${esc(it.number)}</strong> <span class="muted">${esc(it.name)}</span></span><span class="src">${SOURCE[it.source]}</span></div>
+    <div class="caption"><span><strong>Statement ${esc(it.number)}</strong> <span class="muted">${esc(it.name)}</span></span><span class="src">${it.demo ? '<span class="demo">Demo</span> ' : ''}${SOURCE[it.source]}</span></div>
     <div class="price-line"><strong>${eth(it.priceEth)}</strong><span class="muted">${opens > 0 ? 'Opens in ' + hrs(opens) : it.source === 'opensea' ? 'Buy on OpenSea ↗' : 'Buy →'}</span></div>
    </a>`;
 }
 const statementCard = p => `
    <a class="party-card" href="#/statement/${esc(p.id)}">
     ${sheet(p)}
-    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.sold ? 'Owned' : 'Party'}</span></div>
+    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.demo ? '<span class="demo">Demo</span> ' : ''}${p.sold ? 'Owned' : 'Party'}</span></div>
     <div class="price-line"><strong>${p.sold ? eth(p.sold.price) : '—'}</strong><span class="muted">${p.sold ? 'last sale' : 'not listed'}</span></div>
    </a>`;
 async function pageStatements() {
