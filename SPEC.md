@@ -164,3 +164,8 @@ One page per party: 8×10 frame, member list with Credit Card balances, chat, op
 - Statements gallery is buyer-first: For sale (sortable by price or newest, with buy countdowns), Sold, Not listed, Yours. Buy from the Statement page or the party page.
 - Credit Cards are ERC-721s and can be listed and traded on OpenSea or any marketplace. Only the Statement is restricted to sale on Statement Maker.
 - "Try it" page: a browser-only simulation of hosting a party end to end, using real Credits and invented members.
+
+## 13. Floor
+- Readings every minute from OpenSea, kept 25 h. Host picks per party: 24-hour average (default) or latest reading.
+- Source: the Statement collection's own floor as soon as it exists (set STATEMENT_SLUG); until then 80 × the Credits floor.
+- Risk: an early Statement market is thin (one or two listings set the floor). The 24-hour average and the 60/80 below-floor rule limit how much one listing can move a party's price.

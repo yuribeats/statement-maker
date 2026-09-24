@@ -102,13 +102,19 @@ function siweMessage(host, origin, address, nonce) {
 const FLOOR_FILE = path.join(DATA, 'floor.json');
 let floorHist = [];
 try { floorHist = JSON.parse(fs.readFileSync(FLOOR_FILE)); } catch {}
+// Once Jack's Statement collection exists on OpenSea, set STATEMENT_SLUG and its own floor replaces the 80 × Credits proxy.
+const STATEMENT_SLUG = process.env.STATEMENT_SLUG || '';
+async function osFloor(slug) {
+  const r = await fetch(`https://api.opensea.io/api/v2/collections/${encodeURIComponent(slug)}/stats`, { headers: process.env.OPENSEA_API_KEY ? { 'x-api-key': process.env.OPENSEA_API_KEY } : {} });
+  const v = Number((await r.json())?.total?.floor_price);
+  return v > 0 ? v : null;
+}
 async function refreshFloor() {
   try {
-    const r = await fetch('https://api.opensea.io/api/v2/collections/credits/stats', { headers: process.env.OPENSEA_API_KEY ? { 'x-api-key': process.env.OPENSEA_API_KEY } : {} });
-    const j = await r.json();
-    const v = Number(j?.total?.floor_price);
+    const v = await osFloor('credits');
+    const st = STATEMENT_SLUG ? await osFloor(STATEMENT_SLUG).catch(() => null) : null;
     if (v > 0) {
-      floorHist.push({ at: Date.now(), credit: v });
+      floorHist.push({ at: Date.now(), credit: v, ...(st ? { statement: st } : {}) });
       floorHist = floorHist.filter(x => x.at > Date.now() - 25 * 36e5);
       const tmp = FLOOR_FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(floorHist)); fs.renameSync(tmp, FLOOR_FILE);
     }
@@ -116,12 +122,16 @@ async function refreshFloor() {
 }
 refreshFloor(); setInterval(refreshFloor, 60 * 1000);
 const FLOOR_MODES = ['avg24h', 'latest'];
+// Source: the Statement collection's floor when readings exist, otherwise 80 × the Credits floor.
 function floorInfo(mode = 'avg24h') {
-  if (!floorHist.length) return { credit: null, eth: null, hours: 0, samples: 0, mode };
-  if (mode === 'latest') { const l = floorHist.at(-1); return { credit: l.credit, eth: l.credit * SLOTS, hours: 0, samples: 1, at: l.at, mode }; }
-  const xs = floorHist.filter(x => x.at > Date.now() - 864e5);
-  const credit = xs.reduce((a, x) => a + x.credit, 0) / xs.length;
-  return { credit, eth: credit * SLOTS, hours: +((Date.now() - xs[0].at) / 36e5).toFixed(1), samples: xs.length, mode };
+  if (!floorHist.length) return { credit: null, eth: null, hours: 0, samples: 0, mode, source: 'credits' };
+  const useStatement = floorHist.at(-1).statement > 0;
+  const val = x => (useStatement ? x.statement : x.credit * SLOTS);
+  const source = useStatement ? 'statements' : 'credits';
+  if (mode === 'latest') { const l = floorHist.at(-1); return { credit: l.credit, eth: val(l), hours: 0, samples: 1, at: l.at, mode, source }; }
+  const xs = floorHist.filter(x => x.at > Date.now() - 864e5 && (!useStatement || x.statement > 0));
+  const eth = xs.reduce((a, x) => a + val(x), 0) / xs.length;
+  return { credit: xs.reduce((a, x) => a + x.credit, 0) / xs.length, eth, hours: +((Date.now() - xs[0].at) / 36e5).toFixed(1), samples: xs.length, mode, source };
 }
 const floorFor = p => floorInfo(p?.params?.floorMode || 'avg24h');
 const floor = { get credit() { return floorInfo('avg24h').credit; } };
