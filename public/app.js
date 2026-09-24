@@ -78,6 +78,9 @@ function filterText(f = {}) {
   return esc(parts.join(' · ') || 'Any Credit');
 }
 const targetText = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : t.mode === 'floorPct' ? `Floor + ${t.value}%` : `Floor + ${t.value} ETH`);
+const priceOf = (t, floorEth) => t.mode === 'fixed' ? t.value : floorEth == null ? null : t.mode === 'floorPct' ? floorEth * (1 + t.value / 100) : floorEth + t.value;
+const priceLabel = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : `Floor ${t.value < 0 ? '−' : '+'} ${Math.abs(t.value)}${t.mode === 'floorPct' ? '%' : ' ETH'}`);
+const vsFloor = (eth, floorEth) => { if (eth == null || !floorEth) return ''; const d = (eth / floorEth - 1) * 100; return `<span class="${d < 0 ? 'blocked' : 'muted'}">${Math.abs(d).toFixed(0)}% ${d < 0 ? 'below' : 'above'} floor</span>`; };
 const stateTag = s => `<span class="tag">${esc(s)}</span>`;
 function matchesClient(c, f = {}) {
   if (f.colors?.length && !f.colors.includes(c.colors)) return false;
@@ -163,6 +166,8 @@ async function pageParty(id) {
       <div><span>Eligible Credits</span><strong>${filterText(p.params.filters)} · ${p.eligible.toLocaleString()}</strong></div>
       <div><span>Minimum deposit</span><strong>${Number(p.params.minDeposit)}</strong></div>
       <div><span>Target</span><strong>${targetText(p.params.target)}${p.params.target.mode !== 'fixed' ? ' · now ' + eth(p.targetEth) : ''}</strong></div>
+      <div><span>Floor (80 × Credit floor)</span><strong>${eth(p.floorEth)}</strong></div>
+      ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div>` : ''}
       <div><span>Sale split</span><strong>Artist royalty · 1% Statement Maker · rest to 80 tokens</strong></div>
       ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 ${p.status === 'OPEN' ? 'deposited' : 'tokens'}</strong></div>` : ''}
      </div>
@@ -188,7 +193,7 @@ async function pageParty(id) {
      ${p.proposals.length ? p.proposals.map(q => `
       <div class="proposal">
        <div class="caption" style="min-height:0"><strong>${Number(q.id)}. ${esc(q.type.replace('_', ' '))}</strong><span class="${q.passing ? 'pass' : q.no ? 'blocked' : 'muted'}">${q.executed ? 'Passed' : q.no ? 'Blocked by NO' : q.passing ? 'Passing' : 'Open'}</span></div>
-       <div class="muted">${q.type === 'NOMINATE_ARRANGER' ? 'Arranger: ' + short(q.args.address) : q.type === 'APPROVE_ARRANGEMENT' ? 'Order: ' + esc(q.args.preset) : ''} · by ${short(q.by)} · ${ago(q.at)} ago</div>
+       <div class="muted">${q.type === 'NOMINATE_ARRANGER' ? 'Arranger: ' + short(q.args.address) : q.type === 'APPROVE_ARRANGEMENT' ? 'Order: ' + esc(q.args.preset) : q.type === 'LIST' ? 'Price: ' + priceLabel(q.args) + ' · ' + eth(priceOf(q.args, p.floorEth)) + ' · ' + vsFloor(priceOf(q.args, p.floorEth), p.floorEth) : ''} · by ${short(q.by)} · ${ago(q.at)} ago</div>
        <div class="tally"><div class="bar"><i style="width:${q.yes / SLOTS * 100}%"></i></div><span>Yes ${q.yes}</span><div class="bar no"><i style="width:${q.no / SLOTS * 100}%"></i></div><span>No ${q.no}</span></div>
        ${isMember && !q.executed ? `<div class="actions"><button type="button" data-vote="${Number(q.id)}" data-yes="1">Vote yes</button><button type="button" data-vote="${Number(q.id)}" data-yes="0">Vote no</button>${q.type === 'APPROVE_ARRANGEMENT' ? `<button type="button" data-preview="${Number(q.id)}">Preview order</button>` : ''}</div>` : ''}
       </div>`).join('') : '<p class="muted">None yet.</p>'}
@@ -196,6 +201,13 @@ async function pageParty(id) {
       <div class="actions" style="margin-top:14px"><span class="muted">Nominate arranger</span>
        <select id="nominee" style="border:0;border-bottom:1px solid var(--line)">${p.members.map(m => `<option value="${esc(m.address)}">${short(m.address)} · ${Number(m.count)}</option>`).join('')}</select>
        <button type="button" id="nominate">Propose</button></div>` : ''}
+     ${isMember ? `
+      <div class="actions" style="margin-top:10px;align-items:center"><span class="muted">Propose price</span>
+       <select id="pm" style="border:0;border-bottom:1px solid var(--line)"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select>
+       <input id="pv" type="number" step="0.01" value="${p.floorEth ? (p.floorEth * 0.9).toFixed(2) : 1}" style="width:90px;border:0;border-bottom:1px solid var(--line)">
+       <span id="pp" class="muted"></span>
+       <button type="button" id="propose-price">Propose</button></div>
+      <p class="note">Any price can be proposed, below the floor included. Only the vote decides.</p>` : ''}
      <div class="error" id="vote-err"></div>
     </div>` : ''}
 
@@ -239,6 +251,9 @@ async function pageParty(id) {
   $('#withdraw')?.addEventListener('click', () => act('withdraw', {}, 'dep-err'));
   app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => act('vote', { proposal: b.dataset.vote, yes: b.dataset.yes === '1' }, 'vote-err'));
   app.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { const q = p.proposals.find(x => x.id === Number(b.dataset.preview)); const m = new Map(p.credits.map(c => [c.id, c])); partyUI.mode = 'arrange'; partyUI.order = q.args.order.map(id => m.get(id)); partyUI.preset = 'Proposal ' + q.id; route(); });
+  const pricePreview = () => { const t = { mode: $('#pm').value, value: +$('#pv').value }; const e = priceOf(t, p.floorEth); render($('#pp'), `= ${eth(e)} ${vsFloor(e, p.floorEth)}`); };
+  if ($('#pm')) { $('#pm').onchange = pricePreview; $('#pv').oninput = pricePreview; pricePreview(); }
+  $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
   $('#nominate')?.addEventListener('click', () => act('propose', { type: 'NOMINATE_ARRANGER', args: { address: $('#nominee').value } }, 'vote-err'));
   const send = () => { const t = $('#say').value.trim(); if (t) act('chat', { text: t }, 'chat-err'); };
   $('#send')?.addEventListener('click', send);
@@ -323,7 +338,7 @@ function pageRules() {
    <div><span>04 Arrange</span><strong>Members elect an arranger. The arranger orders the 8 × 10 sheet. Members approve the order.</strong></div>
    <div><span>05 Assemble</span><strong>The 80 Credits are burned into one Statement, held by the party.</strong></div>
    <div><span>06 Sell</span><strong>Only at the party's own price, only on Statement Maker. No offers. No auctions. No marketplaces.</strong></div>
-   <div><span>07 Price</span><strong>Fixed ETH, or floor plus ETH or percent. A floor price only moves up.</strong></div>
+   <div><span>07 Price</span><strong>Fixed ETH, or floor plus or minus ETH or percent. Any price can be proposed, below the floor included. A floor-tracking price only moves up; lowering it takes a new vote.</strong></div>
    <div><span>08 Split</span><strong>Artist royalty first, then 1% to Statement Maker, then the rest to token holders.</strong></div>
    <div><span>09 Votes</span><strong>A proposal passes when more than 40 tokens vote yes and no one votes no.</strong></div>
    <div><span>10 Expire</span><strong>If a party never fills or never assembles, every Credit goes back to its depositor.</strong></div>

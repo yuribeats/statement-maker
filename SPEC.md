@@ -68,6 +68,8 @@ Proposal types (closed set, no arbitrary calls):
 - Floor-relative asks:
   - Floor data is read off-chain (marketplace APIs, since other Statements will trade there) and averaged over 24 h. This is a data input only; we list nothing there.
   - A keeper updates the on-chain ask as the floor rises. The contract accepts only increases: the ask never goes down. Lowering the price requires a new LIST vote.
+- Manual prices: any member may propose a LIST at any price, including below the floor (fixed ETH, or floor minus ETH/percent). The floor is shown as context, never enforced. Only the pass rule decides.
+- A LIST can be proposed while FULL; it takes effect when the Statement is assembled.
   - The LIST proposal carries an absolute minimum in ETH as the starting ask.
   - Keeper risk: a faulty keeper could only raise the price (blocking sales, never underselling). Members can CANCEL_LISTING and re-list by vote.
 

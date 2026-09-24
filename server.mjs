@@ -71,6 +71,12 @@ function tally(p, prop) {
   for (const [a, v] of Object.entries(prop.votes)) (v ? (yes += w.get(a) || 0) : (no += w.get(a) || 0));
   return { yes, no, passing: yes > SLOTS / 2 && no === 0 };
 }
+function priceEth(t) {
+  const base = floor.credit ? floor.credit * SLOTS : null;
+  if (t.mode === 'fixed') return t.value;
+  if (!base) return null;
+  return t.mode === 'floorPct' ? base * (1 + t.value / 100) : base + t.value;
+}
 function targetEth(p) {
   const t = p.params.target;
   const base = floor.credit ? floor.credit * SLOTS : null;
@@ -85,6 +91,8 @@ function view(p) {
     credits: order.map(id => card(byId.get(id), p.deposits.find(d => d.id === id)?.address)),
     proposals: p.proposals.map(x => ({ ...x, ...tally(p, x) })),
     eligible: [...byId.values()].filter(c => matches(c, p.params.filters)).length,
+    floorEth: floor.credit ? floor.credit * SLOTS : null,
+    listingEth: p.listing ? priceEth(p.listing) : null,
   };
 }
 const card = (c, depositor) => c && ({ id: c.id, colors: c.colors, print: c.print, weight: c.weight, eights: c.eights, tier: c.tier, marks: c.marks, rank: c.rank, paidAt: c.paidAt, owner: c.owner, depositor });
@@ -223,7 +231,16 @@ http.createServer(async (req, res) => {
       if (c === 'propose') {
         if (st !== 'FULL' && st !== 'ASSEMBLED') return json(res, 400, { error: 'proposals open once the party is full' });
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'token holders only' });
-        const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'APPROVE_ARRANGEMENT'] : ['LIST', 'CANCEL_LISTING', 'DISTRIBUTE'];
+        const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'APPROVE_ARRANGEMENT', 'LIST'] : ['LIST', 'CANCEL_LISTING', 'DISTRIBUTE'];
+        if (x.type === 'LIST') {
+          // Any price may be proposed, including below the floor. Only a vote sets it.
+          const mode = ['fixed', 'floorEth', 'floorPct'].includes(x.args?.mode) ? x.args.mode : null;
+          const value = Number(x.args?.value);
+          if (!mode || !Number.isFinite(value)) return json(res, 400, { error: 'price needs a mode and a number' });
+          if (mode === 'fixed' && value <= 0) return json(res, 400, { error: 'a fixed price must be above 0' });
+          if (mode !== 'fixed' && !(priceEth({ mode, value }) > 0)) return json(res, 400, { error: 'that price is at or below 0 ETH' });
+          x.args = { mode, value };
+        }
         if (!allowed.includes(x.type)) return json(res, 400, { error: `${x.type} not allowed while ${st}` });
         p.proposals.push({ id: p.proposals.length + 1, type: x.type, args: x.args || {}, by: who, at: Date.now(), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
@@ -238,6 +255,7 @@ http.createServer(async (req, res) => {
           prop.executed = true;
           if (prop.type === 'NOMINATE_ARRANGER') p.arranger = prop.args.address;
           if (prop.type === 'APPROVE_ARRANGEMENT') p.order = prop.args.order;
+          if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: Date.now() };
         }
         save(); return json(res, 200, view(p));
       }
