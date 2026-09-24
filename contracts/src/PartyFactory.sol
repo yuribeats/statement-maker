@@ -43,6 +43,11 @@ contract PartyFactory is EIP712 {
         emit PartyCreated(address(party), msg.sender, parties.length - 1);
     }
 
+    /// @notice Seconds per "hour" for party rule windows. Always 1 hour here; TestnetPartyFactory overrides it.
+    function timeUnit() public view virtual returns (uint256) {
+        return 1 hours;
+    }
+
     function partiesCount() external view returns (uint256) {
         return parties.length;
     }

@@ -3,13 +3,14 @@ pragma solidity 0.8.28;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {Credits} from "../test/credits/Credits.sol";
-import {PartyFactory} from "../src/PartyFactory.sol";
+import {TestnetPartyFactory} from "../src/testnet/TestnetPartyFactory.sol";
+import {KeyProbe} from "../src/testnet/KeyProbe.sol";
 import {MockStatement} from "../src/mocks/MockStatement.sol";
 import {ICredits, IStatement} from "../src/interfaces/IExternal.sol";
 
 /// @notice Sepolia rehearsal: Jack's verified Credits source (identical code), test Credits, the Statement stand-in,
 ///         and Statement Maker. Refuses to run on any chain but Sepolia.
-/// env: TEST_HOLDERS (comma-separated addresses), PER_HOLDER, FLOOR_SIGNER, FEE_RECIPIENT
+/// env: TEST_HOLDERS (comma-separated addresses), PER_HOLDER, FLOOR_SIGNER, FEE_RECIPIENT, TIME_UNIT (seconds per rule-hour)
 contract DeploySepolia is Script {
     function run() external {
         require(block.chainid == 11155111, "Sepolia only");
@@ -19,6 +20,17 @@ contract DeploySepolia is Script {
         address feeTo = vm.envAddress("FEE_RECIPIENT");
 
         vm.startBroadcast();
+        // Reuse an already-deployed test Credits + Statement stand-in when given (EXISTING_CREDITS/EXISTING_STATEMENT).
+        address existing = vm.envOr("EXISTING_CREDITS", address(0));
+        if (existing != address(0)) {
+            TestnetPartyFactory f = new TestnetPartyFactory(ICredits(existing), IStatement(vm.envAddress("EXISTING_STATEMENT")), feeTo, signer, vm.envUint("TIME_UNIT"));
+            KeyProbe kp = new KeyProbe();
+            vm.stopBroadcast();
+            console2.log("PartyFactory", address(f));
+            console2.log("CreditCards", address(f.cards()));
+            console2.log("KeyProbe", address(kp));
+            return;
+        }
         Credits credits = new Credits(msg.sender);
         uint256 n = holders.length * per;
         uint256 batch = 100;
@@ -37,13 +49,15 @@ contract DeploySepolia is Script {
         }
         credits.seal();
         MockStatement statement = new MockStatement(address(credits));
-        PartyFactory factory = new PartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, signer);
+        TestnetPartyFactory factory = new TestnetPartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, signer, vm.envUint("TIME_UNIT"));
+        KeyProbe probe = new KeyProbe();
         vm.stopBroadcast();
 
         console2.log("Credits (test copy)", address(credits));
         console2.log("Statement (stand-in)", address(statement));
         console2.log("PartyFactory", address(factory));
         console2.log("CreditCards", address(factory.cards()));
+        console2.log("KeyProbe", address(probe));
     }
 
     function _seed(uint256 i) internal pure returns (bytes21 s) {

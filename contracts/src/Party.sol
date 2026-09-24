@@ -14,6 +14,7 @@ interface IFactory {
     function cards() external view returns (CreditCards);
     function feeRecipient() external view returns (address);
     function FEE_BPS() external view returns (uint16);
+    function timeUnit() external view returns (uint256);
     function isValidFloor(uint256 floorWei, uint8 mode, uint64 issuedAt, bytes calldata sig) external view returns (bool);
 }
 
@@ -94,6 +95,10 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint64 public createdAt;
     uint64 public deadline;
     uint64 public fullAt;
+    /// @notice Seconds per "hour" for every rule window (buy delay, votes, lapse, deadlock, deadline). 3600 on mainnet;
+    ///         a testnet factory may set it lower so a full party can be rehearsed in minutes. Floor-signature age is
+    ///         always real time.
+    uint256 public timeUnit;
 
     // deposits
     uint256[] internal _order; // credit ids in deposit order (compacted on redeem)
@@ -147,6 +152,8 @@ contract Party is Initializable, ReentrancyGuardTransient {
         factory = IFactory(msg.sender);
         credits = factory.credits();
         cards = factory.cards();
+        timeUnit = factory.timeUnit();
+        if (timeUnit == 0 || timeUnit > 1 hours) revert Bad("timeUnit");
         if (host_ == address(0)) revert Bad("host");
         if (p.minDeposit == 0 || p.minDeposit > SLOTS) revert Bad("minDeposit");
         if (p.durationDays == 0 || p.durationDays > 60) revert Bad("duration");
@@ -157,7 +164,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         host = host_;
         _params = p;
         createdAt = uint64(block.timestamp);
-        deadline = uint64(block.timestamp + uint256(p.durationDays) * 1 days);
+        deadline = uint64(block.timestamp + _t(uint256(p.durationDays) * 1 days));
     }
 
     // ------------------------------------------------------------------ views
@@ -352,7 +359,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         bool dl = _deadlocked();
         _proposals.push(Proposal({
             price: price, cancel: cancel, proposer: msg.sender, snapshot: uint48(block.number - 1),
-            endsAt: uint64(block.timestamp + uint256(h) * 1 hours), epoch: priceEpoch, deadlock: dl,
+            endsAt: uint64(block.timestamp + _t(uint256(h) * 1 hours)), epoch: priceEpoch, deadlock: dl,
             executed: false, yes: 0, no: 0
         }));
         ++openBy[msg.sender];
@@ -394,7 +401,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         Status s = status();
         if (p.executed) revert Bad("executed");
         if (block.timestamp < p.endsAt) revert Bad("voting open");
-        if (block.timestamp > uint256(p.endsAt) + EXECUTE_WINDOW) revert Bad("lapsed");
+        if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
         if (p.epoch != priceEpoch) revert Bad("superseded");
         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
         if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
@@ -437,7 +444,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     function _deadlocked() internal view returns (bool) {
         if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
         uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (fullAt != 0 ? fullAt : type(uint64).max);
-        return since != type(uint64).max && block.timestamp > since + DEADLOCK_TIME;
+        return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
     }
 
     function _refreshOpen(address who) internal {
@@ -465,7 +472,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     /// @notice Buy the Statement at the current ask. `maxPrice` protects against an ask change in the same block.
     function buy(uint256 maxPrice) external payable nonReentrant {
         if (status() != Status.ASSEMBLED || ask == 0) revert Bad("not for sale");
-        if (block.timestamp < uint256(askLiveAt) + BUY_DELAY) revert Bad("not open yet");
+        if (block.timestamp < uint256(askLiveAt) + _t(BUY_DELAY)) revert Bad("not open yet");
         uint256 price = ask;
         if (price > maxPrice || msg.value < price) revert Bad("price");
 
@@ -552,6 +559,11 @@ contract Party is Initializable, ReentrancyGuardTransient {
         int256 r = p.mode == PriceMode.FloorPct ? f * (10_000 + p.value) / 10_000 : f + p.value;
         if (r <= 0) revert Bad("price <= 0");
         return uint256(r);
+    }
+
+    /// @dev Scales a rule duration expressed in real seconds by the factory's time unit (identity when timeUnit = 1 hour).
+    function _t(uint256 secs) internal view returns (uint256) {
+        return secs * timeUnit / 1 hours;
     }
 
     function _windowOk(uint16 h) internal pure returns (bool) {

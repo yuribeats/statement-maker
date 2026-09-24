@@ -4,6 +4,7 @@ pragma solidity 0.8.28;
 import {ICredits, ICreditArt} from "./interfaces/IExternal.sol";
 
 /// @notice Arrangement presets and their sort keys, computed from on-chain Credits data only.
+///         key() and shuffle() are public, so this library is deployed once and linked (keeps Party under 24 KB).
 ///         Every auto arrangement is a strict ascending order of uint256 keys; the low 32 bits of each key are
 ///         the Credit id, so keys are unique and ties always break by ascending id.
 ///         The same orderings are implemented in the site (server.mjs PRESETS) and must stay identical.
@@ -24,7 +25,7 @@ library CreditKeys {
 
     uint256 internal constant ID_BITS = 32;
 
-    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) internal view returns (uint256) {
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
         require(id < 2 ** ID_BITS, "id");
         if (p == Preset.Number) return id;
         uint64 paidAt = credits.timestampOf(id);
@@ -132,7 +133,7 @@ library CreditKeys {
     }
 
     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
-    function shuffle(uint256[] memory ids, uint256 seed) internal pure returns (uint256[] memory out) {
+    function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
         out = new uint256[](ids.length);
         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
         for (uint256 i = out.length; i > 1; --i) {
