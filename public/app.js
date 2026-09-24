@@ -18,6 +18,9 @@ const api = async (path, body) => {
 };
 let stats = null;
 let me = ''; // set from the server session (GET /api/auth/me), never from local state
+let access = { canParty: false, storeOnly: '' };
+const STORE_ONLY_TEXT = 'Statements made by a party can only be sold on Statement Maker, at the party\u2019s own price. They cannot be listed, offered or auctioned on OpenSea or any other marketplace.';
+const storeBanner = () => `<div class="store-only"><strong>Sold only on Statement Maker.</strong> ${STORE_ONLY_TEXT} Credit Cards can be traded anywhere; the Statement cannot.</div>`;
 
 // ---------- wallet: real sign-in with a browser wallet; simulated wallets only in dev builds ----------
 async function fillActing() {
@@ -45,7 +48,7 @@ $('#acting').addEventListener('change', async e => {
   if (v === '__paste') { v = (prompt('Wallet address') || '').trim().toLowerCase(); if (!/^0x[0-9a-f]{40}$/.test(v)) { fillActing(); return; } }
   if (v) { fillActing(); openTermsModal(v, 'sim'); }
 });
-function setMe(v) { me = v; fillActing(); route(); }
+async function setMe(v) { me = v; try { const m = await api('auth/me'); access = m; } catch {} fillActing(); route(); }
 const hex = str => '0x' + [...new TextEncoder().encode(str)].map(b => b.toString(16).padStart(2, '0')).join('');
 
 // ---------- ordering presets ----------
@@ -182,6 +185,7 @@ async function pageParty(id) {
 
   render(app, `
   <div class="intro"><div><h1>${esc(p.name)}</h1>${p.description ? `<p class="desc">${esc(p.description)}</p>` : ''}<p class="muted">${p.status === 'OPEN' ? `${remaining} slots open · closes in ${Math.max(0, Math.ceil((p.deadline - Date.now()) / 864e5))} days` : p.status === 'FULL' ? (p.manual ? 'Full · host arranging by hand' : 'Full · ready to burn') : esc(p.status)}${p.demo ? ' · <span class="demo">Demo data</span>' : ''}</p></div><div style="text-align:right"><a href="#/" class="muted">← All parties</a>${stats?.dev ? `<div><button type="button" id="skip" class="faint" title="Prototype only: move the clock forward">Dev · skip 24h</button></div>` : ''}</div></div>
+  ${storeBanner()}
   <div class="works">
    <section aria-label="Statement">
     ${sheet(p, { interactive: true, order, selected: partyUI.selected })}
@@ -259,7 +263,8 @@ async function pageParty(id) {
        <p class="muted">${short(me)} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'} · ${eligibleMine.length} eligible here · minimum ${minDep}</p>
        <div class="picker">${wallet.slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
-       <button class="cta" id="deposit">Deposit ${partyUI.picks.size || ''}</button> ${cost('deposit')} each
+       <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>I understand the Statement this party makes can only be sold on Statement Maker, at the party\u2019s price, and never on OpenSea or any other marketplace.</span></label>
+       <button class="cta" id="deposit" disabled>Deposit ${partyUI.picks.size || ''}</button> ${cost('deposit')} each
        ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Redeem all my cards</button>` : ''}`}
      <div class="error" id="dep-err"></div>
      <p class="note">Depositing accepts this party's defaults: ${esc(arrLabel(p.params.arrangement))} arrangement, ${targetText(p.params.target)} price. Each Credit you deposit returns one Credit Card. Until the party fills, the card's holder can redeem it for that Credit.</p>
@@ -358,7 +363,8 @@ async function pageParty(id) {
   app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const id = Number(b.dataset.pick); partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); $('#deposit').textContent = 'Deposit ' + (partyUI.picks.size || ''); });
   $('#pick-all')?.addEventListener('click', () => { partyUI.picks = new Set(eligibleMine.slice(0, remaining).map(c => c.id)); route(); });
   $('#pick-none')?.addEventListener('click', () => { partyUI.picks.clear(); route(); });
-  $('#deposit')?.addEventListener('click', async () => { const picks = [...partyUI.picks]; partyUI.picks.clear(); if (!await act('deposit', { ids: picks }, 'dep-err')) partyUI.picks = new Set(picks); });
+  $('#dep-ack')?.addEventListener('change', e => { $('#deposit').disabled = !e.target.checked; });
+  $('#deposit')?.addEventListener('click', async () => { const picks = [...partyUI.picks]; partyUI.picks.clear(); if (!await act('deposit', { ids: picks, storeOnly: $('#dep-ack').checked }, 'dep-err')) partyUI.picks = new Set(picks); });
   $('#withdraw')?.addEventListener('click', () => act('withdraw', {}, 'dep-err'));
   app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => act('vote', { proposal: b.dataset.vote, yes: b.dataset.yes === '1' }, 'vote-err'));
   app.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { const q = p.proposals.find(x => x.id === Number(b.dataset.preview)); const m = new Map(p.credits.map(c => [c.id, c])); partyUI.mode = 'arrange'; partyUI.order = q.args.order.map(id => m.get(id)); partyUI.preset = 'Proposal ' + q.id; route(); });
@@ -419,7 +425,16 @@ async function pageNew() {
     <div class="field"><label for="rk">Rarity rank ≤</label><div><input id="rk" type="number" min="1" max="${rg.rank[1]}" value="${val(draft.filters.rankMax)}" placeholder="Any">${hint(`Range: ${n(rg.rank[0])}–${n(rg.rank[1])} · 1 = rarest · e.g. 1,000 keeps the rarest 1,000`)}</div></div>
     <div class="field"><label>Ink (marks)</label><div><div style="display:flex;gap:12px"><input id="mk0" type="number" min="${rg.marks[0]}" max="${rg.marks[1]}" placeholder="Min" value="${val(draft.filters.marksMin)}"><input id="mk1" type="number" min="${rg.marks[0]}" max="${rg.marks[1]}" placeholder="Max" value="${val(draft.filters.marksMax)}"></div>${hint(`Range: ${rg.marks[0]}–${rg.marks[1]} inked squares · median 65`)}</div></div>
     <div class="field"><label>Token number</label><div><div style="display:flex;gap:12px"><input id="id0" type="number" min="1" max="${rg.id[1]}" placeholder="From" value="${val(draft.filters.idMin)}"><input id="id1" type="number" min="1" max="${rg.id[1]}" placeholder="To" value="${val(draft.filters.idMax)}"></div>${hint(`Range: ${n(rg.id[0])}–${n(rg.id[1])} · lower numbers paid earlier`)}</div></div>
-    <button class="cta" id="create" type="button">Open party as ${me ? short(me) : '—'}</button>
+    <div class="panel" style="margin-top:32px">
+     <h2>Your opening deposit</h2>
+     <p class="alert-k">Your connected wallet must deposit at least the minimum number of Credits, and every one must meet the criteria selected above. The party opens with your deposit.</p>
+     <p class="muted" id="own-note">…</p>
+     <div class="picker" id="own-picker"></div>
+     <div class="actions"><button type="button" id="own-all">Select the minimum</button><button type="button" id="own-none">Clear</button></div>
+    </div>
+    ${storeBanner()}
+    <label class="check" style="margin:12px 0"><input type="checkbox" id="new-ack"> <span>I understand the Statement this party makes can only be sold on Statement Maker, at the party’s price, and never on OpenSea or any other marketplace.</span></label>
+    <button class="cta" id="create" type="button" disabled>Open party and deposit</button>
     <div class="error" id="new-err"></div>
    </div>
    <div>
@@ -441,7 +456,25 @@ async function pageNew() {
     $('#elig').textContent = `${r.count.toLocaleString()} Credits · ${r.owners.toLocaleString()} holders · up to ${r.statements.toLocaleString()} Statements`;
     render($('#elig-sheet'), r.sample.map(c => `<span><img src="${svg(c.id)}" alt=""></span>`).join('') + '<span class="empty"></span>'.repeat(Math.max(0, SLOTS - r.sample.length)));
     $('#elig-note').textContent = r.count < SLOTS ? 'Fewer than 80 Credits match. This party could never fill.' : 'Rarest 16 shown.';
+    drawOwn();
   }, 150); };
+  // The host's own Credits that meet the criteria; the party opens with at least the minimum of them.
+  let own = [];
+  const picks = new Set();
+  api('wallet/' + me).then(w => { own = w; drawOwn(); }).catch(() => {});
+  function drawOwn() {
+    const ok = own.filter(c => !c.deposited && matchesClient(c, draft.filters));
+    for (const id of [...picks]) if (!ok.some(c => c.id === id)) picks.delete(id);
+    const min = draft.minDeposit || 1;
+    $('#own-note').textContent = `${short(me)} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; ${ok.length} meet these criteria. Selected ${picks.size} of at least ${min}.`;
+    render($('#own-picker'), ok.slice(0, 200).map(c => `<button type="button" data-own="${Number(c.id)}" aria-pressed="${picks.has(c.id)}" title="#${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`).join('') || '<span class="muted">None of your Credits meet these criteria. Loosen the filters or hold a matching Credit.</span>');
+    app.querySelectorAll('[data-own]').forEach(b => b.onclick = () => { const id = Number(b.dataset.own); picks.has(id) ? picks.delete(id) : picks.add(id); drawOwn(); });
+    $('#create').disabled = !($('#new-ack').checked && picks.size >= min);
+    $('#create').textContent = `Open party and deposit ${picks.size || ''}`;
+  }
+  $('#own-all').onclick = () => { own.filter(c => !c.deposited && matchesClient(c, draft.filters)).slice(0, draft.minDeposit || 1).forEach(c => picks.add(c.id)); drawOwn(); };
+  $('#own-none').onclick = () => { picks.clear(); drawOwn(); };
+  $('#new-ack').onchange = drawOwn;
   $('#shift-only').onclick = e => { draft.filters.shiftOnly = !draft.filters.shiftOnly; e.target.setAttribute('aria-pressed', draft.filters.shiftOnly); refresh(); };
   app.querySelectorAll('[data-f="shiftMin"]').forEach(b => b.onclick = e => { e.stopImmediatePropagation(); const v = +b.dataset.v; draft.filters.shiftMin = draft.filters.shiftMin === v ? undefined : v; app.querySelectorAll('[data-f="shiftMin"]').forEach(x => x.setAttribute('aria-pressed', draft.filters.shiftMin === +x.dataset.v)); refresh(); });
   app.querySelectorAll('[data-f]:not([data-f="shiftMin"])').forEach(b => b.onclick = () => { const k = b.dataset.f, v = k === 'eights' ? +b.dataset.v : b.dataset.v; const a = draft.filters[k] || []; draft.filters[k] = a.includes(v) ? a.filter(x => x !== v) : [...a, v]; b.setAttribute('aria-pressed', draft.filters[k].includes(v)); refresh(); });
@@ -450,8 +483,8 @@ async function pageNew() {
   app.querySelectorAll('[data-arr]').forEach(b => b.onclick = () => { draft.arrangement = b.dataset.arr === 'Random' ? { preset: 'Random', seed: 1 + Math.floor(Math.random() * 999999) } : { preset: b.dataset.arr }; app.querySelectorAll('[data-arr]').forEach(x => x.setAttribute('aria-pressed', x === b)); const h = $('#arr-hint'); const man = draft.arrangement.preset === 'Manual'; h.className = 'hint' + (man ? ' alert-c' : ''); h.textContent = man ? 'Manual: you will order the 80 by hand and burn in the same step. Nobody else can burn this party.' : 'Fixed at the burn. You are the only arranger; there is no vote on arrangement.'; });
   app.querySelectorAll('[data-tm]').forEach(b => b.onclick = () => { draft.target.mode = b.dataset.tm; app.querySelectorAll('[data-tm]').forEach(x => x.setAttribute('aria-pressed', x === b)); tvHint(); });
   tvHint();
-  app.querySelectorAll('input, textarea').forEach(i => i.oninput = refresh);
-  $('#create').onclick = async () => { read(); try { const p = await api('parties', draft); location.hash = '#/party/' + p.id; } catch (e) { $('#new-err').textContent = e.message; } };
+  app.querySelectorAll('input:not([type=checkbox]), textarea').forEach(i => i.oninput = refresh);
+  $('#create').onclick = async () => { read(); try { const p = await api('parties', { ...draft, ids: [...picks], storeOnly: $('#new-ack').checked }); location.hash = '#/party/' + p.id; } catch (e) { $('#new-err').textContent = e.message; } };
   refresh();
 }
 
@@ -564,6 +597,18 @@ function openTermsModal(address, mode = 'sim') {
     } catch (e) { $('#t-err').textContent = e.message; }
   };
   $('#agree').focus?.();
+}
+
+// ---------- gate ----------
+function pageGate() {
+  render(app, `
+  <div class="intro"><div><h1>For Credit holders</h1><p class="muted">Parties are open to wallets that hold a Credit or a Credit Card.</p></div></div>
+  <div class="works"><div class="rows terms">
+   <div><span>Parties</span><strong>${me ? `The connected wallet ${short(me)} holds no Credits and no Credit Cards, so it cannot start or join a party.` : 'Connect a wallet that holds at least one Credit to start or join a party.'}</strong></div>
+   <div><span>Starting a party</span><strong>You must hold a Credit, and open the party by depositing at least its minimum number of Credits that meet the criteria you set.</strong></div>
+   <div><span>Without a Credit</span><strong>You can view and buy Statements, read the rules, and try the simulation.</strong></div>
+  </div>
+  <div><div class="actions">${me ? '' : '<span class="muted">Use “Connect wallet” at the top right.</span>'}<a class="cta" href="#/statements" style="margin:0">View Statements →</a><a href="#/try">Try it →</a></div></div></div>`);
 }
 
 // ---------- statements ----------
@@ -784,6 +829,45 @@ async function pageSim() {
   $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(`You claimed ${eth(perCard * mine.length)} for 5 cards. The cards were burned.`); }));
 }
 
+// ---------- definitions: hovering a field label shows what it means ----------
+const DEFS = {
+  'name': 'What the party is called. Shown on its page and on every Credit Card.',
+  'description': 'What this Statement is about, in your words. Up to 1,000 characters.',
+  'minimum deposit': 'The fewest Credits one person can add at a time. The last slots are exempt so the party can always reach exactly 80.',
+  'deadline, days': 'How long the party has to fill and burn. If it misses the deadline, every Credit goes back to whoever holds its card.',
+  'vote window': 'How long a price vote stays open by default. Anyone proposing can pick 24 hours, 48 hours, 72 hours or 7 days.',
+  'default arrangement': 'The order of the 80 Credits in the 8 × 10 sheet. An auto-order is checked by the contract at the burn; Manual means the host arranges by hand.',
+  'arrangement': 'The order of the 80 Credits in the 8 × 10 sheet, set by the host when the party opened.',
+  'floor reference': 'Which floor this party uses: the average of the last 24 hours (harder to move with one cheap listing) or the latest reading.',
+  'default price': 'What the Statement sells for once it is made, unless card holders vote a different price.',
+  'colors': 'Which of the four ink plates (cyan, magenta, yellow, black) show on a Credit. Set by the payment second.',
+  'print': 'Registration: Registered means the plates line up; Nudge, Slip, Skew, Drift and Loose are increasingly misregistered.',
+  'weight': 'How much of the grid is inked: sparse, lean, even or extreme.',
+  'eights': 'How many 8s appear in the X Money transaction ID. More eights are rarer.',
+  'shifted plates': 'For misregistered Credits: which ink plates moved off register.',
+  'shift size': 'The largest distance any plate moved, in squares (1 or 2).',
+  'rarity rank ≤': 'Keep only Credits at or above this rarity. 1 is the rarest of all 122,154.',
+  'ink (marks)': 'How many squares are inked, from 16 to 160.',
+  'token number': 'The Credit number. Lower numbers were paid for earlier.',
+  'status': 'Where the party is: open (filling), full (ready to burn), assembled (Statement made), sold, or expired.',
+  'filled': 'Credits deposited so far, out of 80.',
+  'hosts': 'Who opened the party. The host sets the defaults and is the only arranger.',
+  'eligible credits': 'Which Credits this party accepts, and how many exist in total.',
+  'sale split': 'Where the sale money goes: 1% to Statement Maker, the rest in 80 equal shares, one per Credit Card.',
+  'defaults': 'Settings the host chose when opening the party. They apply automatically.',
+  'you': 'How many of this party’s 80 Credit Cards your connected wallet holds.',
+  'floor': 'The reference price for a Statement: the Statement collection floor once it exists, 80 × the Credits floor until then. Prices below it need 60 of 80 votes.',
+  'approved price': 'The price in force now, set by the host default or by a vote.',
+};
+function addDefs(root = app) {
+  root.querySelectorAll('.field > label, .rows > div > span:first-child').forEach(el => {
+    const k = el.textContent.trim().toLowerCase().replace(/\s+/g, ' ');
+    const d = DEFS[k] || DEFS[k.split(' · ')[0]];
+    if (d) { el.dataset.def = d; el.tabIndex = 0; }
+  });
+}
+new MutationObserver(() => addDefs()).observe(app, { childList: true, subtree: true });
+
 // ---------- deploy check: a tab left open across a deploy reloads itself instead of running stale code ----------
 let build = null;
 async function checkBuild() {
@@ -802,6 +886,9 @@ async function route() {
   if (page !== 'party' || arg !== lastParty) partyUI = freshUI();
   lastParty = page === 'party' ? arg : null;
   try {
+    // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements, Try it and Terms only.
+    const gated = !page || page === 'new' || page === 'wallet' || page === 'party';
+    if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page);
     if (page === 'party') await pageParty(arg);
     else if (page === 'new') await pageNew();
     else if (page === 'wallet') await pageWallet(arg);
@@ -814,4 +901,4 @@ async function route() {
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
 window.addEventListener('hashchange', route);
-Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; }), api('stats').then(x => (stats = x))]).then(() => Promise.all([fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
+Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; access = m; }), api('stats').then(x => (stats = x))]).then(() => Promise.all([fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
