@@ -158,4 +158,25 @@ contract Findings3Test is FixesBase {
             vm.revertToState(snap);
         }
     }
+
+    // ================================================================== Pashov L4: no proposal in the fill block
+
+    /// A proposal made in the block that fills slot 80 would snapshot the previous block, where the last depositors'
+    /// cards did not exist yet: they could not vote NO on it. Proposals now open from the next block.
+    function test_propose_notInFillBlock() public {
+        Party party = newParty(params(CreditKeys.Preset.Deposit));
+        deposit(party, holders[0], first(holders[0], 59)); // 60 with the opening deposit
+        vm.roll(block.number + 1);
+        deposit(party, holders[1], first(holders[1], 20)); // fills slot 80 in this block
+        assertEq(party.fullBlock(), block.number);
+        vm.prank(holders[0]);
+        vm.expectRevert(bad("just filled"));
+        party.propose(fixedPrice(5 ether), false, 24, 0);
+        vm.roll(block.number + 1);
+        vm.prank(holders[0]);
+        uint256 id = party.propose(fixedPrice(5 ether), false, 24, 0);
+        vm.prank(holders[1]); // the last depositor has weight at the snapshot and can vote NO
+        party.vote(id, false);
+        assertEq(party.proposal(id).no, 20);
+    }
 }

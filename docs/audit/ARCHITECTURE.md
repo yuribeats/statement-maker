@@ -102,7 +102,7 @@ Only prices are governed. Two proposal kinds: **LIST** (`cancel = false`, a `Pri
 ### 6.2 Lifecycle of a proposal
 | Step | Rule | Code |
 |---|---|---|
-| propose | LIST allowed in FULL or ASSEMBLED. CANCEL allowed only in ASSEMBLED with `ask > 0`. Caller must hold ≥ 1 card now. Lifetime cap `MAX_PROPOSALS = 256` per party. At most `MAX_OPEN_PER_PROPOSER = 3` open proposals per address. Window 1/24/48/72/168 h (0 = party default; CANCEL always 24 h). The proposer's YES is cast automatically. | 340-362 |
+| propose | LIST allowed in FULL or ASSEMBLED, from the block after the one that filled slot 80 (`fullBlock`; Pashov L4: the snapshot is block − 1). CANCEL allowed only in ASSEMBLED with `ask > 0`. Caller must hold ≥ 1 card now. Lifetime cap `MAX_PROPOSALS = 256` per party. At most `MAX_OPEN_PER_PROPOSER = 3` open proposals per address. Window 1/24/48/72/168 h (0 = party default; CANCEL always 24 h). The proposer's YES is cast automatically. | 340-362 |
 | snapshot | `snapshot = block.number − 1`. Weight = the caller's card count for this party at the end of that block (`CreditCards.heldAt`). Resists flash loans and buy-vote-sell. | 354, 368-382 |
 | vote | Allowed while `now < endsAt`. Weight is cached on first vote. The vote can be changed (yes↔no). No check for epoch, executed, or status. | 364-382 |
 | execute | `now ≥ endsAt` and `now ≤ endsAt + 7 days` (else lapsed), `epoch == priceEpoch` (else superseded), caller holds ≥ 1 card now, and status valid for the kind. LIST requires a valid floor attestation even for `Fixed` prices. | 392-427 |

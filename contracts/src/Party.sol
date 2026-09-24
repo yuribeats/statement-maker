@@ -106,6 +106,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint64 public fullAt;
     uint64 public assembledAt;
     uint64 public lastFloorAt; // floor readings may never go back in time
+    uint64 public fullBlock; // block in which slot 80 was filled; proposals open from the next block (vote snapshot = block - 1)
     /// @notice Seconds per "hour" for every rule window (buy delay, votes, lapse, deadlock, deadline). 3600 on mainnet;
     ///         a testnet factory may set it lower so a full party can be rehearsed in minutes. Floor-signature age is
     ///         always real time.
@@ -234,6 +235,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         }
         if (_order.length == SLOTS) {
             fullAt = uint64(block.timestamp);
+            fullBlock = uint64(block.number);
             uint256 grace = block.timestamp + _t(FILL_GRACE);
             if (deadline < grace) deadline = uint64(grace);
         }
@@ -339,6 +341,8 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
         if (cancel && ask == 0) revert Bad("not listed");
         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+        // The snapshot is block - 1: in the fill block the last depositors' cards would carry no weight (Pashov L4).
+        if (block.number <= fullBlock) revert Bad("just filled");
         _refreshOpen(msg.sender);
         if (_openIds[msg.sender].length >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
         if (!cancel) _checkPrice(price);
