@@ -73,6 +73,33 @@ Proposal types (closed set, no arbitrary calls):
   - The LIST proposal carries an absolute minimum in ETH as the starting ask.
   - Keeper risk: a faulty keeper could only raise the price (blocking sales, never underselling). Members can CANCEL_LISTING and re-list by vote.
 
+## 4c. Callers and gas
+Every state change is a transaction: someone calls it and pays gas. Rule: once a step is allowed, ANY party member (depositor or token holder) can call it. No host, arranger, or Statement Maker key is required to move a party forward, so no single absent person can stall it.
+
+| Function | Who may call | When | Gas (measured on a mainnet fork 2026-09-23 unless marked) |
+|---|---|---|---|
+| openParty(params) | any Credit holder (becomes host) | any time | est. ~250k (clone ERC-20 + vault) |
+| deposit(ids) | the Credits' owner | OPEN | ~126k per Credit (1 transfer measured: 125,815) |
+| withdraw(ids) | the depositor | OPEN or EXPIRED | ~ same as deposit |
+| propose(type, args) | any member | per state | est. ~80–150k |
+| vote(id, yes) | any member | voting window open | est. ~50–70k |
+| execute(id) | **any member** | voting window closed, YES > 40, NO = 0 | est. ~60–100k (LIST, NOMINATE) |
+| submitArrangement(order) | the arranger (host by default) | FULL | est. ~2M (stores 80 ids) |
+| assemble() | **any member** | arrangement approved + Statement contract open | burn of 80 measured: 2,576,314, plus the Statement contract's own mint (unknown until it ships) |
+| raiseAsk(floorAttestation) | **any member** | LISTED, floor-relative ask | est. ~60k |
+| buy() | anyone (buyer) | LISTED | est. ~150–250k (royalty lookup + fee + transfer) |
+| claimFor(holder) | **anyone**, pays out to the holder | SOLD | est. ~60k per holder |
+| returnCredits(depositor) | **any member**, returns to the depositor | EXPIRED | ~126k per Credit |
+
+Cost at 0.077 gwei and ETH $2,688: one transfer ≈ $0.03; burn of 80 ≈ $0.53. At a 10 gwei spike: ≈ $3.40 and ≈ $69.
+
+Design consequences:
+- Payouts and refunds are push-to-owner and callable by anyone, so a member who never returns still gets their ETH or Credits.
+- Voting window: fixed (default 48 h). A proposal can only be executed after the window closes, because a single NO anywhere in the window kills it.
+- Floor data is off-chain. raiseAsk takes a floor value signed by the Statement Maker price key; the contract checks the signature and that the new ask is higher. Any member can submit it. Trust point: the key can only ever raise an ask, never lower one or move funds.
+- Arranger stall: if the arranger does not submit within N days of the party filling, members can elect another by vote.
+- Undecided: reimburse the assemble() caller's gas from sale proceeds (largest single cost), or let the caller absorb it.
+
 ## 5. Arrangement (the 8×10 order)
 Burn returns seeds in call order and the preview renders an ordered sheet. Order is likely part of the work (unverified until Statement contract ships).
 Flow:
