@@ -2,7 +2,7 @@
 
 Parties for [Credits](https://jack.art/credits) holders. Eighty Credits burn into one Statement; most holders have one. A party pools them.
 
-Live preview: https://statementmaker.204.168.175.190.nip.io
+Live preview: https://statement-maker.vercel.app
 
 **Status: preview.** The Statement contract is not published yet, so nothing here moves Credits or ETH. Independent project, not affiliated with Jack Butcher.
 
