@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { startEvm, ART, artAbi } from './scripts/evm.mjs';
-import { createPublicClient, http as viemHttp, getAddress, parseAbi } from 'viem';
+import { createPublicClient, http as viemHttp, getAddress, parseAbi, keccak256, encodePacked } from 'viem';
 import { mainnet } from 'viem/chains';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
@@ -34,7 +34,9 @@ credits.forEach((c, i) => byId.set(c.id, { ...c, ...traits[i], owner: c.owner?.t
 const TRAITS = ['colors', 'print', 'weight', 'eights'];
 const freq = Object.fromEntries(TRAITS.map(k => [k, new Map()]));
 for (const c of byId.values()) for (const k of TRAITS) freq[k].set(c[k], (freq[k].get(c[k]) || 0) + 1);
-for (const c of byId.values()) c.score = TRAITS.reduce((s, k) => s + -Math.log2(freq[k].get(c[k]) / byId.size), 0);
+// Rarity uses the same integer table as the contract (CreditKeys.sol): round(-log2(count/N) * 1e9) per trait value.
+const RARITY = JSON.parse(fs.readFileSync(path.join(DATA, 'rarity.json')));
+for (const c of byId.values()) c.score = TRAITS.reduce((s, k) => s + RARITY[k][String(c[k])].w, 0);
 [...byId.values()].sort((a, b) => b.score - a.score || a.id - b.id).forEach((c, i) => { c.rank = i + 1; });
 
 let MARKS = [Infinity, -Infinity];
@@ -210,17 +212,19 @@ const COLOR_ORDER = ['C', 'M', 'Y', 'K', 'CM', 'CY', 'MY', 'CK', 'MK', 'YK', 'CM
 const PRINT_ORDER = ['Registered', 'Nudge', 'Slip', 'Skew', 'Drift', 'Loose'];
 const WEIGHT_ORDER = ['sparse', 'lean', 'even', 'extreme'];
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+// Must match CreditKeys.sol exactly: strictly ordered keys, ties broken by ascending id.
 const PRESETS = {
   Deposit: cs => cs,
   Number: cs => [...cs].sort((a, b) => a.id - b.id),
-  Time: cs => [...cs].sort((a, b) => a.paidAt - b.paidAt),
-  Rarity: cs => [...cs].sort((a, b) => a.rank - b.rank),
+  Time: cs => [...cs].sort((a, b) => a.paidAt - b.paidAt || a.id - b.id),
+  Rarity: cs => [...cs].sort((a, b) => b.score - a.score || a.id - b.id),
   Colors: cs => [...cs].sort((a, b) => COLOR_ORDER.indexOf(a.colors) - COLOR_ORDER.indexOf(b.colors) || a.id - b.id),
   Print: cs => [...cs].sort((a, b) => PRINT_ORDER.indexOf(b.print) - PRINT_ORDER.indexOf(a.print) || a.id - b.id),
-  Weight: cs => [...cs].sort((a, b) => WEIGHT_ORDER.indexOf(a.weight) - WEIGHT_ORDER.indexOf(b.weight) || a.marks - b.marks),
+  Weight: cs => [...cs].sort((a, b) => WEIGHT_ORDER.indexOf(a.weight) - WEIGHT_ORDER.indexOf(b.weight) || a.marks - b.marks || a.id - b.id),
   Eights: cs => [...cs].sort((a, b) => b.eights - a.eights || a.id - b.id),
-  Ink: cs => [...cs].sort((a, b) => a.marks - b.marks),
-  Random: (cs, seed) => { const r = rng(seed), o = [...cs]; for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } return o; },
+  Ink: cs => [...cs].sort((a, b) => a.marks - b.marks || a.id - b.id),
+  // Fisher–Yates with j = keccak256(abi.encodePacked(uint256 seed, uint256 i)) mod (i + 1), as CreditKeys.shuffle.
+  Random: (cs, seed) => { const o = [...cs]; for (let i = o.length; i > 1; i--) { const j = Number(BigInt(keccak256(encodePacked(['uint256', 'uint256'], [BigInt(seed), BigInt(i - 1)]))) % BigInt(i)); [o[i - 1], o[j]] = [o[j], o[i - 1]]; } return o; },
 };
 function cleanArrangement(a) {
   // 'Manual' means the host orders the 80 by hand in the same step as the burn.
