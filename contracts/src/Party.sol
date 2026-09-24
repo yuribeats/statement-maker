@@ -34,7 +34,7 @@ interface IFactory {
 ///  - Only prices are voted on. A proposal passes with YES >= 41 of 80 and NO == 0; a price below the floor
 ///    needs 60. After 3 NO-blocked price proposals or 30 days without one executing, 54 YES passes and NO is
 ///    ignored (below-floor still needs 60). Weight = cards held at the block before the proposal. Windows are
-///    24/48/72/168 hours; passed proposals must be executed within 7 days; executing one supersedes the rest.
+///    1/24/48/72/168 hours; passed proposals must be executed within 7 days; executing one supersedes the rest.
 ///  - The Statement leaves only through buy(), at the current ask, once that price's wait has passed (voted with
 ///    the price; the host sets the default, 0..72 hours). No offers, auctions or other transfer path exist.
 ///  - Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 10%), 1% fee, and the rest
@@ -72,7 +72,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         bytes32 eligibleRoot; // leaf = keccak256(bytes.concat(keccak256(abi.encode(creditId)))); 0 = any Credit
         uint8 minDeposit; // 1..80
         uint32 durationDays; // 1..60, from creation to the burn deadline
-        uint16 voteHours; // default window: 24, 48, 72 or 168
+        uint16 voteHours; // default window: 1, 24, 48, 72 or 168
         CreditKeys.Preset arrangement;
         uint256 seed; // for Random
         PriceSpec defaultPrice;
@@ -598,7 +598,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     }
 
     function _windowOk(uint16 h) internal pure returns (bool) {
-        return h == 24 || h == 48 || h == 72 || h == 168;
+        return h == 1 || h == 24 || h == 48 || h == 72 || h == 168;
     }
 
     /// @dev Raw staticcall: a reverting, gas-hungry or malformed royaltyInfo never blocks a sale. The 150k-gas stipend

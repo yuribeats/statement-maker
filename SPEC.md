@@ -54,7 +54,7 @@ Approvals: a user approves exactly one contract, the PartyFactory (`Credits.setA
 
 ## 4. Party governance (binding, on-chain) — Party-style
 Borrowed from PartyGovernance.sol: propose → vote → close → execute. No host veto, no rage quit (Statements cannot be split back into Credits).
-Time limits: each proposal has a voting window of 24 h, 48 h, 72 h or 7 days, chosen by the proposer (party default set by hosts, 48 h). A passed proposal must be executed within 7 days of closing or it lapses.
+Time limits: each proposal has a voting window of 1 h, 24 h, 48 h, 72 h or 7 days, chosen by the proposer (party default set by hosts, 48 h). CANCEL_LISTING always runs 24 h. The snapshot stays the block before creation, and the 7-day execution lapse, deadlock clock and buy waits are unchanged by a short window; a floor-relative price still needs a buy wait of at least 1 h. A passed proposal must be executed within 7 days of closing or it lapses.
 Vote weight = ERC721Votes checkpoint at creation block − 1 (stops buy-vote-sell and flash loans; Party uses the same offset).
 **Pass rule:** 1 card = 1 vote, weight = cards held at proposal creation (snapshot). Passes with YES ≥ 41 of 80 AND zero NO.
 - Below floor: a LIST priced below the floor at execution needs YES ≥ 60 (75%), still zero NO.

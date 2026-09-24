@@ -149,12 +149,12 @@ contract FactoryTest is UnitBase {
 
     function test_create_voteHours() public {
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
-        uint16[8] memory badH = [uint16(0), 1, 23, 25, 47, 96, 167, 169];
+        uint16[8] memory badH = [uint16(0), 2, 23, 25, 47, 96, 167, 169];
         for (uint256 i; i < badH.length; ++i) {
             p.voteHours = badH[i];
             _expectCreateBad(p, "voteHours");
         }
-        uint16[4] memory ok = [uint16(24), 48, 72, 168];
+        uint16[5] memory ok = [uint16(1), 24, 48, 72, 168];
         for (uint256 i; i < ok.length; ++i) {
             p.voteHours = ok[i];
             _create(p);

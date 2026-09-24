@@ -342,8 +342,8 @@ contract Handler is Test {
         p.name = "Fuzz Party";
         p.minDeposit = uint8(_bound(minSeed, 1, 10));
         p.durationDays = uint32(durSeed % 5 == 0 ? _bound(durSeed >> 8, 1, 5) : _bound(durSeed >> 8, 20, 60));
-        uint16[4] memory w = [uint16(24), 48, 72, 168];
-        p.voteHours = w[(minSeed >> 8) % 4];
+        uint16[5] memory w = [uint16(1), 24, 48, 72, 168];
+        p.voteHours = w[(minSeed >> 8) % 5];
         p.arrangement = CreditKeys.Preset(arrSeed % 11);
         p.seed = arrSeed >> 8;
         p.floorMode = Party.FloorMode((minSeed >> 16) % 2);
@@ -540,8 +540,8 @@ contract Handler is Test {
         else if (k == 3) price = Party.PriceSpec(Party.PriceMode.FloorPct, _bound(val, -9000, 5000));
         else if (k == 4) price = Party.PriceSpec(Party.PriceMode.FloorDelta, _bound(val, -10 ether, 10 ether));
         else if (k == 5) price = Party.PriceSpec(Party.PriceMode.Fixed, 0); // invalid
-        uint16[6] memory hs = [uint16(0), 24, 48, 72, 168, 25];
-        uint16 h = hs[hSeed % 6];
+        uint16[7] memory hs = [uint16(0), 1, 24, 48, 72, 168, 25]; // 25 must be refused
+        uint16 h = hs[hSeed % 7];
         uint16[6] memory ds = [uint16(0), 1, 24, 72, 73, 500]; // buy waits: 0..72 valid, 73+ refused for prices
         uint16 d = ds[(hSeed >> 8) % 6];
 

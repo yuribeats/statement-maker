@@ -90,7 +90,7 @@ abstract contract FixesBase is UnitBase {
 
     // ------------------------------------------------------------------ helpers
 
-    function _prop(Party party, address who, Party.PriceSpec memory s, uint16 wait) internal returns (uint256 id) {
+    function _prop(Party party, address who, Party.PriceSpec memory s, uint16 wait) internal virtual returns (uint256 id) {
         vm.prank(who);
         id = party.propose(s, false, 24, wait);
     }
