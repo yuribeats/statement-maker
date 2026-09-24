@@ -7,3 +7,6 @@ server.log
 tools/slips/out
 tools/slips/cache
 research-private
+contracts/out
+contracts/cache
+contracts/broadcast
