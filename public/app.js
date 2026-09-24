@@ -897,11 +897,26 @@ const DEFS = {
   'floor': 'The reference price for a Statement: the Statement collection floor once it exists, 80 × the Credits floor until then. Prices below it need 60 of 80 votes.',
   'buy wait, hours': 'How long after a price goes live before anyone can buy it. The host sets the default; each price vote can set its own.',
   'buy wait': 'How long after a price goes live before anyone can buy it. The host sets the default; each price vote can set its own.',
+  'open': 'Opening a party: the host sets the defaults and makes the first deposit.',
+  'the card': 'A Credit Card is the token you get for each Credit you deposit. Whoever holds it owns that Credit\u2019s vote and share.',
+  'full': 'The moment the 80th Credit arrives. Deposits and redemptions stop.',
+  'arrange': 'Choosing the order of the 80 Credits in the 8 × 10 Statement. Only the host arranges.',
+  'assemble': 'The burn: the 80 Credits become one Statement, held by the party until it sells.',
+  'sold only here': 'Where a party can sell its Statement: only through Statement Maker, at its own price.',
+  'split': 'How sale money is divided: 1% fee, the rest equally across the 80 Credit Cards.',
+  'votes': 'How price decisions pass: 1 card = 1 vote; 41 yes and no no; 60 below the floor.',
+  'time': 'How long votes stay open, and how long a passed vote can wait to be executed.',
+  'expire': 'What happens if a party runs out of time: every Credit goes back to whoever holds its card.',
+  'contract': 'The Credits contract on Ethereum that every party works with.',
+  'source code': 'Statement Maker\u2019s code, public on GitHub.',
+  'traits': 'Colors, print, weight and eights, read directly from the Credits art contract.',
+  'rarity': 'How rare a Credit is: the sum of how uncommon each of its four traits is.',
+  'deposit': 'Adding Credits to a party. Each one returns a Credit Card.',
   'approved price': 'The price in force now, set by the host default or by a vote.',
 };
 function addDefs(root = app) {
   root.querySelectorAll('.field > label, .rows > div > span:first-child').forEach(el => {
-    const k = el.textContent.trim().toLowerCase().replace(/\s+/g, ' ');
+    const k = el.textContent.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^\d\d /, '');
     const d = DEFS[k] || DEFS[k.split(' · ')[0]];
     if (d) { el.dataset.def = d; el.tabIndex = 0; }
   });
