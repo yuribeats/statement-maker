@@ -7,8 +7,9 @@
 //   SLOTS, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS/DEADLOCK_DAYS/OVERRIDE
 //   credits + traits → byId, TRAITS, RARITY → score + rank
 //   COLOR_ORDER … PRESETS (arrangement presets)
-//   tally, kindOf, deadlocked, belowFloor, priceEth, cleanTarget
-// Stubs (the only non-verbatim pieces): floorFor(p) returns { eth: p.__floorEth } and now() returns the harness clock.
+//   tally, kindOf, deadlocked, the wei price-math block (decUnits … priceWei/priceEth/belowFloor), cleanTarget
+// Stubs (the only non-verbatim pieces): floorFor(p) returns { eth: p.__floorEth, wei: p.__floorWei } (the signed floor
+// reading in wei, as the contract receives it) and now() returns the harness clock.
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -47,21 +48,20 @@ export const RANGES = [
   ['function tally(p, prop)', '}'],
   ['const kindOf', 'const kindOf'],
   ['function deadlocked(p, type)', '}'],
-  ['const belowFloor', 'const belowFloor'],
-  ['function priceEth(t, p)', '}'],
+  ['// ---- price math in wei', '// ---- end price math'],
   ['function cleanTarget(t)', '}'],
 ];
 
 const code = RANGES.map(r => lines(...r)).join('\n') + `
 ;({ SLOTS, OVERRIDE, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS, DEADLOCK_DAYS, byId, credits, TRAITS, RARITY,
-    COLOR_ORDER, PRINT_ORDER, WEIGHT_ORDER, PRESETS, tally, kindOf, deadlocked, belowFloor, priceEth, cleanTarget })`;
+    COLOR_ORDER, PRINT_ORDER, WEIGHT_ORDER, PRESETS, tally, kindOf, deadlocked, belowFloor, priceEth, priceWei, resolvePrice, weiStr, cleanTarget })`;
 
 export const clock = { now: Date.UTC(2026, 8, 23) };
 const ctx = vm.createContext({
   fs, path, DATA: path.join(ROOT, 'data'), keccak256, encodePacked, BigInt, Math, Number, String, Map, Object, JSON,
   // lib/core.mjs reads data through readData (plain or .gz); same result for the plain files.
   readData: n => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', n))),
-  floorFor: p => ({ eth: p.__floorEth ?? null }),
+  floorFor: p => ({ eth: p.__floorEth ?? null, wei: p.__floorWei ?? null }),
   now: () => clock.now,
 });
 export const S = vm.runInContext(code, ctx, { filename: `${SRC_NAME} (copied ranges)` });

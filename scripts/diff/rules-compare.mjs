@@ -42,7 +42,7 @@ for (let i = 0; i < site.length; i++) {
   // 4. resolved price (ASSEMBLED LIST that executed on both sides)
   if (c.eOk && s.sExec && s.state === 1 && !s.cancel && s.sPrice != null) {
     priceN++;
-    const siteWei = BigInt(Math.round(s.sPrice * 1e18)); // exact conversion of the site's double
+    const siteWei = BigInt(s.sPrice); // the site's resolved price, in wei
     const d = siteWei > c.ask ? siteWei - c.ask : c.ask - siteWei;
     if (d === 0n) exactN++;
     if (d > maxAbs) maxAbs = d;

@@ -1,7 +1,9 @@
 // Pass-rule and price-resolution cases for contracts/test/diff/RulesDiff.t.sol.
 // Server verdicts come from the site's own tally/priceEth/belowFloor/cleanTarget (copied verbatim by server-copy.mjs).
-// Units: the contract takes wei / basis points; the site takes ETH floats / percent. Each case is generated in contract
-// units and converted to the site's units with Number(wei) / 1e18 and bps / 100 (the obvious adapter; none exists yet).
+// Units: the contract takes wei / basis points; the site takes exact decimal strings (ETH to 1 wei, percent to 1 bps) and
+// does its math in BigInt wei. Each case is generated in contract units and handed to the site as the exact decimal
+// (weiStr(wei), bps / 100). The floor reading is handed over in wei (what the signer signs); floorWei 0 is a signed
+// reading of 0 on both sides (the contract rejects it: "floor").
 //   node scripts/diff/gen-rules.mjs [cases=3000]
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,13 +60,12 @@ for (let i = 0; i < N; i++) {
   const cPrice = cancel || floorWei === 0n ? 0n : (resolve(mode, value, floorWei) ?? 0n);
 
   // Site verdict with the copied server code
-  const args = cancel ? {} : mode === 0 ? { mode: 'fixed', value: Number(value) / 1e18 } : mode === 1 ? { mode: 'floorPct', value: Number(value) / 100 } : { mode: 'floorEth', value: Number(value) / 1e18 };
-  const p = { __floorEth: floorWei === 0n ? null : Number(floorWei) / 1e18, params: {} };
-  let sPropose = true, sWhy = '';
-  if (!cancel) {
-    const t = S.cleanTarget(args); sPropose = !!t && S.priceEth(t, p) > 0;
-    sWhy = !t ? 'out of range' : S.priceEth(t, p) == null ? 'no floor' : !(S.priceEth(t, p) > 0) ? 'price <= 0' : '';
-  }
+  const bpsStr = v => (v < 0n ? '-' : '') + ((v < 0n ? -v : v) / 100n) + '.' + ((v < 0n ? -v : v) % 100n).toString().padStart(2, '0');
+  const input = cancel ? {} : mode === 0 ? { mode: 'fixed', value: S.weiStr(value) } : mode === 1 ? { mode: 'floorPct', value: bpsStr(value) } : { mode: 'floorEth', value: S.weiStr(value) };
+  const p = { __floorEth: Number(floorWei) / 1e18, __floorWei: floorWei, params: {} };
+  // Site propose route: LIST needs cleanTarget (range only, as Party.propose); the stored args are the cleaned target.
+  let sPropose = true, sWhy = '', args = {};
+  if (!cancel) { args = S.cleanTarget(input); sPropose = !!args; sWhy = args ? '' : 'out of range'; }
   const snapshot = {}, votes = {};
   for (let k = 0; k < 80; k++) snapshot['v' + k] = 1;
   for (let k = 0; k < yes; k++) votes['v' + k] = true;
@@ -74,7 +75,7 @@ for (let i = 0; i < N; i++) {
   const saved = clock.now; clock.now = prop.endsAt;
   const t = S.tally(p, prop);
   clock.now = saved;
-  const sPrice = cancel ? null : S.priceEth(args, p);
+  const sPrice = cancel || !sPropose ? null : S.priceWei(args, p)?.toString() ?? null;
   cases.push({ state, cancel, mode, value: value.toString(), floorWei: floorWei.toString(), yes, no, deadlock, cPropose, cPrice: cPrice.toString(),
     sPropose, sWhy, sExec: sPropose && t.executable, sNeed: t.need, sBelow: t.below, sPrice });
 }
