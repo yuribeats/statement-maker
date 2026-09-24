@@ -263,7 +263,8 @@ async function pageParty(id) {
        <p class="muted">${short(me)} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'} · ${eligibleMine.length} eligible here · minimum ${minDep}</p>
        <div class="picker">${wallet.slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
-       <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>I understand the Statement this party makes can only be sold on Statement Maker, at the party\u2019s price, and never on OpenSea or any other marketplace.</span></label>
+       <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
+       <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>I understand the Statement this party makes is sold only on Statement Maker, at the party’s price, and that <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
        <button class="cta" id="deposit" disabled>Deposit ${partyUI.picks.size || ''}</button> ${cost('deposit')} each
        ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Redeem all my cards</button>` : ''}`}
      <div class="error" id="dep-err"></div>
@@ -433,7 +434,8 @@ async function pageNew() {
      <div class="actions"><button type="button" id="own-all">Select the minimum</button><button type="button" id="own-none">Clear</button></div>
     </div>
     ${storeBanner()}
-    <label class="check" style="margin:12px 0"><input type="checkbox" id="new-ack"> <span>I understand the Statement this party makes can only be sold on Statement Maker, at the party’s price, and never on OpenSea or any other marketplace.</span></label>
+    <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
+    <label class="check" style="margin:12px 0"><input type="checkbox" id="new-ack"> <span>I understand the Statement this party makes is sold only on Statement Maker, at the party’s price, and that <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
     <button class="cta" id="create" type="button" disabled>Open party and deposit</button>
     <div class="error" id="new-err"></div>
    </div>
@@ -623,30 +625,42 @@ async function statementPNG(p) {
   })));
   const a = Object.assign(document.createElement('a'), { href: cv.toDataURL('image/png'), download: `statement-${p.assembled.number}.png` }); a.click();
 }
-const saleState = p => p.sold ? ['Sold', 'done'] : !p.listing ? ['Not listed', 'muted'] : p.buyOpensAt > p.now ? ['Opens in ' + hrs(p.buyOpensAt - p.now), 'open'] : ['For sale', 'pass'];
-const statementCard = p => { const [label, cls] = saleState(p); return `
+// Every listing looks the same whatever its source; only a small label differs.
+const SOURCE = { party: 'Party sale', holder: 'Holder listing', opensea: 'OpenSea' };
+function listingCard(it, byId) {
+  const p = byId[it.id];
+  const pic = p ? sheet(p) : `<div class="frame statement os-frame"><span>Statement ${esc(it.number)}</span></div>`;
+  const opens = it.opensAt && it.source !== 'opensea' ? (it.source === 'party' ? it.opensAt - Date.now() : 0) : 0;
+  const href = it.source === 'opensea' ? esc(it.url) : `#/statement/${esc(it.id)}`;
+  return `
+   <a class="party-card" href="${href}" ${it.source === 'opensea' ? 'target="_blank" rel="noopener noreferrer"' : ''}>
+    ${pic}
+    <div class="caption"><span><strong>Statement ${esc(it.number)}</strong> <span class="muted">${esc(it.name)}</span></span><span class="src">${SOURCE[it.source]}</span></div>
+    <div class="price-line"><strong>${eth(it.priceEth)}</strong><span class="muted">${opens > 0 ? 'Opens in ' + hrs(opens) : it.source === 'opensea' ? 'Buy on OpenSea ↗' : 'Buy →'}</span></div>
+   </a>`;
+}
+const statementCard = p => `
    <a class="party-card" href="#/statement/${esc(p.id)}">
     ${sheet(p)}
-    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="chip ${cls}">${esc(label)}</span></div>
-    <div class="price-line"><strong>${p.sold ? eth(p.sold.price) : eth(p.listingEth)}</strong>${!p.sold && p.listing ? ' ' + vsFloor(p.listingEth, p.floorEth) : ''}<span class="muted">${p.members.length} holders</span></div>
-   </a>`; };
-// Buyer-first gallery: what can be bought now, then what sold, then your own.
+    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.sold ? 'Owned' : 'Party'}</span></div>
+    <div class="price-line"><strong>${p.sold ? eth(p.sold.price) : '—'}</strong><span class="muted">${p.sold ? 'last sale' : 'not listed'}</span></div>
+   </a>`;
 async function pageStatements() {
-  const list = await api('statements');
+  const [list, market] = await Promise.all([api('statements'), api('market')]);
+  const byId = Object.fromEntries(list.map(p => [p.id, p]));
   const sort = partyUI.gsort || 'price';
-  const by = { price: (a, b) => (a.listingEth ?? 1e9) - (b.listingEth ?? 1e9), high: (a, b) => (b.listingEth ?? -1) - (a.listingEth ?? -1), new: (a, b) => b.assembled.at - a.assembled.at }[sort];
-  const forSale = list.filter(p => !p.sold && p.listing).sort(by);
-  const sold = list.filter(p => p.sold).sort((a, b) => b.sold.at - a.sold.at);
-  const unlisted = list.filter(p => !p.sold && !p.listing);
-  const mine = me ? list.filter(p => p.members.some(m => m.address === me)) : [];
-  const grid = arr => `<div class="parties" style="margin-bottom:64px">${arr.map(statementCard).join('')}</div>`;
+  const items = [...market.items].sort({ price: (a, b) => a.priceEth - b.priceEth, high: (a, b) => b.priceEth - a.priceEth, new: (a, b) => (b.opensAt || 0) - (a.opensAt || 0) }[sort]);
+  const listedIds = new Set(items.filter(i => i.source !== 'opensea').map(i => i.id));
+  const others = list.filter(p => !listedIds.has(p.id));
+  const mine = me ? list.filter(p => p.owner === me || p.members.some(m => m.address === me)) : [];
+  const grid = arr => `<div class="parties" style="margin-bottom:64px">${arr.join('')}</div>`;
   render(app, `
-  <div class="intro"><div><h1>Statements</h1><p class="muted">Each one is 80 Credits burned by a party. Bought only here, only at the party's price.</p></div><p class="muted">${list.length} made · ${forSale.length} for sale · ${sold.length} sold</p></div>
-  <div class="caption"><h2>For sale · ${forSale.length}</h2><div class="modes">${[['price', 'Price ↑'], ['high', 'Price ↓'], ['new', 'Newest']].map(([k, l]) => `<button type="button" data-gsort="${k}" aria-pressed="${sort === k}">${l}</button>`).join('')}</div></div>
-  ${forSale.length ? grid(forSale) : '<p class="muted" style="margin-bottom:64px">Nothing for sale right now.</p>'}
-  ${sold.length ? `<div class="caption"><h2>Sold · ${sold.length}</h2></div>${grid(sold)}` : ''}
-  ${unlisted.length ? `<div class="caption"><h2>Not listed · ${unlisted.length}</h2></div>${grid(unlisted)}` : ''}
-  ${mine.length ? `<div class="caption"><h2><span class="dot y"></span>Yours · ${mine.length}</h2></div>${grid(mine)}` : ''}`);
+  <div class="intro"><div><h1>Statements</h1><p class="muted">Everything for sale in one place: party sales, holder listings, and OpenSea listings, side by side.</p></div><p class="muted">${list.length} made · ${items.length} for sale</p></div>
+  <div class="caption"><h2>For sale · ${items.length}</h2><div class="modes">${[['price', 'Price ↑'], ['high', 'Price ↓'], ['new', 'Newest']].map(([k, l]) => `<button type="button" data-gsort="${k}" aria-pressed="${sort === k}">${l}</button>`).join('')}</div></div>
+  ${items.length ? grid(items.map(i => listingCard(i, byId))) : '<p class="muted" style="margin-bottom:64px">Nothing for sale right now.</p>'}
+  ${stats?.dev && market.sources.opensea !== 'ok' ? `<p class="note" style="margin:-48px 0 48px">Dev · OpenSea listings: ${esc(market.sources.opensea)}.</p>` : ''}
+  ${others.length ? `<div class="caption"><h2>Not for sale · ${others.length}</h2></div>${grid(others.map(statementCard))}` : ''}
+  ${mine.length ? `<div class="caption"><h2><span class="dot y"></span>Yours · ${mine.length}</h2></div>${grid(mine.map(statementCard))}` : ''}`);
   app.querySelectorAll('[data-gsort]').forEach(b => b.onclick = () => { partyUI.gsort = b.dataset.gsort; route(); });
 }
 async function pageStatement(id) {
@@ -666,11 +680,21 @@ async function pageStatement(id) {
     <div><span>Credits</span><strong>80, burned ${new Date(p.assembled.at).toLocaleString()}</strong></div>
     <div><span>Order</span><strong>${esc(p.orderSource === 'Manual' ? 'Manual, by the host' : arrLabel({ preset: p.orderSource }))}</strong></div>
     <div><span>Assembled by</span><strong>${short(p.assembled.by)}</strong></div>
-    <div><span>Held by</span><strong>The party vault · ${p.members.length} Credit Card holders</strong></div>
+    <div><span>Held by</span><strong>${p.sold ? short(p.owner) + (p.owner === me ? ' (you)' : '') : 'The party vault · ' + p.members.length + ' Credit Card holders'}</strong></div>
     ${mine ? `<div><span>You</span><strong><span class="dot y"></span>${Number(mine.count)} of 80 Credit Cards · ${(mine.count / 80 * 100).toFixed(2)}%</strong></div>` : ''}
     <div><span>Price</span><strong>${p.sold ? 'Sold for ' + eth(p.sold.price) : p.listing ? priceLabel(p.listing) + ' · ' + eth(p.listingEth) + ' · ' + vsFloor(p.listingEth, p.floorEth) : 'Not listed'}</strong></div>
     <div><span>Floor</span><strong>${eth(p.floorEth)}</strong></div>
    </div>
+   ${p.sold && p.resale ? `<div class="buy-box">
+     <div class="caption" style="min-height:0"><h2>Buy · holder listing</h2><strong class="big">${eth(p.resale.priceEth)}</strong></div>
+     <p class="muted">Listed by ${short(p.resale.seller)}. 1% to Statement Maker, the rest to the seller.</p>
+     ${me === p.resale.seller ? `<button type="button" id="unlist">Cancel your listing</button>` : me ? `<button class="cta" id="buy-r">Buy Statement ${Number(p.assembled.number)} for ${eth(p.resale.priceEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
+     <div class="error" id="buy-r-err"></div></div>` : ''}
+   ${p.sold && p.owner === me && !p.resale ? `<div class="buy-box">
+     <h2 style="margin-bottom:10px">List it for sale</h2>
+     <p class="muted">You own Statement ${Number(p.assembled.number)}. List it here at a fixed price; buyers pay the price, you receive it less 1%. You may also sell anywhere else.</p>
+     <div class="actions"><input id="lp" type="number" step="0.01" min="0" value="${p.sold.price.toFixed(2)}" style="width:110px;border:0;border-bottom:1px solid var(--line)"> ETH <button class="cta" id="list" style="margin:0">List</button></div>
+     <div class="error" id="list-err"></div></div>` : ''}
    ${!p.sold && p.listing ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy</h2><strong class="big">${eth(p.listingEth)}</strong></div>
      <p class="muted">1% to Statement Maker, then ${eth(p.listingEth * 0.99 / SLOTS)} to each of the 80 Credit Cards.</p>
@@ -681,6 +705,10 @@ async function pageStatement(id) {
    </section>
   </div>`);
   $('#png').onclick = () => statementPNG(p);
+  const sAct = async (path, body, errId) => { try { await api(`statements/${encodeURIComponent(p.id)}/${path}`, body); route(); } catch (e) { $('#' + errId).textContent = e.message; } };
+  $('#buy-r')?.addEventListener('click', () => sAct('buy', { maxPriceEth: p.resale.priceEth }, 'buy-r-err'));
+  $('#unlist')?.addEventListener('click', () => sAct('unlist', {}, 'buy-r-err'));
+  $('#list')?.addEventListener('click', () => sAct('list', { priceEth: Number($('#lp').value) }, 'list-err'));
   $('#buy-s')?.addEventListener('click', async () => { try { await api(`parties/${encodeURIComponent(p.id)}/buy`, {}); route(); } catch (e) { $('#buy-s-err').textContent = e.message; } });
 }
 

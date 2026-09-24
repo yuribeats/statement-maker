@@ -224,3 +224,9 @@ form.new{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
 
 .rows>div.rule-strong{border:2px solid var(--ink);padding:10px 12px;margin:6px 0}
 .rule-strong strong{font-weight:700}
+
+.src{border:1px solid var(--line);padding:0 6px;color:#999;white-space:nowrap}
+.os-frame{display:grid!important;place-items:center;color:#999}
+
+.fee-box{border:1px solid var(--ink);padding:10px 14px;margin:14px 0 6px;text-transform:none;font-size:12px;line-height:1.5}
+.fee-box strong{text-transform:uppercase;font-size:11px}
