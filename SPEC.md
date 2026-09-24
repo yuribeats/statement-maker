@@ -53,7 +53,7 @@ Time limits: each proposal has a voting window of 1 h, 24 h, 48 h, 72 h or 7 day
 Vote weight = ERC721Votes checkpoint at creation block − 1 (stops buy-vote-sell and flash loans; Party uses the same offset).
 **Pass rule:** 1 card = 1 vote, weight = cards held at proposal creation (snapshot). Passes with YES ≥ 41 of 80 AND zero NO.
 - Below floor: a LIST priced below the floor at execution needs YES ≥ 60 (75%), still zero NO.
-- Deadlock escape: after 3 NO-blocked proposals of a kind, or 30 days since FULL/assembly without one executing, a new proposal of that kind passes with YES ≥ 54 (2/3) and NO is ignored. Below-floor prices still need 60.
+- Deadlock escape: after 3 NO-blocked proposals of a kind, or 30 days since FULL/assembly without one executing, a new proposal of that kind passes with YES ≥ 54 (2/3) and NO is ignored. Below-floor prices still need 60. Accepted consequence (audit H1): the NO votes that count toward the 3 can come from the coalition itself, so with 1-hour windows 54+ cards can reach deadlock mode within hours; the zero-NO veto protects minorities only against coalitions below 54.
 - Dust veto: impossible — cards are whole (ERC-721).
 - Executing a proposal supersedes every other pending proposal of the same kind.
 Proposal types (closed set, no arbitrary calls):
@@ -76,7 +76,8 @@ Proposal types (closed set, no arbitrary calls):
   - A floor-relative price needs a buy wait of at least 1 hour (default at creation and every LIST). Because a reading is only good for 10 minutes, anyone can raise a stale-low ask with a fresher reading before buying opens.
   - Minimum ask (`minAskWei`): clamps floor-relative prices only. It never bounds a Fixed price: 41 votes (60 below the floor) can still set any fixed price.
 - Manual prices: any member may propose a LIST at any price, including below the floor (fixed ETH, or floor minus ETH/percent). The floor is shown as context, never enforced. Only the pass rule decides.
-- A LIST can be proposed while FULL; it takes effect when the Statement is assembled.
+- A LIST can be proposed while FULL (from the block after the one that filled slot 80); it takes effect when the Statement is assembled. The burn applies the most recent LIST that passed while FULL even if nobody executed it (as if executed), else one executed while FULL, else the host default. Every price that goes live at the burn waits at least 1 hour before buying opens.
+- A floor-relative price that works out to zero or less (floor at or below a floor-minus discount) goes live at the host's minimum ask instead of blocking the burn.
   - The LIST proposal carries an absolute minimum in ETH as the starting ask.
   - Keeper risk: a faulty keeper could only raise the price (blocking sales, never underselling). Members can CANCEL_LISTING and re-list by vote.
 

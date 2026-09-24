@@ -179,4 +179,106 @@ contract Findings3Test is FixesBase {
         party.vote(id, false);
         assertEq(party.proposal(id).no, 20);
     }
+
+    // ================================================================== Pashov H2: burn applies a passed price
+
+    /// Audit PoC inverted: a 79-card majority passes a 10 ETH LIST while FULL; a 1-card holder burns before anyone
+    /// executes it. The burn now applies the passed price (as if executed), and buying waits at least 1 hour even
+    /// though the host default wait is 0.
+    function test_H2_assembleAppliesPassedUnexecutedPrice() public {
+        Party.Params memory pp = params(CreditKeys.Preset.Deposit);
+        pp.defaultPrice = fixedPrice(1 ether);
+        pp.buyDelayHours = 0;
+        Party party = newParty(pp);
+        fill(party);
+        address[] memory v = spread(party, c2(79, 1)); // v0 majority, v1 attacker with 1 card
+        vm.prank(v[0]);
+        uint256 id = party.propose(fixedPrice(10 ether), false, 1, 0);
+        vm.warp(party.proposal(id).endsAt); // passed: 79 YES, 0 NO, not executed
+        uint256[] memory order = party.depositOrder();
+        Party.Floor memory f = floorSig(3 ether, 0);
+        vm.prank(v[1]);
+        party.assemble(order, f);
+        assertEq(party.ask(), 10 ether, "the passed price went live, not the 1 ETH default");
+        assertTrue(party.proposal(id).executed);
+        assertEq(party.buyableAt(), block.timestamp + 1 hours, "minimum 1 h wait at the burn");
+        vm.deal(v[1], 10 ether);
+        vm.prank(v[1]);
+        vm.expectRevert(bad("not open yet"));
+        party.buy{value: 1 ether}(1 ether);
+    }
+
+    /// The most recent passing LIST wins; a failed or NO-blocked newer one is skipped.
+    function test_H2_mostRecentPassingWins() public {
+        Party party = newParty(params(CreditKeys.Preset.Deposit));
+        fill(party);
+        address[] memory v = spread(party, c3(50, 29, 1));
+        vm.prank(v[0]);
+        uint256 a = party.propose(fixedPrice(5 ether), false, 1, 0);
+        vm.prank(v[1]);
+        uint256 b = party.propose(fixedPrice(7 ether), false, 1, 0); // passes? 29 + 50 below
+        vm.prank(v[0]);
+        party.vote(b, true);
+        vm.prank(v[2]);
+        uint256 c = party.propose(fixedPrice(9 ether), false, 1, 0); // 1 YES only: fails
+        vm.warp(party.proposal(c).endsAt);
+        uint256[] memory order = party.depositOrder();
+        Party.Floor memory f = floorSig(3 ether, 0);
+        vm.prank(v[2]);
+        party.assemble(order, f);
+        assertEq(party.ask(), 7 ether);
+        assertTrue(party.proposal(b).executed);
+        assertFalse(party.proposal(a).executed);
+    }
+
+    /// Omitting the floor cannot skip a Fixed price that could pass above the floor (41..59 YES): the burn needs a reading.
+    function test_H2_missingFloorCannotSkipAPassedPrice() public {
+        Party party = newParty(params(CreditKeys.Preset.Deposit));
+        fill(party);
+        address[] memory v = spread(party, c2(45, 35));
+        vm.prank(v[0]);
+        uint256 id = party.propose(fixedPrice(5 ether), false, 1, 0); // 45 YES: passes at a floor <= 5 ETH
+        vm.warp(party.proposal(id).endsAt);
+        uint256[] memory order = party.depositOrder();
+        vm.prank(v[1]);
+        vm.expectRevert(bad("floor needed"));
+        party.assemble(order, noFloor());
+        Party.Floor memory high = floorSig(6 ether, 0); // 5 ETH is below this floor: needs 60, fails -> default
+        vm.prank(v[1]);
+        party.assemble(order, high);
+        assertEq(party.ask(), 3 ether, "default (3 ETH) when the passed price is below the floor without 60 YES");
+    }
+
+    // ================================================================== Pashov H1: ACCEPTED (THREAT_MODEL R-2)
+
+    /// Documents the accepted consequence of the deadlock rule (user decision): a 54-card coalition can self-block
+    /// three 1-hour proposals with its own NO, enter deadlock mode, and then override a minority's NO within hours.
+    /// If the deadlock rule changes, this test must change with it.
+    function test_H1_accepted_coalitionReachesDeadlockInHours() public {
+        (Party party, address[] memory v) = assembledWithVoters(c3(41, 13, 26)); // v0,v1 coalition (54), v2 minority
+        uint256 t0 = vm.getBlockTimestamp();
+        uint256[3] memory ids;
+        for (uint256 i; i < 3; ++i) {
+            vm.prank(v[0]);
+            ids[i] = party.propose(fixedPrice(3 ether), false, 1, 0);
+            vm.prank(v[1]);
+            party.vote(ids[i], false); // the coalition's own NO
+        }
+        vm.warp(party.proposal(ids[2]).endsAt);
+        for (uint256 i; i < 3; ++i) party.countBlocked(ids[i]);
+        roll();
+        vm.prank(v[0]);
+        uint256 id = party.propose(fixedPrice(3 ether), false, 1, 0);
+        assertTrue(party.proposal(id).deadlock);
+        vm.prank(v[1]);
+        party.vote(id, true);
+        vm.prank(v[2]);
+        party.vote(id, false); // ignored in deadlock mode
+        vm.warp(party.proposal(id).endsAt);
+        Party.Floor memory f = floorSig(3 ether, 0);
+        vm.prank(v[0]);
+        party.execute(id, f);
+        assertEq(party.ask(), 3 ether);
+        assertLt(vm.getBlockTimestamp() - t0, 3 hours);
+    }
 }

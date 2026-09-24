@@ -108,12 +108,16 @@ contract DeadlockDiffTest is LocalBase {
     }
 
     // S5: a LIST that passed while FULL is superseded by assembly on the contract (epoch bump). Site: still executable.
+    /// Since Pashov H2 the burn APPLIES a LIST that passed while FULL and was not executed (as if executed), so it
+    /// can no longer be executed afterwards ("executed"); the site must mirror this (the scenario row stays false).
     function test_S5_assemblySupersedesFullTimeProposals() public {
         uint256 id = _prop(0, _fixed(300), false, 41, 0);
         _assemble();
+        assertTrue(party.proposal(id).executed, "the passed FULL-time LIST went live at the burn");
+        assertEq(party.ask(), 300 ether);
         Party.Floor memory f = floorSig(100 ether, 0);
         vm.prank(v[0]);
-        vm.expectRevert(abi.encodeWithSelector(Party.Bad.selector, "superseded"));
+        vm.expectRevert(abi.encodeWithSelector(Party.Bad.selector, "executed"));
         party.execute(id, f);
     }
 

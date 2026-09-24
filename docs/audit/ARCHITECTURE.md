@@ -145,7 +145,7 @@ Key definitions (`CreditKeys.traitKey` over the CreditTraits entry; identical to
 - The table was built from the art contract's `describe()` and checked three ways (scripts/keytable): forge derivation (a) == live-mainnet eth_call derivation (b) for all ids × presets (0 mismatches), table == site trait data (0 mismatches), table keys == (a) for all ids; fork tests re-check 2,000 sampled ids and all 320 house-party ids.
 
 Sequence:
-1. Resolve the live price: `pendingPrice` if one executed while FULL, else `defaultPrice`. Floor-relative prices need a valid floor attestation, or the call reverts.
+1. Resolve the live price: the most recent current-epoch LIST that passed while FULL and was not executed (applied as if executed: marked executed, `Executed` emitted), else `pendingPrice` if one executed while FULL, else `defaultPrice`. Floor-relative prices need a valid floor attestation, or the call reverts; a Fixed candidate that could pass above the floor needs one too (`floor needed`). Buying opens after the price's wait, at least 1 hour (Pashov H2).
 2. Effects: `assembled = true`, `burnOrderHash = keccak256(abi.encodePacked(order))` (the order itself is in the `Assembled` event), `ask`, `askSpec`, `askLiveAt = now`, `++priceEpoch`.
 3. `credits.setApprovalForAll(statement, true)`, then `_assembling = true`, then `statement.make(order)`, then `_assembling = false`, then revoke approval.
 4. Verify: `statement.ownerOf(sid) == party`, and for each of the 80, `credits.ownerOf(id)` reverts with `ERC721NonexistentToken` (selector `0x7e273289`, the mainnet Credits error for a burned or never-minted id, checked on chain 2026-09-24). A Credit that still has any owner, or any other revert, fails with `not burned`.

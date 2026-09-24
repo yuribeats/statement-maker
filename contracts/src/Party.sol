@@ -294,9 +294,29 @@ contract Party is Initializable, ReentrancyGuardTransient {
         }
         CreditKeys.verifyOrder(p, factory.traits(), _order, cardOfCredit, order, _params.seed);
 
-        // Price that goes live: the one voted while FULL, else the host default. Resolve before external calls.
-        PriceSpec memory spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
-        uint256 price = _resolve(spec, floor);
+        // Price that goes live (Pashov H2): the most recent LIST that passed while FULL but was not executed yet is
+        // applied as if executed; else the price executed while FULL; else the host default. Resolved before any
+        // external call. Every price that goes live at the burn waits at least 1 hour before buying opens.
+        (bool voted, uint256 vid, uint256 vprice) = _passedUnexecuted(floor);
+        PriceSpec memory spec;
+        uint256 price;
+        uint256 wait;
+        if (voted) {
+            Proposal storage q = _proposals[vid];
+            q.executed = true;
+            lastPriceExecutedAt = uint64(block.timestamp);
+            blockedPriceProposals = 0;
+            spec = q.price;
+            price = vprice;
+            wait = q.buyDelayHours;
+            emit Executed(vid, msg.sender);
+        } else {
+            spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
+            price = _resolve(spec, floor);
+            wait = hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours;
+            voted = hasPendingPrice;
+        }
+        if (wait == 0) wait = 1;
 
         // Effects
         assembled = true;
@@ -305,7 +325,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         ask = price;
         askSpec = spec;
         askLiveAt = uint64(block.timestamp);
-        buyableAt = uint64(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+        buyableAt = uint64(block.timestamp + _t(wait * 1 hours));
         ++priceEpoch; // proposals made before the burn are superseded
 
         // Interactions: approve the Statement contract for this call only, then verify the outcome.
@@ -324,7 +344,33 @@ contract Party is Initializable, ReentrancyGuardTransient {
         }
         statementId = sid;
         emit Assembled(msg.sender, sid, order);
-        emit AskSet(price, hasPendingPrice);
+        emit AskSet(price, voted);
+    }
+
+    /// @dev The most recent current-epoch LIST that has closed, is inside its execute window, is not executed, and
+    ///      passes exactly as execute() would judge it with `floor`. Scans back from the newest proposal and stops at
+    ///      the first older epoch (ids are appended in epoch order). A Fixed candidate that could pass above the floor
+    ///      cannot be judged without a reading, so the burn then requires one ("floor needed"): omitting the floor can
+    ///      never be used to skip a passed price.
+    function _passedUnexecuted(Floor calldata floor) internal returns (bool, uint256, uint256) {
+        for (uint256 i = _proposals.length; i > 0; --i) {
+            Proposal storage q = _proposals[i - 1];
+            if (q.epoch != priceEpoch) break;
+            if (q.cancel || q.executed || block.timestamp < q.endsAt || block.timestamp > uint256(q.endsAt) + _t(EXECUTE_WINDOW)) continue;
+            if ((q.no > 0 && !q.deadlock) || q.yes < (q.deadlock ? PASS_DEADLOCK : PASS)) continue; // cannot pass at any floor
+            (uint256 price, uint256 floorWei) = _judgePrice(q.price, floor);
+            if (q.yes >= needFor(i - 1, price, floorWei)) return (true, i - 1, price);
+            if (floor.sig.length == 0) revert Bad("floor needed");
+        }
+        return (false, 0, 0);
+    }
+
+    /// @dev A LIST price and the floor it is judged against, as execute() does: with no floor reading a Fixed price is
+    ///      treated as below the floor; a floor-relative price needs a valid reading.
+    function _judgePrice(PriceSpec memory ps, Floor calldata floor) internal returns (uint256 price, uint256 floorWei) {
+        if (ps.mode == PriceMode.Fixed && floor.sig.length == 0) return (uint256(ps.value), type(uint256).max);
+        floorWei = _floor(floor);
+        price = ps.mode == PriceMode.Fixed ? uint256(ps.value) : _clampMin(_resolveWith(ps, floorWei));
     }
 
     /// @notice The Statement contract may mint with a safe-transfer callback, but only during assemble().
@@ -403,16 +449,8 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
         uint256 price;
         uint256 floorWei;
-        if (!p.cancel) {
-            if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
-                // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
-                price = uint256(p.price.value);
-                floorWei = type(uint256).max;
-            } else {
-                floorWei = _floor(floor);
-                price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
-            }
-        }
+        // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+        if (!p.cancel) (price, floorWei) = _judgePrice(p.price, floor);
         uint256 need = needFor(id, price, floorWei);
         if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
 

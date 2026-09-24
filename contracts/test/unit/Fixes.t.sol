@@ -350,16 +350,17 @@ contract FixesTest is FixesBase {
         for (uint256 i; i < 3; ++i) {
             uint256 snap = vm.snapshotState();
             Party party = _assembledWithWait(waits[i]);
-            uint256 opens = uint256(party.assembledAt()) + uint256(waits[i]) * 1 hours;
+            // every price that goes live at the burn waits at least 1 hour (Pashov H2): a default of 0 becomes 1
+            uint256 opens = uint256(party.assembledAt()) + uint256(waits[i] == 0 ? 1 : waits[i]) * 1 hours;
             assertEq(party.buyableAt(), opens);
             address b = _buyer(10 ether);
-            if (waits[i] > 0) {
+            {
                 vm.warp(opens - 1);
                 vm.prank(b);
                 vm.expectRevert(bad("not open yet"));
                 party.buy{value: 3 ether}(3 ether);
             }
-            vm.warp(opens); // wait 0: same block as the assembly
+            vm.warp(opens);
             vm.prank(b);
             party.buy{value: 3 ether}(3 ether);
             assertTrue(party.sold());

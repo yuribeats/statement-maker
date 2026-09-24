@@ -26,8 +26,10 @@ function checkPrice(mode, v) {
 function resolve(mode, v, f) {
   if (mode === 0) return v;
   const r = mode === 1 ? f * (10000n + v) / 10000n : f + v; // BigInt division truncates toward zero, as Solidity
-  return r <= 0n ? null : r;
+  return r <= 0n ? 0n : r; // Pashov M3: <= 0 resolves to 0, then the minimum-ask clamp applies
 }
+const MIN_ASK = 1n; // params().minAskWei in the fork harness (contracts/test/Base.t.sol)
+const clampMin = (mode, r) => (mode === 0 || r >= MIN_ASK ? r : MIN_ASK);
 
 const YES = [1, 2, 40, 41, 42, 53, 54, 55, 59, 60, 61, 79, 80];
 const cases = [];
@@ -57,7 +59,7 @@ for (let i = 0; i < N; i++) {
 
   // Contract model
   const cPropose = cancel ? true : checkPrice(mode, value);
-  const cPrice = cancel || floorWei === 0n ? 0n : (resolve(mode, value, floorWei) ?? 0n);
+  const cPrice = cancel || floorWei === 0n ? 0n : clampMin(mode, resolve(mode, value, floorWei));
 
   // Site verdict with the copied server code
   const bpsStr = v => (v < 0n ? '-' : '') + ((v < 0n ? -v : v) / 100n) + '.' + ((v < 0n ? -v : v) % 100n).toString().padStart(2, '0');

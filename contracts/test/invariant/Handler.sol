@@ -322,6 +322,32 @@ contract Handler is Test {
     }
 
     /// Floor-relative prices never resolve below the host's minimum ask.
+    /// Model of Party._passedUnexecuted: 0 = none, 1 = found (id, price, wait), 2 = the burn must revert (a candidate
+    /// needs a floor reading that is missing, invalid or stale).
+    function _candidate(Party p, Party.Floor memory f, bool fOk) internal view returns (uint8, uint256, uint256, uint256) {
+        for (uint256 i = p.proposalCount(); i > 0; --i) {
+            Party.Proposal memory q = p.proposal(i - 1);
+            if (q.epoch != p.priceEpoch()) break;
+            if (q.cancel || q.executed || block.timestamp < q.endsAt || block.timestamp > uint256(q.endsAt) + 7 days) continue;
+            if ((q.no > 0 && !q.deadlock) || q.yes < (q.deadlock ? 54 : 41)) continue;
+            uint256 price;
+            uint256 fw;
+            if (q.price.mode == Party.PriceMode.Fixed && f.sig.length == 0) {
+                (price, fw) = (uint256(q.price.value), type(uint256).max);
+            } else {
+                if (!fOk) return (2, 0, 0, 0);
+                fw = f.floorWei;
+                (, uint256 v) = _resolve(q.price, fw);
+                price = _clamp(p, q.price, v);
+            }
+            uint256 need = price < fw ? 60 : 41;
+            if (q.deadlock && need < 54) need = 54;
+            if (q.yes >= need) return (1, i - 1, price, q.buyDelayHours);
+            if (f.sig.length == 0) return (2, 0, 0, 0);
+        }
+        return (0, 0, 0, 0);
+    }
+
     function _clamp(Party p, Party.PriceSpec memory spec, uint256 v) internal view returns (uint256) {
         if (spec.mode == Party.PriceMode.Fixed) return v;
         uint256 m = p.params().minAskWei;
@@ -753,11 +779,17 @@ contract Handler is Test {
             orderOk = false;
         }
         (Party.Floor memory f, bool fValid) = _floor(p, fKind, fw);
+        // Pashov H2: the most recent passed-but-unexecuted LIST goes live as if executed; else pending, else default.
+        (uint8 cs, uint256 cid, uint256 cprice, uint256 cwait) = _candidate(p, f, _fresh(p, f, fValid));
         Party.PriceSpec memory spec = prm.defaultPrice;
         if (p.hasPendingPrice()) (spec.mode, spec.value) = p.pendingPrice();
         (bool rOk, uint256 resolved) = _resolve(spec, f.floorWei);
         bool priceOk = spec.mode == Party.PriceMode.Fixed || (_fresh(p, f, fValid) && rOk);
         uint256 wantAsk = _clamp(p, spec, resolved);
+        uint256 wait = p.hasPendingPrice() ? ghostPendingDelay[address(p)] : prm.buyDelayHours;
+        if (cs == 1) { priceOk = true; wantAsk = cprice; wait = cwait; }
+        else if (cs == 2) priceOk = false;
+        if (wait == 0) wait = 1; // every price that goes live at the burn waits at least 1 hour
         bool authOk = manualHost ? who == p.host() : cards.heldNow(address(p), who) > 0;
         bool expected = p.status() == Party.Status.FULL && orderOk && priceOk && authOk;
         _arm(who, p);
@@ -775,7 +807,7 @@ contract Handler is Test {
         }
         if (statement.ownerOf(p.statementId()) != address(p)) _fail("I3: statement not held by party");
         ghostAssembledAt[address(p)] = uint64(block.timestamp);
-        uint256 wait = p.hasPendingPrice() ? ghostPendingDelay[address(p)] : prm.buyDelayHours;
+        if (cs == 1 && !p.proposal(cid).executed) _fail("H2: passed LIST not marked executed at the burn");
         ghostBuyableAt[address(p)] = uint64(block.timestamp + wait * 1 hours);
         if (p.buyableAt() != ghostBuyableAt[address(p)]) _fail("assemble: buyableAt != now + default/pending wait");
         if (p.ask() != wantAsk) _fail("assembled ask != clamped resolved price");
