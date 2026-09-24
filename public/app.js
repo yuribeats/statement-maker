@@ -516,7 +516,7 @@ const rulesAgreed = () => { try { return localStorage.getItem(RULES_KEY) === '1'
 function pageRules() {
   render(app, `
   <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div></div>
-  <div class="works"><div class="rows terms">
+  <div class="works no-defs"><div class="rows terms">
    <div><span>01 Open</span><strong>A host opens a party and sets its defaults: which Credits qualify, minimum deposit, default arrangement, default price, voting window, deadline.</strong></div>
    <div><span>02 Deposit</span><strong>Users deposit Credits that match the party’s criteria. Each deposited Credit returns one Credit Card (ERC-721) to the depositor. Depositing accepts the party’s defaults.</strong></div>
    <div><span>03 The card</span><strong>Whoever holds a Credit Card has its vote, can redeem its Credit until the party fills or if it expires, and gets 1/80 of the sale. Credit Cards are ERC-721s: list and trade them on OpenSea or anywhere. The Statement itself sells only here.</strong></div>
@@ -916,6 +916,7 @@ const DEFS = {
 };
 function addDefs(root = app) {
   root.querySelectorAll('.field > label, .rows > div > span:first-child').forEach(el => {
+    if (el.closest('.no-defs')) return; // the Rules page explains itself
     const k = el.textContent.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^\d\d /, '');
     const d = DEFS[k] || DEFS[k.split(' · ')[0]];
     if (d) { el.dataset.def = d; el.tabIndex = 0; }
