@@ -1392,10 +1392,10 @@ async function route() {
   // A bare URL opens "#/". Not signed in, "#/" is the landing: the name and Connect wallet, nothing else. After
   // connecting (and accepting the terms) it continues to the Rules, then The Four (or the parties list after launch).
   if (!location.hash) { location.replace('#/'); return; }
-  // The bare URL is always the landing: the name and Connect wallet (Enter when already signed in).
+  // The bare URL is always the landing: the name, Connect wallet and View only.
   const bare = !page;
   document.body.classList.toggle('bare', bare);
-  if (bare) { clearInterval(auctionTick); return render(app, `<div class="landing"><h1>Statement Maker</h1>${me ? `<a class="cta" href="${home()}">Enter</a>` : '<button type="button" class="cta" data-switch-wallet>Connect wallet</button><button type="button" class="view-only" id="view-only">View only</button>'}</div>`), $('#view-only') && ($('#view-only').onclick = () => { try { sessionStorage.setItem(VIEW_KEY, '1'); } catch {} location.hash = home(); }); }
+  if (bare) { clearInterval(auctionTick); return render(app, `<div class="landing"><h1>Statement Maker</h1><button type="button" class="cta" id="land-connect">Connect wallet</button><button type="button" class="view-only" id="view-only">View only</button></div>`), $('#view-only').onclick = () => { try { sessionStorage.setItem(VIEW_KEY, '1'); } catch {} location.hash = home(); }, $('#land-connect').onclick = async () => { await connectWallet(); if (me && !document.querySelector('#modal-root .modal')) location.hash = home(); }; }
   applyPhase();
   const launch = launchPhase();
   // Launch phase: a Minute party's generic page opens as its Minute page.
