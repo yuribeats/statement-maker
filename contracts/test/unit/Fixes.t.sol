@@ -592,14 +592,16 @@ contract FixesTest is FixesBase {
         assertEq(party.ask(), 2.5 ether);
     }
 
-    /// Observed: a floor-relative price that resolves to <= 0 reverts instead of clamping to minAskWei.
-    function test_minAsk_nonPositiveResolveStillReverts() public {
+    /// Pashov M3: a floor-relative price that resolves to <= 0 clamps to minAskWei (it used to revert).
+    function test_minAsk_nonPositiveResolveClamps() public {
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
         p.minAskWei = 1 ether;
         (Party party, address[] memory v) = _assembled(p, noFloor(), one(80));
         uint256 id = _prop(party, v[0], _delta(-2 ether), 1);
         _end(party, id);
-        _exFail(party, v[0], id, floorSig(1 ether, 0), bad("price <= 0"));
+        Party.Floor memory f = floorSig(1 ether, 0);
+        _ex(party, v[0], id, f);
+        assertEq(party.ask(), 1 ether);
     }
 
     // ================================================================== T-4b: monotonic floor readings

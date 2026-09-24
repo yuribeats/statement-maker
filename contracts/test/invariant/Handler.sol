@@ -292,8 +292,7 @@ contract Handler is Test {
         if (p.mode == Party.PriceMode.Fixed) return (true, uint256(p.value));
         int256 f = int256(fw);
         int256 r = p.mode == Party.PriceMode.FloorPct ? f * (10_000 + p.value) / 10_000 : f + p.value;
-        if (r <= 0) return (false, 0);
-        return (true, uint256(r));
+        return (true, r <= 0 ? 0 : uint256(r)); // <= 0 resolves to 0, then the minimum-ask clamp applies (Pashov M3)
     }
 
     function _floor(Party p, uint256 kind, uint256 fwSeed) internal view returns (Party.Floor memory f, bool valid) {

@@ -97,7 +97,7 @@ Only prices are governed. Two proposal kinds: **LIST** (`cancel = false`, a `Pri
 ### 6.1 Price specs
 - `Fixed`: `value` wei, `0 < value ≤ 1e24`.
 - `FloorPct`: `floor × (10_000 + value) / 10_000`, with `-10_000 < value ≤ 1_000_000` (basis points).
-- `FloorDelta`: `floor + value` wei, `|value| ≤ 1e24`. A result ≤ 0 reverts.
+- `FloorDelta`: `floor + value` wei, `|value| ≤ 1e24`. A result ≤ 0 resolves to 0 and is then clamped up to `minAskWei` (Pashov M3; it used to revert and could block assembly).
 
 ### 6.2 Lifecycle of a proposal
 | Step | Rule | Code |

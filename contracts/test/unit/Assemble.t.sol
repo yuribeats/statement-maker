@@ -309,19 +309,19 @@ contract AssembleTest is UnitBase {
         assertEq(v, 1_000);
     }
 
-    function test_floorDelta_nonPositiveRejected() public {
+    /// Pashov M3: a floor-relative default that resolves to <= 0 (floor at or below the FloorDelta discount) clamps
+    /// to minAskWei instead of reverting, so a low floor can no longer keep a full party from burning.
+    function test_floorDelta_nonPositiveClampsToMinAsk() public {
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
         p.defaultPrice = Party.PriceSpec(Party.PriceMode.FloorDelta, -1 ether);
+        p.minAskWei = 0.5 ether;
         Party party = scrambledParty(p);
         uint256[] memory dep = party.depositOrder();
-        Party.Floor memory f = floorSig(1 ether, 0);
-        vm.prank(arranger);
-        vm.expectRevert(bad("price <= 0"));
-        party.assemble(dep, f);
-        f = floorSig(1 ether + 1, 0);
+        Party.Floor memory f = floorSig(1 ether, 0); // floor - 1 ETH = 0
         vm.prank(arranger);
         party.assemble(dep, f);
-        assertEq(party.ask(), 1);
+        assertTrue(party.assembled(), "liveness: the burn is not blocked");
+        assertEq(party.ask(), 0.5 ether);
     }
 
     function test_fixedDefault_ignoresFloorArg() public {

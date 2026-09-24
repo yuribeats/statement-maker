@@ -57,8 +57,7 @@ contract PartyLogic {
         if (p.mode == PriceMode.Fixed) return uint256(p.value);
         int256 f = int256(floorWei);
         int256 r = p.mode == PriceMode.FloorPct ? f * (10_000 + p.value) / 10_000 : f + p.value;
-        if (r <= 0) revert Bad("price <= 0");
-        return uint256(r);
+        return r <= 0 ? 0 : uint256(r);
     }
 
     // Party.sol:574-576 (_clampMin), verbatim.
@@ -164,7 +163,7 @@ contract PartyHalmos is Test {
     }
 
     /// FloorPct, for every value _checkPrice admits and every floor up to 1e30 wei:
-    /// returns floor*(10000+value)/10000 exactly; reverts only when that is 0.
+    /// returns floor*(10000+value)/10000 exactly, or 0 when that is <= 0 (clamped to minAskWei by the caller); never reverts.
     function check_resolve_pct(int256 value, uint256 floorWei) public view {
         vm.assume(value > -10_000 && value <= 1_000_000);
         vm.assume(floorWei > 0 && floorWei <= 1e30);
@@ -173,9 +172,9 @@ contract PartyHalmos is Test {
         int256 want;
         unchecked { want = int256(floorWei) * (10_000 + value) / 10_000; }
         try L.resolveWith(PartyLogic.PriceMode.FloorPct, value, floorWei) returns (uint256 got) {
-            assert(want > 0 && got == uint256(want));
+            assert(want > 0 ? got == uint256(want) : got == 0);
         } catch {
-            assert(want <= 0); // the only revert is Bad("price <= 0"); no overflow Panic
+            assert(false); // no revert at all (no overflow Panic, no Bad)
         }
     }
 
@@ -190,15 +189,15 @@ contract PartyHalmos is Test {
         }
     }
 
-    /// FloorDelta: returns floor + value; reverts only when that is <= 0.
+    /// FloorDelta: returns floor + value, or 0 when that is <= 0; never reverts.
     function check_resolve_delta(int256 value, uint256 floorWei) public view {
         vm.assume(value >= -1e24 && value <= 1e24);
         vm.assume(floorWei > 0 && floorWei <= 1e30);
         int256 want = int256(floorWei) + value;
         try L.resolveWith(PartyLogic.PriceMode.FloorDelta, value, floorWei) returns (uint256 got) {
-            assert(want > 0 && got == uint256(want));
+            assert(want > 0 ? got == uint256(want) : got == 0);
         } catch {
-            assert(want <= 0);
+            assert(false);
         }
     }
 

@@ -573,11 +573,11 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (p.mode == PriceMode.Fixed) return uint256(p.value);
         int256 f = int256(floorWei);
         int256 r = p.mode == PriceMode.FloorPct ? f * (10_000 + p.value) / 10_000 : f + p.value;
-        if (r <= 0) revert Bad("price <= 0");
-        return uint256(r);
+        return r <= 0 ? 0 : uint256(r); // a result <= 0 is clamped up to minAskWei (> 0 for any floor-relative spec)
     }
 
-    /// @dev Floor-relative prices never resolve below the host's minimum ask (limits a bad or compromised floor reading).
+    /// @dev Floor-relative prices never resolve below the host's minimum ask (limits a bad or compromised floor reading),
+    ///      including results <= 0 (floor at or below a FloorDelta discount), which would otherwise block assembly.
     function _clampMin(uint256 v) internal view returns (uint256) {
         return v < _params.minAskWei ? _params.minAskWei : v;
     }
