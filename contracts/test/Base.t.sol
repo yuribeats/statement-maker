@@ -33,11 +33,12 @@ abstract contract Base is Test {
     KeyProbe probe;
     uint256 signerKey = 0xA11CE;
     address feeTo = makeAddr("fee");
+    address collectionOwner = makeAddr("collectionOwner");
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_RPC_URL"), FORK_BLOCK);
         statement = new MockStatement(address(CREDITS));
-        factory = new PartyFactory(CREDITS, IStatement(address(statement)), feeTo, vm.addr(signerKey));
+        factory = new PartyFactory(CREDITS, IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner);
         cards = factory.cards();
         probe = new KeyProbe();
     }
@@ -53,6 +54,19 @@ abstract contract Base is Test {
         p.seed = 42;
         p.defaultPrice = Party.PriceSpec(Party.PriceMode.Fixed, 3 ether);
         p.floorMode = Party.FloorMode.Avg24h;
+        p.minAskWei = 1;
+        p.buyDelayHours = 24; // pre-audit fixed wait; the site default is 1 hour
+    }
+
+    /// `host` approves the predicted party address, then createParty() pulls its opening deposit (same tx).
+    function openParty(Party.Params memory p, address host, uint256[] memory ids) internal returns (Party party) {
+        address predicted = factory.predictParty(host);
+        vm.startPrank(host);
+        CREDITS.setApprovalForAll(predicted, true);
+        party = factory.createParty(p, ids, new bytes32[][](0));
+        CREDITS.setApprovalForAll(predicted, false);
+        vm.stopPrank();
+        require(address(party) == predicted, "harness: predicted address");
     }
 
     function holdings(address who) internal view returns (uint256[] memory ids) {

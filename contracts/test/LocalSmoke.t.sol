@@ -7,12 +7,13 @@ import {CreditKeys} from "../src/CreditKeys.sol";
 
 contract LocalSmokeTest is LocalBase {
     function test_localHarness_fillFromManyHolders_burn() public {
-        Party party = factory.createParty(params(CreditKeys.Preset.Deposit));
+        Party party;
         for (uint256 h; h < 4; ++h) {
             uint256[] memory mine = ownedBy(holders[h]);
             uint256[] memory twenty = new uint256[](20);
             for (uint256 i; i < 20; ++i) twenty[i] = mine[i];
-            deposit(party, holders[h], twenty);
+            if (h == 0) party = openParty(params(CreditKeys.Preset.Deposit), holders[0], twenty); // host opens
+            else deposit(party, holders[h], twenty);
         }
         assertEq(party.count(), 80);
         uint256[] memory order = party.depositOrder();

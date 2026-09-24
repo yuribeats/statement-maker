@@ -19,6 +19,7 @@ abstract contract LocalBase is Test {
     CreditCards cards;
     uint256 signerKey = 0xA11CE;
     address feeTo = makeAddr("fee");
+    address collectionOwner = makeAddr("collectionOwner"); // CreditCards.owner(): marketplace page only
     address[] holders;
 
     function setUp() public virtual {
@@ -27,7 +28,7 @@ abstract contract LocalBase is Test {
         _distribute(8, 60); // 8 holders × 60 Credits = 480
         credits.seal();
         statement = new MockStatement(address(credits));
-        factory = new PartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey));
+        factory = new PartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner);
         cards = factory.cards();
     }
 
@@ -63,6 +64,27 @@ abstract contract LocalBase is Test {
         p.seed = 7;
         p.defaultPrice = Party.PriceSpec(Party.PriceMode.Fixed, 3 ether);
         p.floorMode = Party.FloorMode.Avg24h;
+        p.minAskWei = 1; // required > 0 when the default price is floor-relative; 1 wei never binds in these tests
+        p.buyDelayHours = 24; // pre-audit fixed wait; the site default is 1 hour
+    }
+
+    /// Opens a party the way the site does: `host` approves the predicted clone address on Credits, then
+    /// createParty() deploys it and pulls the host's opening deposit in the same transaction.
+    function openParty(Party.Params memory p, address host, uint256[] memory ids) internal returns (Party) {
+        return openPartyWith(factory, p, host, ids, new bytes32[][](0));
+    }
+
+    function openPartyWith(PartyFactory f, Party.Params memory p, address host, uint256[] memory ids, bytes32[][] memory proofs)
+        internal
+        returns (Party party)
+    {
+        address predicted = f.predictParty(host);
+        vm.startPrank(host);
+        credits.setApprovalForAll(predicted, true);
+        party = f.createParty(p, ids, proofs);
+        credits.setApprovalForAll(predicted, false);
+        vm.stopPrank();
+        require(address(party) == predicted, "harness: predicted address");
     }
 
     function ownedBy(address who) internal view returns (uint256[] memory) {
