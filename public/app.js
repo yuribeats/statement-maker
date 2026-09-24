@@ -117,6 +117,7 @@ async function pageParties() {
    <div><strong>${stats.soloStatements.toLocaleString()} / ${stats.maxStatements.toLocaleString()}</strong><span>Statements possible without a party</span></div>
    <div><strong>${stats.scattered.toLocaleString()}</strong><span>Credits in wallets under 80</span></div>
   </div>
+  <div id="fit"></div>
   <div class="caption"><h2>Parties</h2><a href="#/new">Start a party →</a></div>
   <div class="parties">${parties.map(p => `
    <a class="party-card" href="#/party/${esc(p.id)}">
@@ -125,6 +126,30 @@ async function pageParties() {
     <div class="caption"><span><strong>${esc(p.name)}</strong></span><span>${p.credits.length}/80 ${stateTag(p.status)}</span></div>
     <div class="muted">${filterText(p.params.filters)} · Target ${targetText(p.params.target)}${p.demo ? ' · <span class="demo">Demo</span>' : ''}</div>
    </a>`).join('')}</div>`);
+  if (me) renderFit();
+}
+// Two optional starting points once a wallet is connected: join a party that fits, or start one from what you hold.
+async function renderFit() {
+  const f = await api(`wallet/${me}/fit`);
+  const el = $('#fit'); if (!el) return;
+  const mini = ids => `<span class="mini">${ids.map(id => `<img src="${svg(id)}" alt="">`).join('')}</span>`;
+  render(el, `
+  <div class="fit">
+   <div>
+    <div class="caption" style="min-height:0;margin-bottom:12px"><h2><span class="dot y"></span>Parties your Credits fit</h2><span class="muted">${f.held} available in ${short(me)}</span></div>
+    ${f.parties.length ? `<div class="rows">${f.parties.map(q => `<div><span><a href="#/party/${esc(q.id)}">${esc(q.name)}</a><br><span class="faint">${q.filled}/80 · ${q.left} left · min ${q.minDeposit}</span></span><strong>${mini(q.sample)}<br>${q.fit} of yours qualify · <a href="#/party/${esc(q.id)}">Join →</a></strong></div>`).join('')}</div>`
+      : '<p class="muted">No open party accepts your Credits right now.</p>'}
+   </div>
+   <div>
+    <div class="caption" style="min-height:0;margin-bottom:12px"><h2>Start a party from your Credits</h2><span class="muted">Rarest pools you hold most of first</span></div>
+    <div class="rows">${f.ideas.map((i, k) => `<div><span>${esc(i.label)}<br><span class="faint">You hold ${n(i.mine)} · ${n(i.eligible)} exist</span></span><strong>${mini(i.sample)}<br><button type="button" data-idea="${k}">Start with these rules →</button></strong></div>`).join('')}</div>
+   </div>
+  </div>`);
+  el.querySelectorAll('[data-idea]').forEach(b => b.onclick = () => {
+    const i = f.ideas[Number(b.dataset.idea)];
+    draft = { name: i.label === 'Any Credit' ? '' : i.label, minDeposit: 1, days: 14, voteHours: 48, target: { mode: 'floorPct', value: 25 }, filters: { ...i.filters } };
+    location.hash = '#/new';
+  });
 }
 
 const freshUI = () => ({ mode: 'sheet', selected: null, order: null, preset: null, picks: new Set() });

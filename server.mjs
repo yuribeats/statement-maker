@@ -258,6 +258,38 @@ http.createServer(async (req, res) => {
       save(); return json(res, 200, { now: now() });
     }
     if (a === 'holders') return json(res, 200, [...holders].sort((x, y) => y[1].length - x[1].length).slice(0, 40).map(([address, ids]) => ({ address, count: ids.length })));
+    if (a === 'wallet' && c === 'fit') {
+      // Starting points for a wallet: open parties its Credits qualify for, and party ideas built from what it holds.
+      const who = addr(b);
+      const inParty = new Set(state.parties.flatMap(deposited));
+      const mine = (holders.get(who) || []).map(id => byId.get(id)).filter(cr => !inParty.has(cr.id));
+      const parties = state.parties.filter(q => status(q) === 'OPEN').map(q => {
+        const fit = mine.filter(cr => matches(cr, q.params.filters));
+        const left = SLOTS - q.deposits.length;
+        return { id: q.id, name: q.name, filters: q.params.filters, target: q.params.target, filled: q.deposits.length, left, minDeposit: Math.min(q.params.minDeposit, left), fit: fit.length, sample: fit.slice(0, 8).map(cr => cr.id) };
+      }).filter(q => q.fit > 0 && q.fit >= q.minDeposit).sort((x, y) => y.fit - x.fit);
+      const ideas = [];
+      const seen = new Set();
+      for (const k of TRAITS) {
+        const counts = new Map();
+        for (const cr of mine) counts.set(cr[k], (counts.get(cr[k]) || 0) + 1);
+        for (const [v, n] of counts) {
+          if (n < 1) continue;
+          const filters = { [k]: [v] };
+          ideas.push({ label: `${k === 'eights' ? 'Eights' : k[0].toUpperCase() + k.slice(1)} ${v}`, filters, mine: n, eligible: freq[k].get(v), holders: null, rarity: freq[k].get(v) / byId.size });
+        }
+      }
+      // Rare-and-held first: ideas where the wallet holds a big share of a small pool, then the biggest holdings.
+      ideas.sort((x, y) => (y.mine / y.eligible) - (x.mine / x.eligible) || y.mine - x.mine);
+      const top = [];
+      for (const i of ideas) { if (i.eligible < SLOTS || seen.has(i.label)) continue; seen.add(i.label); top.push(i); if (top.length >= 6) break; }
+      const any = { label: 'Any Credit', filters: {}, mine: mine.length, eligible: byId.size };
+      const ranks = mine.map(cr => cr.rank).sort((x, y) => x - y);
+      const k = Math.min(10, ranks.length);
+      const r = k ? Math.max(ranks[k - 1], SLOTS) : 0;
+      const rare = k ? { label: `Rarity top ${r.toLocaleString()}`, filters: { rankMax: r }, mine: ranks.filter(x => x <= r).length, eligible: r } : null;
+      return json(res, 200, { held: mine.length, parties: parties.slice(0, 12), ideas: [...top, ...(rare && rare.eligible < byId.size ? [rare] : []), any].map(i => ({ ...i, sample: mine.filter(cr => matches(cr, i.filters)).slice(0, 8).map(cr => cr.id) })) });
+    }
     if (a === 'wallet') {
       const ids = holders.get(addr(b)) || [];
       const inParty = new Set(state.parties.flatMap(deposited));
