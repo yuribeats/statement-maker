@@ -113,7 +113,7 @@ function walletPanel() {
      ${w && chainNow !== CHAIN ? `<div><span>Network</span><strong class="alert-m">Chain ${Number(chainNow)} · this site reads Ethereum mainnet</strong></div>` : ''}
      <div><span>Parties</span><strong>${access?.canParty ? 'Allowed · holds a Credit or a Credit Card' : 'Holds 0 Credits · parties need a wallet holding a Credit'}</strong></div>
     </div></div>
-    <div class="modal-foot"><div class="actions" style="align-items:center"><button class="cta" type="button" id="w-switch">Switch wallet</button><button type="button" id="w-off">Disconnect</button><button type="button" id="w-close">Close</button></div></div>
+    <div class="modal-foot"><div class="actions" style="align-items:center"><button class="cta" type="button" id="w-switch">Switch wallet</button><button type="button" id="w-off">Log out</button><button type="button" id="w-close">Close</button></div></div>
    </div>
   </div>`);
   document.body.style.overflow = 'hidden';
@@ -1392,10 +1392,10 @@ async function route() {
   // A bare URL opens "#/". Not signed in, "#/" is the landing: the name and Connect wallet, nothing else. After
   // connecting (and accepting the terms) it continues to the Rules, then The Four (or the parties list after launch).
   if (!location.hash) { location.replace('#/'); return; }
-  // The bare URL is always the landing: the name, Connect wallet and View only.
+  // The bare URL is always the landing: the name with Connect wallet and View only, or Enter and Log out when signed in.
   const bare = !page;
   document.body.classList.toggle('bare', bare);
-  if (bare) { clearInterval(auctionTick); return render(app, `<div class="landing"><h1>Statement Maker</h1><button type="button" class="cta" id="land-connect">Connect wallet</button><button type="button" class="view-only" id="view-only">View only</button></div>`), $('#view-only').onclick = () => { try { sessionStorage.setItem(VIEW_KEY, '1'); } catch {} location.hash = home(); }, $('#land-connect').onclick = async () => { await connectWallet(); if (me && !document.querySelector('#modal-root .modal')) location.hash = home(); }; }
+  if (bare) { clearInterval(auctionTick); return render(app, `<div class="landing"><h1>Statement Maker</h1>${me ? `<a class="cta" href="${home()}">Enter</a><button type="button" class="view-only" id="land-out">Log out</button>` : '<button type="button" class="cta" id="land-connect">Connect wallet</button><button type="button" class="view-only" id="view-only">View only</button>'}</div>`), $('#view-only') && ($('#view-only').onclick = () => { try { sessionStorage.setItem(VIEW_KEY, '1'); } catch {} location.hash = home(); }), $('#land-connect') && ($('#land-connect').onclick = async () => { await connectWallet(); if (me && !document.querySelector('#modal-root .modal')) location.hash = home(); }), $('#land-out') && ($('#land-out').onclick = async () => { await Wallets.disconnect(); await signOut(); route(); }); }
   applyPhase();
   const launch = launchPhase();
   // Launch phase: a Minute party's generic page opens as its Minute page.
