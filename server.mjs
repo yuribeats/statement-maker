@@ -97,15 +97,34 @@ function siweMessage(host, origin, address, nonce) {
 }
 
 // ---- floor (data input only; nothing is listed anywhere) ----
-let floor = { credit: null, at: 0 };
+// Credits floor from OpenSea listings, read every minute and kept for 25 hours (data/floor.json).
+// A party uses either the 24-hour average of these readings (default; resists a single cheap listing) or the latest reading.
+const FLOOR_FILE = path.join(DATA, 'floor.json');
+let floorHist = [];
+try { floorHist = JSON.parse(fs.readFileSync(FLOOR_FILE)); } catch {}
 async function refreshFloor() {
   try {
     const r = await fetch('https://api.opensea.io/api/v2/collections/credits/stats', { headers: process.env.OPENSEA_API_KEY ? { 'x-api-key': process.env.OPENSEA_API_KEY } : {} });
     const j = await r.json();
-    if (j?.total?.floor_price) floor = { credit: j.total.floor_price, at: Date.now() };
+    const v = Number(j?.total?.floor_price);
+    if (v > 0) {
+      floorHist.push({ at: Date.now(), credit: v });
+      floorHist = floorHist.filter(x => x.at > Date.now() - 25 * 36e5);
+      const tmp = FLOOR_FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(floorHist)); fs.renameSync(tmp, FLOOR_FILE);
+    }
   } catch {}
 }
-refreshFloor(); setInterval(refreshFloor, 10 * 60 * 1000);
+refreshFloor(); setInterval(refreshFloor, 60 * 1000);
+const FLOOR_MODES = ['avg24h', 'latest'];
+function floorInfo(mode = 'avg24h') {
+  if (!floorHist.length) return { credit: null, eth: null, hours: 0, samples: 0, mode };
+  if (mode === 'latest') { const l = floorHist.at(-1); return { credit: l.credit, eth: l.credit * SLOTS, hours: 0, samples: 1, at: l.at, mode }; }
+  const xs = floorHist.filter(x => x.at > Date.now() - 864e5);
+  const credit = xs.reduce((a, x) => a + x.credit, 0) / xs.length;
+  return { credit, eth: credit * SLOTS, hours: +((Date.now() - xs[0].at) / 36e5).toFixed(1), samples: xs.length, mode };
+}
+const floorFor = p => floorInfo(p?.params?.floorMode || 'avg24h');
+const floor = { get credit() { return floorInfo('avg24h').credit; } };
 let gas = { gwei: null, ethUsd: null };
 async function refreshGas() {
   try {
@@ -224,7 +243,7 @@ function tally(p, prop) {
   const endsAt = prop.endsAt || prop.at + VOTE_WINDOW;
   const closed = now() >= endsAt;
   // A price below the floor needs 75% of cards (60 of 80); everything else needs a majority (41).
-  const below = prop.type === 'LIST' && belowFloor(prop.args);
+  const below = prop.type === 'LIST' && belowFloor(prop.args, p);
   const need = below ? Math.ceil(SLOTS * 0.75) : Math.floor(SLOTS / 2) + 1;
   const passing = prop.override ? yes >= Math.max(need, OVERRIDE) : yes >= need && no === 0;
   const execBy = endsAt + EXEC_WINDOW;
@@ -240,16 +259,16 @@ function deadlocked(p, type) {
   const since = p.assembled?.at || p.fullAt;
   return blocked >= DEADLOCK_FAILS || (since != null && now() - since > DEADLOCK_DAYS * 864e5);
 }
-const belowFloor = t => { const e = priceEth(t), f = floor.credit ? floor.credit * SLOTS : null; return e != null && f != null && e < f; };
-function priceEth(t) {
-  const base = floor.credit ? floor.credit * SLOTS : null;
+const belowFloor = (t, p) => { const e = priceEth(t, p), f = floorFor(p).eth; return e != null && f != null && e < f; };
+function priceEth(t, p) {
+  const base = floorFor(p).eth;
   if (t.mode === 'fixed') return t.value;
   if (!base) return null;
   return t.mode === 'floorPct' ? base * (1 + t.value / 100) : base + t.value;
 }
 function targetEth(p) {
   const t = p.params.target;
-  const base = floor.credit ? floor.credit * SLOTS : null;
+  const base = floorFor(p).eth;
   if (t.mode === 'fixed') return t.value;
   if (!base) return null;
   return t.mode === 'floorPct' ? base * (1 + t.value / 100) : base + t.value;
@@ -262,12 +281,13 @@ function view(p) {
     credits: order.map(id => { const d = p.deposits.find(x => x.id === id); return { ...card(byId.get(id), d?.address), card: d?.card, depositorAddr: d?.depositor, claimed: !!d?.claimed }; }),
     perCard: p.sold ? p.sold.perCard : null,
     buyOpensAt: p.listing ? p.listing.at + BUY_DELAY : null,
-    defaultBelowFloor: belowFloor(p.params.target),
+    defaultBelowFloor: belowFloor(p.params.target, p),
     deadlock: { LIST: deadlocked(p, 'LIST') },
     proposals: p.proposals.map(x => ({ ...x, ...tally(p, x) })),
     eligible: p.eligible ?? (p.eligible = eligibleCount(p.params.filters)),
-    floorEth: floor.credit ? floor.credit * SLOTS : null,
-    listingEth: p.listing ? priceEth(p.listing) : null,
+    floorEth: floorFor(p).eth,
+    floor: floorFor(p),
+    listingEth: p.listing ? priceEth(p.listing, p) : null,
   };
 }
 const card = (c, depositor) => c && ({ id: c.id, colors: c.colors, print: c.print, register: c.register, shifted: c.shifted, shift: c.shift, weight: c.weight, eights: c.eights, tier: c.tier, marks: c.marks, rank: c.rank, paidAt: c.paidAt, owner: c.owner, depositor });
@@ -378,7 +398,7 @@ if (!state.parties.length) {
   const y = mk('yellow', 'Yellow Plate Only', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Weight' }, target: { mode: 'floorPct', value: 30 }, filters: { colors: ['Y'] } }, 80, 5);
   y.fullAt = T - 4 * 864e5; y.order = defaultOrder(y); y.orderSource = 'Weight';
   y.assembled = { by: y.hosts[0], at: T - 3 * 864e5, number: 2 };
-  y.listing = { mode: 'floorPct', value: 30, startEth: priceEth({ mode: 'floorPct', value: 30 }), at: T - 60 * 36e5, source: 'default' };
+  y.listing = { mode: 'floorPct', value: 30, startEth: priceEth({ mode: 'floorPct', value: 30 }, y), at: T - 60 * 36e5, source: 'default' };
   y.deadline = T + 10 * 864e5; y.description = 'Yellow only, sparse to extreme.';
   const mg = mk('magenta', 'Magenta Plate Only', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Rarity' }, target: { mode: 'fixed', value: 2.9 }, filters: { colors: ['M'] } }, 80, 5);
   mg.fullAt = T - 7 * 864e5; mg.order = defaultOrder(mg); mg.orderSource = 'Rarity';
@@ -456,7 +476,7 @@ http.createServer(async (req, res) => {
         soloStatements: bal.reduce((s, n) => s + Math.floor(n / SLOTS), 0),
         scattered: bal.filter(n => n < SLOTS).reduce((s, n) => s + n, 0),
         ranges: { id: [1, byId.size], rank: [1, byId.size], marks: MARKS, minDeposit: [1, SLOTS], days: [1, 60] },
-        dev: DEV, syncedBlock, floor: floor.credit, freq: Object.fromEntries(TRAITS.map(k => [k, Object.fromEntries(freq[k])])),
+        dev: DEV, syncedBlock, floor: floor.credit, floorLatest: floorInfo('latest').credit, floorAvg: floorInfo('avg24h'), freq: Object.fromEntries(TRAITS.map(k => [k, Object.fromEntries(freq[k])])),
       });
     }
     if (a === 'terms' && req.method === 'GET') return json(res, 200, { version: TERMS_VERSION, accepted: state.terms?.[addr(b)]?.version === TERMS_VERSION });
@@ -586,7 +606,7 @@ http.createServer(async (req, res) => {
       const name = String(x.name || 'Untitled').replace(/\s+/g, ' ').trim().slice(0, 60) || 'Untitled';
       const description = String(x.description || '').replace(/\r/g, '').trim().slice(0, 1000);
       const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) + '-' + crypto.randomUUID().slice(0, 8);
-      const p = { id, name, description, hosts: [host], createdAt: now(), deadline: now() + days * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit, target, filters, arrangement: cleanArrangement(x.arrangement) }, eligible: eligibleCount(filters), deposits: [], order: null, arranger: null, proposals: [], chat: [] };
+      const p = { id, name, description, hosts: [host], createdAt: now(), deadline: now() + days * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit, target, filters, arrangement: cleanArrangement(x.arrangement), floorMode: FLOOR_MODES.includes(x.floorMode) ? x.floorMode : 'avg24h' }, eligible: eligibleCount(filters), deposits: [], order: null, arranger: null, proposals: [], chat: [] };
       state.parties.unshift(p); save();
       return json(res, 200, view(p));
     }
@@ -650,7 +670,7 @@ http.createServer(async (req, res) => {
           // Any price may be proposed, including below the floor. Only a vote sets it.
           const t = cleanTarget(x.args);
           if (!t) return json(res, 400, { error: 'price is out of range' });
-          if (!(priceEth(t) > 0)) return json(res, 400, { error: 'that price is at or below 0 ETH' });
+          if (!(priceEth(t, p) > 0)) return json(res, 400, { error: 'that price is at or below 0 ETH' });
           x.args = t;
         }
         const at = now();
@@ -675,7 +695,7 @@ http.createServer(async (req, res) => {
         const RUNS_IN = { LIST: ['FULL', 'ASSEMBLED'], CANCEL_LISTING: ['ASSEMBLED'] };
         if (!RUNS_IN[prop.type]?.includes(st)) return json(res, 400, { error: `${prop.type} cannot run while ${st}` });
         prop.executed = true; prop.executedBy = who;
-        if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: now(), source: 'vote' };
+        if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args, p), at: now(), source: 'vote' };
         if (prop.type === 'CANCEL_LISTING') p.listing = null;
         // Executing one proposal supersedes every other pending proposal of the same kind (no stale re-runs).
         for (const q of p.proposals) if (q !== prop && !q.executed && kindOf(q.type) === kindOf(prop.type)) q.superseded = true;
@@ -697,7 +717,7 @@ http.createServer(async (req, res) => {
         p.order = order; p.orderSource = source;
         p.assembled = { by: who, at: now(), number: state.parties.filter(q => q.assembled).length + 1 };
         // The host's default price goes live at assembly unless card holders already voted a price.
-        if (!p.listing) p.listing = { ...p.params.target, startEth: priceEth(p.params.target), at: now(), source: 'default' };
+        if (!p.listing) p.listing = { ...p.params.target, startEth: priceEth(p.params.target, p), at: now(), source: 'default' };
         save(); return json(res, 200, view(p));
       }
       if (c === 'return') {
@@ -724,7 +744,7 @@ http.createServer(async (req, res) => {
         if (st !== 'ASSEMBLED') return json(res, 400, { error: 'party is ' + st });
         if (!p.listing) return json(res, 400, { error: 'not listed' });
         if (now() < p.listing.at + BUY_DELAY) return json(res, 400, { error: `buying opens ${Math.ceil((p.listing.at + BUY_DELAY - now()) / 36e5)}h after the price went live` });
-        const price = priceEth(p.listing);
+        const price = priceEth(p.listing, p);
         if (!(price > 0)) return json(res, 400, { error: 'no price available' });
         const royalty = 0, fee = price * 0.01;
         p.sold = { buyer: who, price, royalty, fee, perCard: (price - royalty - fee) / SLOTS, at: now() };
@@ -747,6 +767,7 @@ http.createServer(async (req, res) => {
         if ('target' in q) { const t = cleanTarget(q.target); if (!t) return json(res, 400, { error: 'target price is out of range' }); next.target = t; }
         if ('filters' in q) next.filters = cleanFilters(q.filters);
         if ('arrangement' in q) next.arrangement = cleanArrangement(q.arrangement);
+        if ('floorMode' in q) { if (!FLOOR_MODES.includes(q.floorMode)) return json(res, 400, { error: 'floor must be avg24h or latest' }); next.floorMode = q.floorMode; }
         if ('description' in x) p.description = String(x.description || '').replace(/\r/g, '').trim().slice(0, 1000);
         if ('name' in x) p.name = String(x.name || p.name).replace(/\s+/g, ' ').trim().slice(0, 60) || p.name;
         if ('voteHours' in q) { if (!WINDOWS.includes(Number(q.voteHours))) return json(res, 400, { error: 'vote window must be 24, 48, 72 or 168 hours' }); next.voteHours = Number(q.voteHours); }
