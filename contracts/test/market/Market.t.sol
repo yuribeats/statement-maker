@@ -11,6 +11,7 @@ contract Stmt is ERC721 {
     bytes public rawRoyalty; // when set, royaltyInfo returns these bytes verbatim (malformed-response test)
     constructor() ERC721("Statements", "STMT") {}
     function mint(address to, uint256 id) external { _mint(to, id); }
+    function burn(uint256 id) external { _burn(id); }
     function setRoyalty(address to, uint256 bps) external { royaltyTo = to; royaltyBps = bps; }
     function setRaw(bytes calldata b) external { rawRoyalty = b; }
     uint256 public burnReads; // cold SLOADs royaltyInfo makes first (~2.2k gas each), standing in for a delegating lookup
@@ -254,5 +255,16 @@ contract MarketTest is Test {
         m.buy{value: 2 ether}(1, 2 ether);
         assertEq(m.owed(makeAddr("artist")), 0);
         assertEq(st.ownerOf(1), buyer);
+    }
+
+    /// A listing on a burned token (ownerOf reverts) can be cleared by anyone, not only the seller.
+    function test_cancel_burnedToken_clearableByAnyone() public {
+        _list(1 ether);
+        st.burn(1);
+        assertFalse(m.isLive(1));
+        vm.prank(makeAddr("anyone"));
+        m.cancel(1);
+        (address s_,,,,) = m.listings(1);
+        assertEq(s_, address(0));
     }
 }

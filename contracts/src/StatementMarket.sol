@@ -88,7 +88,10 @@ contract StatementMarket is ReentrancyGuardTransient {
         Listing memory l = listings[tokenId];
         // The seller can cancel; anyone can clear a listing whose seller no longer owns the token.
         if (l.seller == address(0)) revert Bad("not listed");
-        if (msg.sender != l.seller && statement.ownerOf(tokenId) == l.seller) revert Bad("not seller");
+        if (msg.sender != l.seller) {
+            // a reverting ownerOf (burned token) counts as "the seller no longer owns it"
+            try statement.ownerOf(tokenId) returns (address o) { if (o == l.seller) revert Bad("not seller"); } catch {}
+        }
         delete listings[tokenId];
         emit Cancelled(tokenId, l.seller);
     }
