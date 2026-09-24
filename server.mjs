@@ -58,7 +58,8 @@ function moveCredit(id, to) {
 }
 async function syncTransfers() {
   try {
-    const head = Number(await chain.getBlockNumber());
+    // Stay a few blocks behind: load-balanced RPCs can report a head the node serving getLogs hasn't reached.
+    const head = Number(await chain.getBlockNumber()) - 3;
     while (syncedBlock < head) {
       const to = Math.min(syncedBlock + 500, head);
       const logs = await chain.request({ method: 'eth_getLogs', params: [{ address: CREDITS, topics: [TRANSFER], fromBlock: '0x' + (syncedBlock + 1).toString(16), toBlock: '0x' + to.toString(16) }] });
