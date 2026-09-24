@@ -472,17 +472,18 @@ function pageRules() {
   try { localStorage.setItem('sm-rules-seen', '1'); } catch {}
   render(app, `
   <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div><a class="cta" href="#/" style="margin:0">Continue to parties →</a></div>
-  <div class="works"><div class="rows">
-   <div><span>01 Open</span><strong>A host opens a party and sets a minimum deposit, a target price, and which Credits qualify.</strong></div>
-   <div><span>02 Deposit</span><strong>Holders deposit matching Credits. Withdraw any time before the 80th arrives.</strong></div>
-   <div><span>03 Full</span><strong>At 80, Each deposited Credit returns one Credit Card (an ERC-721, one per Credit) the moment it is deposited. Whoever holds a card has its vote, its Credit before the burn, and 1/80 of the sale.</strong></div>
-   <div><span>04 Arrange</span><strong>The host is the default arranger: an auto-order or a manual one, in force at once, no vote needed. Any card holder can challenge it with a vote, or propose a different arranger.</strong></div>
-   <div><span>05 Assemble</span><strong>The 80 Credits are burned into one Statement, held by the party.</strong></div>
-   <div><span>06 Sell</span><strong>Only at the party's own price, only on Statement Maker. No offers. No auctions. No marketplaces.</strong></div>
-   <div><span>07 Price</span><strong>Fixed ETH, or floor plus or minus ETH or percent. Any price can be proposed, below the floor included. A floor-tracking price only moves up; lowering it takes a new vote.</strong></div>
-   <div><span>08 Split</span><strong>Artist royalty first, then 1% to Statement Maker, then the rest to Credit Card holders.</strong></div>
-   <div><span>09 Votes</span><strong>A proposal passes when more than 40 Credit Cards vote yes and no one votes no, within its voting window (24 hours to 7 days). Any member must execute it within 7 days or it lapses.</strong></div>
-   <div><span>10 Expire</span><strong>If a party never fills or never assembles, every Credit goes back to its depositor.</strong></div>
+  <div class="works"><div class="rows terms">
+   <div><span>01 Open</span><strong>A host opens a party and sets its defaults: which Credits qualify, minimum deposit, default arrangement, default price, voting window, deadline.</strong></div>
+   <div><span>02 Deposit</span><strong>Deposit matching Credits. Each one returns a Credit Card (ERC-721). Depositing accepts the party's defaults.</strong></div>
+   <div><span>03 The card</span><strong>Whoever holds a Credit Card has its vote, can redeem its Credit until the party fills or if it expires, and gets 1/80 of the sale.</strong></div>
+   <div><span>04 Full</span><strong>At 80, redemption closes and the default arrangement applies.</strong></div>
+   <div><span>05 Arrange</span><strong>The host is the default arranger and can save any order, auto or manual, without a vote. Any card holder can challenge it with a vote or propose a new arranger.</strong></div>
+   <div><span>06 Assemble</span><strong>One voting window after filling, any card holder burns the 80 into one Statement, held by the party. The default price then goes live.</strong></div>
+   <div><span>07 Sell</span><strong>Only at the party's own price, only on Statement Maker. No offers, no auctions, no marketplaces. Buying opens 24 hours after a price goes live.</strong></div>
+   <div><span>08 Split</span><strong>Artist royalty first, then 1% to Statement Maker, then the rest to the 80 Credit Cards.</strong></div>
+   <div><span>09 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
+   <div><span>10 Time</span><strong>Votes run 24 hours to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
+   <div><span>11 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
   </div>
   <div class="rows">
    <div><span>Contract</span><strong>Credits 0x9763…3043, Ethereum</strong></div>
