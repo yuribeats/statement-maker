@@ -25,7 +25,7 @@ contracts and SPEC and are handled separately. Every fix below was tested on an 
 | 20 | LOW | A cold cron instance rescanned transfers from the snapshot and could write a lower block. | Sync reads the saved block first. The store never writes a lower block (Postgres: conditional UPDATE). OpenSea, Coinbase and gas-price fetches time out after 8 s. `/api/gas` does not retry a failed reading for 60 s. |
 | 21 | INFO | The client's opening-bid preview rounded differently from the server. | The server sends `openingNowEth`, computed with the burn's own rounding. |
 
-Local production-mode results: 41 checks passed, none failed. Covered: unbacked bid refused, bid cap, backed bid, settle split down to the wei, claimFor, market auction entries, Manual grace both ways, cancel rules, buy-wait validation, the 12-per-day limit, pruning to 200, fill grace, return by anyone, Origin 403s, ENS skip, RPC down giving 503 with nothing changed, stale floors giving nulls, the pre-parsed body limit, and the owners block never moving back.
+Local production-mode results: 49 checks passed, none failed. The two stale-floor checks ran in-process, because the running server fetched a fresh floor reading at startup. Covered: unbacked bid refused, bid cap, backed bid, settle split down to the wei, claimFor, market auction entries, Manual grace both ways, cancel rules, buy-wait validation, the 12-per-day limit, pruning to 200, fill grace, return by anyone, Origin 403s, ENS skip, RPC down giving 503 with nothing changed, stale floors giving nulls, the pre-parsed body limit, and the owners block never moving back.
 
 ---
 
