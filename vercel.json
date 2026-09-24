@@ -3,7 +3,12 @@
   "outputDirectory": "public",
   "buildCommand": "",
   "installCommand": "npm ci --omit=dev || npm install --omit=dev",
-  "rewrites": [{ "source": "/api/:path*", "destination": "/api/index?__path=:path*" }],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index?__path=:path*"
+    }
+  ],
   "functions": {
     "api/index.mjs": {
       "memory": 2048,
@@ -12,20 +17,66 @@
     }
   },
   "crons": [
-    { "path": "/api/cron/floor", "schedule": "* * * * *" },
-    { "path": "/api/cron/sync", "schedule": "* * * * *" }
+    {
+      "path": "/api/cron/floor",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/sync",
+      "schedule": "* * * * *"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://relay.walletconnect.org https://rpc.walletconnect.org https://pulse.walletconnect.org https://verify.walletconnect.org; frame-src https://verify.walletconnect.org; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://relay.walletconnect.org https://rpc.walletconnect.org https://pulse.walletconnect.org https://verify.walletconnect.org; frame-src https://verify.walletconnect.org; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+        }
       ]
     },
-    { "source": "/(index.html|app.js|style.css|wallets.js)?", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    {
+      "source": "/(index.html|app.js|style.css|wallets.js)?",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/sepolia.html",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/sepolia",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/sepolia.js",
+      "destination": "/",
+      "permanent": false
+    }
   ]
 }

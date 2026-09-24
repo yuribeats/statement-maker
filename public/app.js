@@ -911,12 +911,11 @@ function pageRulesLaunch() {
   render(app, `
   <div class="intro"><div><h1>Rules</h1><p class="muted">How the four parties work. Read these first.</p></div></div>
   <div class="works no-defs"><div class="rows terms">
-   ${rows.map(([h, t]) => `<div><span>${esc(h)}</span><strong>${esc(t)}${h.startsWith('06') ? burnAlert(null) : ''}</strong></div>`).join('')}
+   ${rows.map(([h, t]) => `<div><span>${esc(h)}</span><strong>${esc(t)}${h.endsWith(' Burn') ? burnAlert(null) : ''}</strong></div>`).join('')}
    ${agreeRow()}
   </div>
   <div class="rows">
    <div><span>Contract</span><strong><a href="https://etherscan.io/address/0x97630aa70ab14ed9883b41dafccbc11349723043" target="_blank" rel="noopener noreferrer">Credits 0x9763…3043, Ethereum ↗</a></strong></div>
-   <div><span>Source code</span><strong><a href="https://github.com/yuribeats/statement-maker" target="_blank" rel="noopener noreferrer">github.com/yuribeats/statement-maker ↗</a></strong></div>
    <div><span>Status</span><strong><span class="demo">Preview</span> · the Statement contract is not published yet · nothing here moves Credits or ETH</strong></div>
   </div></div>`);
   bindRules();
@@ -1371,12 +1370,6 @@ async function pageMinute(key) {
   pageParty(m.party, { root: $('#more') }).catch(() => render($('#more'), ''));
 }
 
-function pageLater() {
-  render(app, `
-  <div class="intro"><div><h1>Not open</h1><p class="muted">Only the four parties are open now.</p></div></div>
-  <div class="actions"><a class="cta" href="#/four" style="margin:0">The Four →</a></div>`);
-}
-
 // ---------- deploy check: a tab left open across a deploy reloads itself instead of running stale code ----------
 let build = null;
 async function checkBuild() {
@@ -1412,7 +1405,7 @@ async function route() {
     // View-only visitors (no wallet) read them without it; every action needs a wallet, then the agreement.
     if (me && ['minute', 'party', 'new', 'wallet', 'four', 'parties'].includes(page) && !rulesAgreed()) return toRules();
     if (page === 'minute') return await pageMinute(arg);
-    if (launch && (page === 'new' || page === 'wallet' || page === 'party' || page === 'u')) return pageLater();
+    if (launch && !['four', 'minute', 'rules', 'terms', 'statements', 'statement'].includes(page)) { location.replace('#/'); return; }
     if (page === 'four' && !launch) { location.replace('#/parties'); return; }
     if (page === 'parties' && launch) { location.replace('#/four'); return; }
     if (page === 'four') return await pageFour();
