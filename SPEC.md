@@ -42,7 +42,7 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 - Param edits after deposits exist: undecided (options: allowed freely, allowed only if they do not disqualify Credits already deposited, or locked at first deposit).
 
 ## 4. Party governance (binding, on-chain) — Party-style
-Borrowed from PartyGovernance.sol: propose → vote → passThresholdBps → executionDelay → execute; host veto; rage quit.
+Borrowed from PartyGovernance.sol: propose → vote → close → execute. No host veto, no rage quit (Statements cannot be split back into Credits).
 Time limits: each proposal has a voting window of 24 h, 48 h, 72 h or 7 days, chosen by the proposer (party default set by hosts, 48 h). A passed proposal must be executed within 7 days of closing or it lapses.
 Vote weight = ERC20Votes checkpoint at the proposal's creation block (stops buy-vote-sell, which matters now that Credit Cards trade).
 **Pass rule:** YES weight > 50% of total supply (more than 40 of 80 Credit Cards) AND NO weight = 0 when voting closes. Any NO vote kills the proposal. Hosts vote with their Credit Cards like everyone else; host privileges are in §3.
