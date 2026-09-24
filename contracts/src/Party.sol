@@ -33,8 +33,8 @@ interface IFactory {
 ///    needs 60. After 3 NO-blocked price proposals or 30 days without one executing, 54 YES passes and NO is
 ///    ignored (below-floor still needs 60). Weight = cards held at the block before the proposal. Windows are
 ///    24/48/72/168 hours; passed proposals must be executed within 7 days; executing one supersedes the rest.
-///  - The Statement leaves only through buy(), at the current ask, no earlier than 24 hours after the ask went
-///    live. No offers, auctions or other transfer path exist.
+///  - The Statement leaves only through buy(), at the current ask, once that price's wait has passed (voted with
+///    the price; the host sets the default, 0..72 hours). No offers, auctions or other transfer path exist.
 ///  - Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 10%), 1% fee, and the rest
 ///    in 80 equal shares; rounding dust goes to the fee recipient. Fee and royalty are pull payments.
 contract Party is Initializable, ReentrancyGuardTransient {
@@ -47,7 +47,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint256 public constant DEADLOCK_BLOCKS = 3;
     uint256 public constant DEADLOCK_TIME = 30 days;
     uint256 public constant EXECUTE_WINDOW = 7 days;
-    uint256 public constant BUY_DELAY = 26 hours; // longer than the 24-hour cancel window, so a cancel can land before buying opens
+    uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
     uint256 public constant FLOOR_MAX_AGE = 1 hours;
     uint256 public constant ROYALTY_CAP_BPS = 1000;
@@ -73,6 +73,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         PriceSpec defaultPrice;
         FloorMode floorMode;
         uint256 minAskWei; // lowest ask any floor-relative price can resolve to (required > 0 if the default is floor-relative)
+        uint16 buyDelayHours; // default wait between a price going live and buying opening, 0..72 (the site defaults to 1)
     }
 
     struct Proposal {
@@ -81,6 +82,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         address proposer;
         uint48 snapshot; // block whose balances are the vote weights
         uint64 endsAt;
+        uint16 buyDelayHours; // wait before buying opens once this price goes live (voted with the price)
         uint64 epoch; // price epoch at creation; executing any price decision bumps it
         bool deadlock; // created under the deadlock rule
         bool executed;
@@ -117,6 +119,8 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint256 public ask; // wei; 0 = not listed
     PriceSpec public askSpec;
     uint64 public askLiveAt;
+    uint64 public buyableAt; // buying opens at this time
+    uint16 internal _pendingBuyDelay;
     PriceSpec public pendingPrice; // price voted while FULL, applied at assembly
     bool public hasPendingPrice;
     bool public sold;
@@ -166,6 +170,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (!_windowOk(p.voteHours)) revert Bad("voteHours");
         _checkPrice(p.defaultPrice);
         if (p.defaultPrice.mode != PriceMode.Fixed && p.minAskWei == 0) revert Bad("minAsk");
+        if (p.buyDelayHours > MAX_BUY_DELAY_HOURS) revert Bad("buyDelay");
         if (bytes(p.name).length == 0 || bytes(p.name).length > 60) revert Bad("name");
         if (bytes(p.description).length > 1000) revert Bad("description");
         host = host_;
@@ -303,6 +308,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         ask = price;
         askSpec = spec;
         askLiveAt = uint64(block.timestamp);
+        buyableAt = uint64(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
         ++priceEpoch; // proposals made before the burn are superseded
 
         // Interactions: approve the Statement contract for this call only, then verify the outcome.
@@ -330,7 +336,8 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
     // ------------------------------------------------------------------ price governance
 
-    function propose(PriceSpec calldata price, bool cancel, uint16 hours_) external returns (uint256 id) {
+    /// @param buyDelayHours for a price: the wait (0..72 hours) before buying opens once it goes live; ignored for cancels.
+    function propose(PriceSpec calldata price, bool cancel, uint16 hours_, uint16 buyDelayHours) external returns (uint256 id) {
         Status s = status();
         if (cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
         if (cancel && ask == 0) revert Bad("not listed");
@@ -338,13 +345,14 @@ contract Party is Initializable, ReentrancyGuardTransient {
         _refreshOpen(msg.sender);
         if (_openIds[msg.sender].length >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
         if (!cancel) _checkPrice(price);
-        uint16 h = cancel ? 24 : (hours_ == 0 ? _params.voteHours : hours_); // cancels always run 24h, inside the 26h buy delay
+        if (!cancel && buyDelayHours > MAX_BUY_DELAY_HOURS) revert Bad("buyDelay");
+        uint16 h = cancel ? 24 : (hours_ == 0 ? _params.voteHours : hours_); // cancels always run 24h
         if (!_windowOk(h)) revert Bad("window");
         id = _proposals.length;
         bool dl = _deadlocked();
         _proposals.push(Proposal({
             price: price, cancel: cancel, proposer: msg.sender, snapshot: uint48(block.number - 1),
-            endsAt: uint64(block.timestamp + _t(uint256(h) * 1 hours)), epoch: priceEpoch, deadlock: dl,
+            endsAt: uint64(block.timestamp + _t(uint256(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
             executed: false, yes: 0, no: 0
         }));
         _openIds[msg.sender].push(id);
@@ -414,12 +422,14 @@ contract Party is Initializable, ReentrancyGuardTransient {
             askLiveAt = 0;
         } else if (s == Status.FULL) {
             pendingPrice = p.price;
+            _pendingBuyDelay = p.buyDelayHours;
             hasPendingPrice = true;
             emit PendingPriceSet(id, p.price.mode, p.price.value);
         } else {
             ask = price;
             askSpec = p.price;
             askLiveAt = uint64(block.timestamp);
+            buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
             emit AskSet(price, true);
         }
         emit Executed(id, msg.sender);
@@ -466,7 +476,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     /// @notice Buy the Statement at the current ask. `maxPrice` protects against an ask change in the same block.
     function buy(uint256 maxPrice) external payable nonReentrant {
         if (status() != Status.ASSEMBLED || ask == 0) revert Bad("not for sale");
-        if (block.timestamp < uint256(askLiveAt) + _t(BUY_DELAY)) revert Bad("not open yet");
+        if (block.timestamp < buyableAt) revert Bad("not open yet");
         uint256 price = ask;
         if (price > maxPrice || msg.value < price) revert Bad("price");
 
