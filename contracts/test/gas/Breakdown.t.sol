@@ -84,58 +84,68 @@ contract GasBreakdownTest is Base {
         uint256[] memory ids = take(holdings(WHALE), 0, 80);
         emit log("preset | total exec | intrinsic | burn(a) | verify(b) | ownerOf checks alone, cold(c) | mock mint(d) | rest incl. warm checks(e)");
         for (uint256 k; k <= 10; ++k) {
-            CreditKeys.Preset pre = CreditKeys.Preset(k);
             uint256 snap = vm.snapshotState();
-            Party.Params memory p = params(pre);
-            p.seed = 42;
-            Party party = openParty(p, WHALE, ids);
-            uint256[] memory dep = party.depositOrder();
-            uint256[] memory order = _order(pre, dep, 42);
-
-            // (b) order verification alone (fresh harness each preset: cold storage, like the party)
-            VerifyHarness v = new VerifyHarness();
-            v.setup(dep);
-            uint256 g = gasleft();
-            v.verify(pre, traits, order, 42);
-            uint256 gVerify = g - gasleft();
-
-            // total: the real assemble
-            bytes memory data = abi.encodeCall(Party.assemble, (order, noFloor()));
-            uint256 snap2 = vm.snapshotState();
-            vm.prank(WHALE);
-            g = gasleft();
-            party.assemble(order, noFloor());
-            uint256 gTotal = g - gasleft();
-
-            // (c) post-burn checks alone, on the burned ids
-            g = gasleft();
-            vh.burnedCheck(CREDITS, order);
-            uint256 gCheck = g - gasleft();
-            vm.revertToState(snap2);
-
-            // (a) Credits.burn alone and (a)+(d) make, from a plain holder of the same 80 Credits
-            BurnHarness bh = new BurnHarness();
-            vm.startPrank(address(party)); // move the 80 to the harness (setup only)
-            for (uint256 i; i < 80; ++i) CREDITS.transferFrom(address(party), address(bh), order[i]);
-            vm.stopPrank();
-            bh.approve(address(statement));
-            uint256 snap3 = vm.snapshotState();
-            g = gasleft();
-            bh.burn(order);
-            uint256 gBurn = g - gasleft();
-            vm.revertToState(snap3);
-            g = gasleft();
-            bh.make(address(statement), order);
-            uint256 gMake = g - gasleft();
-            uint256 gMint = gMake > gBurn ? gMake - gBurn : 0;
-
-            // rest = everything else in assemble: storage, events, approvals, and the ownerOf checks as they run there
-            // (warm: the burn just touched those slots); gCheck is the same check alone in a cold transaction.
-            uint256 used = gVerify + gMake;
-            uint256 rest = gTotal > used ? gTotal - used : 0;
-            emit log(string.concat(vm.toString(k), " | ", vm.toString(gTotal), " | ", vm.toString(_intrinsic(data)), " | ",
-                vm.toString(gBurn), " | ", vm.toString(gVerify), " | ", vm.toString(gCheck), " | ", vm.toString(gMint), " | ", vm.toString(rest)));
+            _row(k, ids);
             vm.revertToState(snap);
         }
+    }
+
+    // Split into small functions so the test compiles under forge coverage --ir-minimum (stack depth).
+    function _row(uint256 k, uint256[] memory ids) internal {
+        CreditKeys.Preset pre = CreditKeys.Preset(k);
+        Party.Params memory p = params(pre);
+        p.seed = 42;
+        Party party = openParty(p, WHALE, ids);
+        uint256[] memory order = _order(pre, party.depositOrder(), 42);
+        uint256 gVerify = _verifyGas(pre, party.depositOrder(), order);
+        (uint256 gTotal, uint256 gCheck) = _assembleGas(party, order);
+        (uint256 gBurn, uint256 gMake) = _burnMakeGas(party, order);
+        uint256 gMint = gMake > gBurn ? gMake - gBurn : 0;
+        // rest = everything else in assemble: storage, events, approvals, and the ownerOf checks as they run there
+        // (warm: the burn just touched those slots); gCheck is the same check alone in a cold transaction.
+        uint256 used = gVerify + gMake;
+        uint256 rest = gTotal > used ? gTotal - used : 0;
+        uint256 intr = _intrinsic(abi.encodeCall(Party.assemble, (order, noFloor())));
+        emit log(string.concat(vm.toString(k), " | ", vm.toString(gTotal), " | ", vm.toString(intr), " | ", vm.toString(gBurn), " | ",
+            vm.toString(gVerify), " | ", vm.toString(gCheck), " | ", vm.toString(gMint), " | ", vm.toString(rest)));
+    }
+
+    /// (b) order verification alone (fresh harness: cold storage, like the party)
+    function _verifyGas(CreditKeys.Preset pre, uint256[] memory dep, uint256[] memory order) internal returns (uint256) {
+        VerifyHarness v = new VerifyHarness();
+        v.setup(dep);
+        uint256 g = gasleft();
+        v.verify(pre, traits, order, 42);
+        return g - gasleft();
+    }
+
+    /// total: the real assemble; then (c) the post-burn checks alone, on the burned ids. State is reverted after.
+    function _assembleGas(Party party, uint256[] memory order) internal returns (uint256 gTotal, uint256 gCheck) {
+        uint256 snap = vm.snapshotState();
+        vm.prank(WHALE);
+        uint256 g = gasleft();
+        party.assemble(order, noFloor());
+        gTotal = g - gasleft();
+        g = gasleft();
+        vh.burnedCheck(CREDITS, order);
+        gCheck = g - gasleft();
+        vm.revertToState(snap);
+    }
+
+    /// (a) Credits.burn alone and (a)+(d) make, from a plain holder of the same 80 Credits
+    function _burnMakeGas(Party party, uint256[] memory order) internal returns (uint256 gBurn, uint256 gMake) {
+        BurnHarness bh = new BurnHarness();
+        vm.startPrank(address(party)); // move the 80 to the harness (setup only)
+        for (uint256 i; i < 80; ++i) CREDITS.transferFrom(address(party), address(bh), order[i]);
+        vm.stopPrank();
+        bh.approve(address(statement));
+        uint256 snap = vm.snapshotState();
+        uint256 g = gasleft();
+        bh.burn(order);
+        gBurn = g - gasleft();
+        vm.revertToState(snap);
+        g = gasleft();
+        bh.make(address(statement), order);
+        gMake = g - gasleft();
     }
 }
