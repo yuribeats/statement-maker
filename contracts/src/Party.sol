@@ -49,8 +49,10 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint256 public constant EXECUTE_WINDOW = 7 days;
     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
-    uint256 public constant FLOOR_MAX_AGE = 1 hours;
+    /// @notice A signed floor reading is accepted for 10 minutes (real time), and never one older than the last used here.
+    uint256 public constant FLOOR_MAX_AGE = 10 minutes;
     uint256 public constant ROYALTY_CAP_BPS = 1000;
+    uint256 public constant ROYALTY_GAS = 150_000;
     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
 
     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
@@ -72,8 +74,10 @@ contract Party is Initializable, ReentrancyGuardTransient {
         uint256 seed; // for Random
         PriceSpec defaultPrice;
         FloorMode floorMode;
-        uint256 minAskWei; // lowest ask any floor-relative price can resolve to (required > 0 if the default is floor-relative)
-        uint16 buyDelayHours; // default wait between a price going live and buying opening, 0..72 (the site defaults to 1)
+        uint256 minAskWei; // lowest ask any FLOOR-RELATIVE price can resolve to (required > 0 if the default is floor-relative).
+                           // It never bounds a Fixed price: 41 (60 below the floor) can still vote any fixed price.
+        uint16 buyDelayHours; // default wait between a price going live and buying opening, 0..72; at least 1 for a
+                              // floor-relative price, so a stale-low reading can be raised (raiseAsk) before anyone can buy
     }
 
     struct Proposal {
@@ -170,7 +174,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (!_windowOk(p.voteHours)) revert Bad("voteHours");
         _checkPrice(p.defaultPrice);
         if (p.defaultPrice.mode != PriceMode.Fixed && p.minAskWei == 0) revert Bad("minAsk");
-        if (p.buyDelayHours > MAX_BUY_DELAY_HOURS) revert Bad("buyDelay");
+        if (!_delayOk(p.defaultPrice.mode, p.buyDelayHours)) revert Bad("buyDelay");
         if (bytes(p.name).length == 0 || bytes(p.name).length > 60) revert Bad("name");
         if (bytes(p.description).length > 1000) revert Bad("description");
         host = host_;
@@ -320,8 +324,10 @@ contract Party is Initializable, ReentrancyGuardTransient {
         credits.setApprovalForAll(address(st), false);
         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
         for (uint256 i; i < SLOTS; ++i) {
-            // every Credit must be gone from this contract (burned by the Statement contract)
-            try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+            // Every Credit must be burned: Credits.ownerOf reverts with ERC721NonexistentToken for a burned id. A Credit
+            // that still has any owner (a Statement contract that kept or moved it) fails, and so does any other revert.
+            try credits.ownerOf(order[i]) returns (address) { revert Bad("not burned"); }
+            catch (bytes memory r) { if (bytes4(r) != 0x7e273289) revert Bad("not burned"); } // ERC721NonexistentToken(uint256)
         }
         statementId = sid;
         emit Assembled(msg.sender, sid, order);
@@ -347,7 +353,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (!cancel) _checkPrice(price);
         // A floor-relative price needs the host's minimum ask as a lower bound (limits a bad or compromised floor reading).
         if (!cancel && price.mode != PriceMode.Fixed && _params.minAskWei == 0) revert Bad("minAsk");
-        if (!cancel && buyDelayHours > MAX_BUY_DELAY_HOURS) revert Bad("buyDelay");
+        if (!cancel && !_delayOk(price.mode, buyDelayHours)) revert Bad("buyDelay");
         uint16 h = cancel ? 24 : (hours_ == 0 ? _params.voteHours : hours_); // cancels always run 24h
         if (!_windowOk(h)) revert Bad("window");
         id = _proposals.length;
@@ -592,13 +598,22 @@ contract Party is Initializable, ReentrancyGuardTransient {
         return secs * timeUnit / 1 hours;
     }
 
+    /// @dev A price's buy wait: 0..72 hours, and at least 1 hour for a floor-relative price (FLOOR_MAX_AGE is shorter,
+    ///      so a fresher reading can always reach raiseAsk before buying opens).
+    function _delayOk(PriceMode m, uint16 h) internal pure returns (bool) {
+        return h <= MAX_BUY_DELAY_HOURS && (m == PriceMode.Fixed || h > 0);
+    }
+
     function _windowOk(uint16 h) internal pure returns (bool) {
         return h == 24 || h == 48 || h == 72 || h == 168;
     }
 
-    /// @dev Raw staticcall: a reverting, gas-hungry or malformed royaltyInfo never blocks a sale.
+    /// @dev Raw staticcall: a reverting, gas-hungry or malformed royaltyInfo never blocks a sale. The 150k-gas stipend
+    ///      leaves room for an implementation that delegates (proxy, royalty registry or splitter lookup); an answer
+    ///      that needs more is treated as no royalty. A buyer cannot starve the call on purpose: with less than the
+    ///      stipend left, the 1/64 kept back is far too little to finish buy().
     function _royalty(uint256 price) internal view returns (address to, uint256 amt) {
-        (bool ok, bytes memory r) = address(factory.statement()).staticcall{gas: 50_000}(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", statementId, price));
+        (bool ok, bytes memory r) = address(factory.statement()).staticcall{gas: ROYALTY_GAS}(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", statementId, price));
         if (!ok || r.length < 64) return (address(0), 0);
         (uint256 a, uint256 v) = abi.decode(r, (uint256, uint256));
         if (a == 0 || a >> 160 != 0) return (address(0), 0);

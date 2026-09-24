@@ -960,13 +960,16 @@ async function pageStatement(id) {
 let sim = null;
 const SIM_ME = 'you';
 const simName = i => ['Ada', 'Bo', 'Cy', 'Dee', 'Eli', 'Fen', 'Gus', 'Hal', 'Ivy', 'Jo', 'Kit', 'Lu', 'Mo', 'Ned', 'Ola', 'Pia'][i % 16];
-function simLog(t) { sim.log.unshift({ t, at: sim.clock }); }
+// Every entry names its actor: the connected wallet (ENS or short address) for the host, otherwise a simulated handle.
+function simLog(actor, t) { sim.log.unshift({ actor, t, at: sim.clock }); }
+const simActor = a => a === SIM_ME ? (me ? userLink(me) : '<span class="demo">sim-host</span>') : a === 'buyer' ? '<span class="faint">sim-buyer</span>' : a ? `<span class="faint">sim-${esc(String(a).toLowerCase())}</span>` : '<span class="faint">party</span>';
+const simWeights = () => sim.deposits.reduce((m, d) => (m[d.holder] = (m[d.holder] || 0) + 1, m), {});
 async function simStart(theme, arrangement, pricePct) {
   const filters = { any: {}, cyan: { colors: ['C'] }, misreg: { print: ['Nudge', 'Slip', 'Skew', 'Drift', 'Loose'] }, eights: { eights: [1, 2, 3, 4, 5] } }[theme];
   const r = await api('sim/sample', { theme });
   const floorEth = stats.floor ? stats.floor * SLOTS : 2.4;
   sim = { step: 'deposit', theme, filters, arrangement, price: { mode: 'floorPct', value: pricePct }, floorEth, pool: r.sample, deposits: [], order: null, proposals: [], clock: 0, log: [], listing: null, sold: null, claimed: new Set(), confirm: false };
-  simLog(`You opened the party. Arrangement: ${arrangement}. Default price: floor ${pricePct >= 0 ? '+' : '−'} ${Math.abs(pricePct)}%.`);
+  simLog(SIM_ME, `Opened the party. Arrangement: ${arrangement}. Default price: floor ${pricePct >= 0 ? '+' : '−'} ${Math.abs(pricePct)}%.`);
 }
 const simCards = () => sim.deposits.map((d, i) => ({ ...d.credit, card: 1000 + i, depositor: d.holder === SIM_ME ? me || SIM_ME : d.holder }));
 const simPrice = t => t.mode === 'fixed' ? t.value : sim.floorEth * (1 + t.value / 100);
@@ -1017,7 +1020,7 @@ async function pageSim() {
     ${sheet(party, { interactive: sim.step === 'arrange' && sim.arrangement === 'Manual', order })}
     <div class="caption"><span>${sim.order ? 'Statement · burned' : `${sim.deposits.length}/80`}${sim.step === 'arrange' && sim.arrangement === 'Manual' ? ' · drag to swap' : ''}</span><span class="${sim.arrangement === 'Manual' ? 'alert-c' : 'muted'}">Arrangement: ${esc(sim.arrangement)}</span></div>
     ${sim.step === 'arrange' && sim.arrangement === 'Manual' ? `<div class="modes" style="margin-bottom:12px">${Object.keys(PRESETS).map(k => `<button type="button" data-sp="${k}">${k}</button>`).join('')}</div>` : ''}
-    <div class="panel"><h2>Log</h2><div class="rows">${sim.log.slice(0, 12).map(l => `<div><span>D${Math.floor(l.at / 24)} ${String(l.at % 24).padStart(2, '0')}h</span><strong style="text-transform:none;text-align:left">${esc(l.t)}</strong></div>`).join('')}</div></div>
+    <div class="panel"><h2>Log · ${sim.log.length}</h2><div class="rows" style="max-height:460px;overflow:auto">${sim.log.map(l => `<div><span>D${Math.floor(l.at / 24)} ${String(l.at % 24).padStart(2, '0')}h · ${simActor(l.actor)}</span><strong style="text-transform:none">${esc(l.t)}</strong></div>`).join('')}</div></div>
    </section>
    <section>
     <div class="panel sim-now"><h2>Now</h2>
@@ -1052,21 +1055,21 @@ async function pageSim() {
     </div>
     ${mine.length ? `<div class="panel"><h2>Your Credit Cards · ${mine.length}</h2><div class="sim-cards">${mine.map(c => `
       <div class="sim-card"><img src="${svg(c.id)}" alt=""><div><strong>Credit Card</strong><span>No. ${c.card}</span><span>Credit #${c.id}</span><span class="${sim.claimed.has(c.card) ? 'muted' : ''}">${sim.claimed.has(c.card) ? 'Redeemed' : sim.sold ? 'Claim ' + eth(perCard) : sim.order ? 'Statement made' : full ? 'Locked · party full' : 'Redeemable'}</span></div></div>`).join('')}</div></div>` : ''}
-    <div class="panel"><h2>Members</h2><div class="rows">${Object.entries(sim.deposits.reduce((m, d) => (m[d.holder] = (m[d.holder] || 0) + 1, m), {})).map(([a, n]) => `<div><span>${a === SIM_ME ? '<span class="dot y"></span>You (host)' : esc(a)}</span><strong>${n} cards</strong></div>`).join('')}</div></div>
+    <div class="panel"><h2>Members</h2><div class="rows">${Object.entries(sim.deposits.reduce((m, d) => (m[d.holder] = (m[d.holder] || 0) + 1, m), {})).map(([a, n]) => `<div><span>${a === SIM_ME ? '<span class="dot y"></span>' + simActor(a) + ' (host)' : simActor(a)}</span><strong>${n} cards</strong></div>`).join('')}</div></div>
    </section>
   </div>`);
   const go = fn => async () => { await fn(); route(); };
   $('#sim-reset').onclick = go(() => { sim = null; });
-  $('#s-dep')?.addEventListener('click', go(() => { sim.pool.slice(0, 5).forEach(c => sim.deposits.push({ credit: c, holder: SIM_ME })); sim.step = 'fill'; simLog('You deposited 5 Credits and received 5 Credit Cards.'); }));
+  $('#s-dep')?.addEventListener('click', go(() => { sim.pool.slice(0, 5).forEach(c => sim.deposits.push({ credit: c, holder: SIM_ME })); sim.step = 'fill'; simLog(SIM_ME, 'Deposited 5 Credits and received 5 Credit Cards.'); }));
   $('#s-fill')?.addEventListener('click', go(() => {
     sim.clock += 24;
     const joiners = 3 + Math.floor(Math.random() * 3);
     for (let j = 0; j < joiners && sim.deposits.length < SLOTS; j++) {
       const who = simName(sim.deposits.length + j), n = Math.min(SLOTS - sim.deposits.length, 3 + Math.floor(Math.random() * 5));
       sim.pool.slice(sim.deposits.length, sim.deposits.length + n).forEach(c => sim.deposits.push({ credit: c, holder: who }));
-      simLog(`${who} deposited ${n}. ${sim.deposits.length}/80.`);
+      simLog(who, `Deposited ${n} Credits and received ${n} Credit Cards. ${sim.deposits.length}/80.`);
     }
-    if (sim.deposits.length === SLOTS) { sim.step = 'arrange'; sim.draft = null; simLog('Full. Redemption closed.'); }
+    if (sim.deposits.length === SLOTS) { sim.step = 'arrange'; sim.draft = null; simLog(null, 'Full at 80. Redemption closed.'); }
   }));
   app.querySelectorAll('[data-sp]').forEach(b => b.onclick = go(() => { sim.draft = PRESETS[b.dataset.sp](sim.draft || cards); }));
   if (sim.step === 'arrange' && sim.arrangement === 'Manual') {
@@ -1080,24 +1083,30 @@ async function pageSim() {
   $('#s-burn')?.addEventListener('click', go(() => {
     sim.order = sim.arrangement === 'Manual' ? (sim.draft || cards) : PRESETS[sim.arrangement](cards);
     sim.listing = sim.price; sim.step = 'listed'; sim.confirm = false;
-    simLog(`You burned the 80 (${sim.arrangement === 'Manual' ? 'your hand-made order' : sim.arrangement}). Statement made. Default price live: ${eth(simPrice(sim.price))}.`);
+    simLog(SIM_ME, `Burned the 80 (${sim.arrangement === 'Manual' ? 'the host’s posted order' : sim.arrangement}). Statement made. Default price live: ${eth(simPrice(sim.price))}.`);
   }));
   $('#s-skip')?.addEventListener('click', go(() => { sim.step = 'buy'; }));
   $('#s-prop')?.addEventListener('click', go(() => {
     const votes = { Ola: true }; for (const d of sim.deposits) if (d.holder !== SIM_ME && d.holder !== 'Ola' && Math.random() < 0.8) votes[d.holder] = true;
-    sim.proposals.push({ type: 'LIST', args: { mode: 'floorPct', value: -10 }, votes }); sim.step = 'vote'; simLog('Ola proposed selling at floor −10%. Most members voted yes.');
+    sim.proposals.push({ type: 'LIST', args: { mode: 'floorPct', value: -10 }, votes }); sim.step = 'vote';
+    const w = simWeights();
+    simLog('Ola', `Proposed selling at floor −10% (${eth(simPrice({ mode: 'floorPct', value: -10 }))}). Below the floor: needs 60 of 80.`);
+    for (const v of Object.keys(votes)) simLog(v, `Voted yes with ${w[v]} card${w[v] === 1 ? '' : 's'}.`);
   }));
-  const vote = yes => go(() => { openProp.votes[SIM_ME] = yes; simLog(`You voted ${yes ? 'yes' : 'no'} with 5 cards.`); });
+  const vote = yes => go(() => { openProp.votes[SIM_ME] = yes; simLog(SIM_ME, `Voted ${yes ? 'yes' : 'no'} with 5 cards.`); });
   $('#s-yes')?.addEventListener('click', vote(true));
   $('#s-no')?.addEventListener('click', vote(false));
   $('#s-close')?.addEventListener('click', go(() => {
     sim.clock += 48; const r = simTally(openProp); openProp.done = true;
-    if (r.passing) { sim.listing = openProp.args; simLog(`Vote closed: ${r.yes} yes, 0 no. Passed. A card holder executed it; the price is now ${eth(simPrice(openProp.args))}.`); }
-    else simLog(`Vote closed: ${r.yes} yes, ${r.no} no. ${r.no ? 'One no blocks it.' : `Needed ${r.need}.`} The default price stays.`);
+    if (r.passing) { sim.listing = openProp.args; simLog(null, `Vote closed: ${r.yes} yes, 0 no. Passed.`); simLog('Ola', `Executed the proposal. The price is now ${eth(simPrice(openProp.args))}.`); }
+    else simLog(null, `Vote closed: ${r.yes} yes, ${r.no} no. ${r.no ? 'One no blocks it.' : `Needed ${r.need}.`} The default price stays.`);
     sim.step = 'buy';
   }));
-  $('#s-buy')?.addEventListener('click', go(() => { sim.clock += 1; sim.sold = { price: simPrice(sim.listing) }; sim.step = 'sold'; simLog(`A buyer paid ${eth(sim.sold.price)} on Statement Maker. The Statement is theirs.`); }));
-  $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(`You claimed ${eth(perCard * mine.length)} for 5 cards. The cards were burned.`); }));
+  $('#s-buy')?.addEventListener('click', go(() => { sim.clock += 1; sim.sold = { price: simPrice(sim.listing) }; sim.step = 'sold'; simLog('buyer', `Paid ${eth(sim.sold.price)} on Statement Maker. The Statement is theirs.`);
+    // The other members claim their shares as the sale lands.
+    const per = sim.sold.price * 0.99 / SLOTS;
+    for (const [h, k] of Object.entries(simWeights())) if (h !== SIM_ME) { simLog(h, `Claimed ${eth(per * k)} for ${k} card${k === 1 ? '' : 's'}. The cards were burned.`); simCards().filter(c => c.depositor === h).forEach(c => sim.claimed.add(c.card)); } }));
+  $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(SIM_ME, `Claimed ${eth(perCard * mine.length)} for 5 cards. The cards were burned.`); }));
 }
 
 // ---------- definitions: hovering a field label shows what it means ----------
