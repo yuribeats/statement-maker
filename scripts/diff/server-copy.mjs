@@ -7,7 +7,8 @@
 //   SLOTS, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS/DEADLOCK_DAYS/OVERRIDE
 //   credits + traits → byId, TRAITS, RARITY → score + rank
 //   COLOR_ORDER … PRESETS (arrangement presets)
-//   tally, kindOf, deadlocked, the wei price-math block (decUnits … priceWei/priceEth/belowFloor), cleanTarget
+//   tally, isSuperseded/lastExecAt/canCountBlocked/countBlocked/blockedCount, kindOf, deadlocked,
+//   the wei price-math block (decUnits … priceWei/priceEth/belowFloor, listingWei/listingEth/goLive), cleanTarget
 // Stubs (the only non-verbatim pieces): floorFor(p) returns { eth: p.__floorEth, wei: p.__floorWei } (the signed floor
 // reading in wei, as the contract receives it) and now() returns the harness clock.
 import fs from 'node:fs';
@@ -46,6 +47,11 @@ export const RANGES = [
   ['const RARITY', '[...byId.values()].sort('],
   ['const COLOR_ORDER', '};'],
   ['function tally(p, prop)', '}'],
+  ['const isSuperseded', 'const isSuperseded'],
+  ['const lastExecAt', 'const lastExecAt'],
+  ['const canCountBlocked', 'const canCountBlocked'],
+  ['const countBlocked', 'const countBlocked'],
+  ['const blockedCount', 'const blockedCount'],
   ['const kindOf', 'const kindOf'],
   ['function deadlocked(p, type)', '}'],
   ['// ---- price math in wei', '// ---- end price math'],
@@ -54,7 +60,8 @@ export const RANGES = [
 
 const code = RANGES.map(r => lines(...r)).join('\n') + `
 ;({ SLOTS, OVERRIDE, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS, DEADLOCK_DAYS, byId, credits, TRAITS, RARITY,
-    COLOR_ORDER, PRINT_ORDER, WEIGHT_ORDER, PRESETS, tally, kindOf, deadlocked, belowFloor, priceEth, priceWei, resolvePrice, weiStr, cleanTarget })`;
+    COLOR_ORDER, PRINT_ORDER, WEIGHT_ORDER, PRESETS, tally, kindOf, deadlocked, isSuperseded, lastExecAt, canCountBlocked, countBlocked, blockedCount,
+    belowFloor, priceEth, priceWei, resolvePrice, listingWei, listingEth, goLive, weiStr, cleanTarget })`;
 
 export const clock = { now: Date.UTC(2026, 8, 23) };
 const ctx = vm.createContext({

@@ -97,7 +97,18 @@ function filterText(f = {}) {
   return esc(parts.join(' · ') || 'Any Credit');
 }
 const targetText = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : t.mode === 'floorPct' ? `Floor + ${t.value}%` : `Floor + ${t.value} ETH`);
-const priceOf = (t, floorEth) => t.mode === 'fixed' ? t.value : floorEth == null ? null : t.mode === 'floorPct' ? floorEth * (1 + t.value / 100) : floorEth + t.value;
+// Preview of a price at the current floor, in BigInt wei like the server (lib/core.mjs resolvePrice): the floor reading
+// rounded to 1e-6 ETH, value as the contract's integer (wei, or basis points), int256-style truncation, 1 wei minimum.
+const toUnits = (x, dec) => { const m = /^\s*([+-]?)(\d*)(?:\.(\d*))?(?:e([+-]?\d{1,3}))?\s*$/i.exec(String(x ?? '')); if (!m || !(m[2] || m[3])) return null; const n = BigInt((m[2] || '') + (m[3] || '') || '0'), sh = dec - (m[3] || '').length + Number(m[4] || 0); const v = sh >= 0 ? n * 10n ** BigInt(sh) : n / 10n ** BigInt(-sh); return m[1] === '-' ? -v : v; };
+const weiToEth = w => { const a = w < 0n ? -w : w, f = (a % 10n ** 18n).toString().padStart(18, '0').replace(/0+$/, ''); return Number((w < 0n ? '-' : '') + (a / 10n ** 18n) + (f ? '.' + f : '')); };
+const priceOf = (t, floorEth) => {
+  const v = toUnits(t.value, t.mode === 'floorPct' ? 2 : 18);
+  if (v == null) return null;
+  if (t.mode === 'fixed') return v > 0n ? weiToEth(v) : null;
+  if (!Number.isFinite(floorEth) || floorEth <= 0) return null;
+  const f = BigInt(Math.round(floorEth * 1e6)) * 10n ** 12n, r = t.mode === 'floorPct' ? f * (10000n + v) / 10000n : f + v;
+  return r > 0n ? weiToEth(r) : null;
+};
 const priceLabel = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : `Floor ${t.value < 0 ? '−' : '+'} ${Math.abs(t.value)}${t.mode === 'floorPct' ? '%' : ' ETH'}`);
 const vsFloor = (eth, floorEth) => { if (eth == null || !floorEth) return ''; const d = (eth / floorEth - 1) * 100; return `<span class="${d < 0 ? 'blocked' : 'muted'}">${Math.abs(d).toFixed(0)}% ${d < 0 ? 'below' : 'above'} floor</span>`; };
 let gasInfo = null;
@@ -225,7 +236,7 @@ async function pageParty(id) {
       <div><span>Arrangement</span><strong${p.manual ? ' class="alert-c"' : ''}>${esc(arrLabel(p.params.arrangement))}${p.manual ? ' · host orders by hand' : ''}${p.assembled && p.orderSource ? ' · burned with ' + esc(p.orderSource === 'Manual' ? 'the host’s order' : arrLabel({ preset: p.orderSource })) : ''}</strong></div>
       <div><span>Defaults</span><strong class="muted">Set by the host and applied automatically. Card holders can vote a different price; arrangement is the host’s alone.</strong></div>
       <div><span>Floor · ${p.params.floorMode === 'latest' ? 'latest reading' : '24-hour average'}</span><strong>${eth(p.floorEth)} <span class="faint">${floorNote(p.floor)}</span></strong></div>
-      ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div>` : ''}
+      ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}${p.raiseAskEth != null && me ? ` <button type="button" id="raise-ask" style="margin:0" title="A floor-relative ask can only rise, never fall">Raise to ${eth(p.raiseAskEth)}</button>` : ''}</strong></div>` : ''}
       <div><span>Sale split</span><strong>1% Statement Maker · the rest to the 80 Credit Cards</strong></div>
       ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 Credit Cards</strong></div>` : ''}
      </div>
@@ -283,7 +294,7 @@ async function pageParty(id) {
       <div><span>Weight</span><strong>1 Credit Card = 1 vote, counted as held when the proposal opened</strong></div>
       <div><span>Passes</span><strong>41 of 80 yes and zero no</strong></div>
       <div><span>Below floor</span><strong>60 of 80 yes and zero no</strong></div>
-      <div><span>Deadlock</span><strong>After 3 blocked proposals of a kind or 30 days, 54 yes passes it; no is ignored</strong></div>
+      <div><span>Deadlock</span><strong>After 3 counted blocks (a price with 41+ yes stopped by a no, recorded by anyone) or 30 days without a price executing, 54 yes passes; no is ignored. Now: ${Number(p.deadlock?.blocked || 0)}/3 counted${p.deadlock?.LIST ? ' · deadlock rule on' : ''}</strong></div>
       <div><span>Window</span><strong>24 hours to 7 days, chosen by the proposer</strong></div>
       <div><span>Execute</span><strong>Any card holder, within 7 days of passing, or it lapses</strong></div></div>` : ''}
      ${p.status === 'FULL' ? `<div class="prop"><div class="prop-head"><strong>Burn</strong><span class="chip ${p.manual ? 'open' : 'pass'}">${p.manual ? 'Host arranges by hand' : 'Ready'}</span></div>
@@ -298,7 +309,7 @@ async function pageParty(id) {
        const mine = q.votes?.[me];
        const canVote = isMember && !q.executed && !q.closed && !q.superseded && (q.snapshot ? q.snapshot[me] > 0 : true);
        const state = q.executed ? ['Executed', 'done'] : q.superseded ? ['Superseded', 'muted'] : q.lapsed ? ['Lapsed', 'muted'] : q.executable ? ['Passed · execute', 'pass'] : q.no && !q.override ? ['Blocked by no', 'blocked'] : q.closed ? ['Failed', 'muted'] : q.passing ? ['Passing', 'pass'] : ['Voting', 'open'];
-       const what = q.type === 'LIST' ? `Sell for ${eth(priceOf(q.args, p.floorEth))} <span class="faint">(${priceLabel(q.args)} · buying opens ${Number(q.args.buyDelayHours ?? 1)}h after it goes live)</span> ${vsFloor(priceOf(q.args, p.floorEth), p.floorEth)}` : q.type === 'CANCEL_LISTING' ? 'Cancel the listing' : esc(q.type);
+       const what = q.type === 'LIST' ? `Sell for ${eth(q.priceEth)} <span class="faint">(${priceLabel(q.args)} · buying opens ${Number(q.args.buyDelayHours ?? 1)}h after it goes live)</span> ${vsFloor(q.priceEth, p.floorEth)}` : q.type === 'CANCEL_LISTING' ? 'Cancel the listing' : esc(q.type);
        return `
       <div class="prop s-${state[1]}">
        <div class="prop-head"><span><span class="faint">#${Number(q.id)}</span> <strong>${esc({ NOMINATE_ARRANGER: 'Arranger', APPROVE_ARRANGEMENT: 'Arrangement', LIST: 'Price', CANCEL_LISTING: 'Cancel listing' }[q.type] || q.type)}</strong></span><span class="chip ${state[1]}">${state[0]}</span></div>
@@ -313,6 +324,8 @@ async function pageParty(id) {
          ${mine !== undefined ? `<span class="you">You voted ${mine ? 'yes' : 'no'}</span>` : ''}
          ${canVote ? `<button type="button" data-vote="${Number(q.id)}" data-yes="1" class="${mine === true ? 'on' : ''}">Yes</button><button type="button" data-vote="${Number(q.id)}" data-yes="0" class="${mine === false ? 'on no' : ''}">No</button>` : ''}
          ${isMember && q.executable ? `<button type="button" class="cta" data-exec="${Number(q.id)}" style="margin:0">Execute</button>` : ''}
+         ${me && q.countable ? `<button type="button" data-count="${Number(q.id)}" style="margin:0" title="Records this block toward the deadlock rule (3 needed)">Count as blocked</button>` : ''}
+         ${q.blockedCounted && !q.superseded ? '<span class="faint">counted toward deadlock</span>' : ''}
         </span>
        </div>
       </div>`; }).join('') || '<p class="muted">No proposals yet.</p>'}
@@ -372,13 +385,15 @@ async function pageParty(id) {
   app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => act('vote', { proposal: b.dataset.vote, yes: b.dataset.yes === '1' }, 'vote-err'));
   app.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { const q = p.proposals.find(x => x.id === Number(b.dataset.preview)); const m = new Map(p.credits.map(c => [c.id, c])); partyUI.mode = 'arrange'; partyUI.order = q.args.order.map(id => m.get(id)); partyUI.preset = 'Proposal ' + q.id; route(); });
   const pricePreview = () => {
-    const t = { mode: $('#pm').value, value: +$('#pv').value }; const e = priceOf(t, p.floorEth);
+    const t = { mode: $('#pm').value, value: +$('#pv').value }; const e = priceOf({ mode: t.mode, value: $('#pv').value }, p.floorEth);
     render($('#pp'), `= ${eth(e)} ${vsFloor(e, p.floorEth)}`);
     $('#ph').textContent = t.mode === 'fixed' ? 'Range: above 0 ETH' : t.mode === 'floorPct' ? 'Range: above −100% (floor ' + eth(p.floorEth) + ')' : 'Range: above −' + eth(p.floorEth) + ' (floor ' + eth(p.floorEth) + ')';
   };
   if ($('#pm')) { $('#pm').onchange = pricePreview; $('#pv').oninput = pricePreview; pricePreview(); }
   $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', hours: $('#win')?.value, buyDelayHours: Number($('#bw2')?.value ?? 1), args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
   app.querySelectorAll('[data-exec]').forEach(b => b.onclick = () => act('execute', { proposal: b.dataset.exec }, 'vote-err'));
+  app.querySelectorAll('[data-count]').forEach(b => b.onclick = () => act('countBlocked', { proposal: b.dataset.count }, 'vote-err'));
+  $('#raise-ask')?.addEventListener('click', () => act('raiseAsk', {}, 'vote-err'));
   $('#skip')?.addEventListener('click', async () => { await api('dev/advance', { hours: 24 }); route(); });
   $('#rules-t')?.addEventListener('click', () => { partyUI.rules = !partyUI.rules; route(); });
   app.querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { partyUI.ptype = b.dataset.ptype; route(); });
