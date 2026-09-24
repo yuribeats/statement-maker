@@ -398,11 +398,11 @@ async function pageParty(id) {
      ${!me ? `<p class="muted">Use “Connect wallet” at the top right.</p>` : `
        ${!wallet.length ? `<p class="alert-k">Connected: ${meName()} holds 0 Credits. Parties need a wallet holding a Credit.</p><div class="actions">${switchBtn}</div>` : !eligibleMine.length ? `<p class="alert-k">Connected: ${meName()} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'}; none meet this party’s criteria.</p><div class="actions">${switchBtn}</div>` : ''}
        <p class="muted">${nameTag(me)} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'} · ${eligibleMine.length} eligible here · minimum ${minDep}</p>
-       <div class="picker">${wallet.slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
+       <div class="picker">${[...eligibleMine, ...wallet.filter(c => !eligibleMine.includes(c))].slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
        <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
        <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>I understand the Statement this party makes is sold only on Statement Maker, at the party’s price, and that <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
-       <button class="cta" id="deposit" disabled>Deposit ${partyUI.picks.size || ''}</button> ${cost('deposit')} each
+       <button class="cta" id="deposit" disabled>Deposit</button> ${cost('deposit')} each <span class="hint" id="dep-hint"></span>
        ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Redeem all my cards</button>` : ''}`}
      <div class="error" id="dep-err"></div>
      <p class="note">Depositing accepts this party's defaults: arranged by ${esc(p.manual ? 'the host’s metric (' + arrDesc(p.params.arrangement) + ')' : arrLabel(p.params.arrangement) + ', ' + arrDesc(p.params.arrangement))}, ${targetText(p.params.target)} price. Each Credit you deposit returns one Credit Card. Until the party fills, the card's holder can redeem it for that Credit.</p>
@@ -509,10 +509,19 @@ async function pageParty(id) {
   $('#burn-ask')?.addEventListener('click', () => { partyUI.confirmBurn = true; route(); });
   $('#burn-x')?.addEventListener('click', () => { partyUI.confirmBurn = false; route(); });
   $('#submit-order-legacy')?.addEventListener('click', () => act('arrange', { order: partyUI.order.map(c => c.id), preset: partyUI.preset || 'Deposit order', hours: $('#win')?.value }, 'arr-err'));
-  app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const id = Number(b.dataset.pick); partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); $('#deposit').textContent = 'Deposit ' + (partyUI.picks.size || ''); });
+  app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const id = Number(b.dataset.pick); partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); depState(); });
   $('#pick-all')?.addEventListener('click', () => { partyUI.picks = new Set(eligibleMine.slice(0, remaining).map(c => c.id)); route(); });
   $('#pick-none')?.addEventListener('click', () => { partyUI.picks.clear(); route(); });
-  $('#dep-ack')?.addEventListener('change', e => { $('#deposit').disabled = !e.target.checked; });
+  // Deposit exactly the Credits picked: at least the party minimum, at most the slots left.
+  function depState() {
+    const b = $('#deposit'); if (!b) return;
+    const k = partyUI.picks.size;
+    b.textContent = `Deposit ${k} Credit${k === 1 ? '' : 's'}`;
+    b.disabled = !($('#dep-ack').checked && k >= minDep && k <= remaining);
+    $('#dep-hint').textContent = k < minDep ? `Pick at least ${minDep}` : k > remaining ? `Only ${remaining} slots left` : '';
+  }
+  depState();
+  $('#dep-ack')?.addEventListener('change', depState);
   $('#deposit')?.addEventListener('click', async () => { const picks = [...partyUI.picks]; partyUI.picks.clear(); if (!await act('deposit', { ids: picks, storeOnly: $('#dep-ack').checked }, 'dep-err')) partyUI.picks = new Set(picks); });
   $('#withdraw')?.addEventListener('click', () => act('withdraw', {}, 'dep-err'));
   app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => act('vote', { proposal: b.dataset.vote, yes: b.dataset.yes === '1' }, 'vote-err'));
@@ -636,8 +645,8 @@ async function pageNew() {
       render($('#own-picker'), ok.slice(0, 200).map(c => `<button type="button" data-own="${Number(c.id)}" aria-pressed="${picks.has(c.id)}" title="#${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`).join(''));
     }
     app.querySelectorAll('[data-own]').forEach(b => b.onclick = () => { const id = Number(b.dataset.own); picks.has(id) ? picks.delete(id) : picks.add(id); drawOwn(); });
-    $('#create').disabled = !($('#new-ack').checked && picks.size >= min);
-    $('#create').textContent = `Open party and deposit ${picks.size || ''}`;
+    $('#create').disabled = !($('#new-ack').checked && picks.size >= min && picks.size <= SLOTS);
+    $('#create').textContent = `Open party and deposit ${picks.size} Credit${picks.size === 1 ? '' : 's'}`;
   }
   $('#own-all').onclick = () => { own.filter(c => !c.deposited && matchesClient(c, draft.filters)).slice(0, draft.minDeposit || 1).forEach(c => picks.add(c.id)); drawOwn(); };
   $('#own-none').onclick = () => { picks.clear(); drawOwn(); };
@@ -721,7 +730,7 @@ async function pageUser(addr) {
     </div>
     <div class="panel">
      <h2>Could join · ${Number(u.couldJoin.total)}</h2>
-     ${u.couldJoin.parties.length ? `<div class="rows">${u.couldJoin.parties.map(q => `<div><span><a href="#/party/${esc(q.id)}">${esc(q.name)}</a> <span class="faint">${Number(q.filled)}/80 · min ${Number(q.minDeposit)}${q.house ? ' · house' : ''}</span></span><strong>${mini(q.sample)} ${Number(q.fit)} qualify · <a href="#/party/${esc(q.id)}">Deposit →</a></strong></div>`).join('')}</div>`
+     ${u.couldJoin.parties.length ? `<div class="rows">${u.couldJoin.parties.map(q => `<div><span><a href="#/party/${esc(q.id)}">${esc(q.name)}</a> <span class="faint">${Number(q.filled)}/80 · min ${Number(q.minDeposit)}${q.house ? ' · house' : ''}</span></span><strong>${mini(q.sample)} ${Number(q.fit)} qualify · <a href="#/party/${esc(q.id)}">Pick and deposit →</a></strong></div>`).join('')}</div>`
        : `<p class="muted">${u.couldJoin.free ? 'No open party accepts these Credits right now.' : 'No Credits free to deposit.'}</p>`}
     </div>
    </section>
@@ -985,9 +994,9 @@ const simActor = a => a === SIM_ME ? (me ? userLink(me) : '<span class="demo">si
 const simWeights = () => sim.deposits.reduce((m, d) => (m[d.holder] = (m[d.holder] || 0) + 1, m), {});
 async function simStart(theme, arrangement, pricePct) {
   const filters = { any: {}, cyan: { colors: ['C'] }, misreg: { print: ['Nudge', 'Slip', 'Skew', 'Drift', 'Loose'] }, eights: { eights: [1, 2, 3, 4, 5] } }[theme];
-  const r = await api('sim/sample', { theme });
+  const r = await api('sim/sample', { theme, count: SLOTS + 10 });
   const floorEth = stats.floor ? stats.floor * SLOTS : 2.4;
-  sim = { step: 'deposit', theme, filters, arrangement, price: { mode: 'floorPct', value: pricePct }, floorEth, pool: r.sample, deposits: [], order: null, proposals: [], clock: 0, log: [], listing: null, sold: null, claimed: new Set(), confirm: false };
+  sim = { step: 'deposit', theme, filters, arrangement, price: { mode: 'floorPct', value: pricePct }, floorEth, wallet: r.sample.slice(0, 10), picks: new Set(), pool: r.sample.slice(10), used: 0, deposits: [], order: null, proposals: [], clock: 0, log: [], listing: null, sold: null, claimed: new Set(), confirm: false };
   simLog(SIM_ME, `Opened the party. Arrangement: ${arrangement}. Default price: floor ${pricePct >= 0 ? '+' : '−'} ${Math.abs(pricePct)}%.`);
 }
 const simCards = () => sim.deposits.map((d, i) => ({ ...d.credit, card: 1000 + i, depositor: d.holder === SIM_ME ? me || SIM_ME : d.holder }));
@@ -1010,11 +1019,11 @@ async function pageSim() {
      <div class="field"><label>Default price</label><div><div style="display:flex;gap:12px;align-items:center"><span class="muted">Floor +</span><input id="sp" type="number" value="${f.pct}" style="width:80px">%</div><div class="hint">Floor now ${eth(stats.floor ? stats.floor * SLOTS : null)} · range above −100%</div></div></div>
      <button class="cta" id="sim-go" type="button">Open the party</button>
     </div><div><div class="rows terms">
-     <div><span>01</span><strong>You open a party and deposit 5 Credits. You get 5 Credit Cards.</strong></div>
+     <div><span>01</span><strong>You open a party and pick which of your Credits to deposit. You get one Credit Card for each.</strong></div>
      <div><span>02</span><strong>Fifteen others deposit until it reaches 80.</strong></div>
      <div><span>03</span><strong>You arrange (by hand if Manual) and burn in one step.</strong></div>
      <div><span>04</span><strong>Your default price goes live. Someone proposes a lower one; see how the vote runs.</strong></div>
-     <div><span>05</span><strong>A buyer pays. You claim for your 5 cards.</strong></div></div></div></form>`);
+     <div><span>05</span><strong>A buyer pays. You claim for your cards.</strong></div></div></div></form>`);
     sim = { step: 'setup', form: f };
     app.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { sim.form = { ...f, theme: b.dataset.st, pct: +$('#sp').value }; route(); });
     app.querySelectorAll('[data-sa]').forEach(b => b.onclick = () => { sim.form = { ...f, arrangement: b.dataset.sa, pct: +$('#sp').value }; route(); });
@@ -1044,9 +1053,10 @@ async function pageSim() {
    <section>
     <div class="panel sim-now"><h2>Now</h2>
     ${sim.step === 'deposit' ? `
-      <p>Your wallet holds 5 Credits that fit this party. Deposit them to join. Each returns a Credit Card: its vote, its Credit until the party fills, and 1/80 of the sale.</p>
-      <div class="picker" style="grid-template-columns:repeat(5,1fr)">${sim.pool.slice(0, 5).map(c => `<span><img src="${svg(c.id)}" alt=""></span>`).join('')}</div>
-      <button class="cta" id="s-dep">Deposit 5 Credits</button>`
+      <p>Your wallet holds ${sim.wallet.length} Credits that fit this party. Pick the ones to deposit (at least 1); the rest stay in the wallet. Each deposit returns a Credit Card: its vote, its Credit until the party fills, and 1/80 of the sale.</p>
+      <div class="picker" style="grid-template-columns:repeat(10,1fr)">${sim.wallet.map(c => `<button type="button" data-spick="${Number(c.id)}" aria-pressed="${sim.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt=""></button>`).join('')}</div>
+      <div class="actions"><button type="button" id="s-all">Select all</button><button type="button" id="s-none">Clear</button></div>
+      <button class="cta" id="s-dep" ${sim.picks.size ? '' : 'disabled'}>Deposit ${sim.picks.size} Credit${sim.picks.size === 1 ? '' : 's'}</button>`
     : sim.step === 'fill' ? `
       <p>${sim.deposits.length}/80. Others are joining. Until 80, any card holder can redeem a card for its Credit.</p>
       <div class="actions"><button class="cta" id="s-fill">Advance a day</button></div>`
@@ -1063,7 +1073,7 @@ async function pageSim() {
       <p>Proposal: sell for ${eth(simPrice(openProp.args))} <span class="blocked">below floor</span>.</p>
       <div class="meter"><i class="yes" style="width:${t.yes / 80 * 100}%"></i><b style="left:${t.need / 80 * 100}%"></b></div>
       <div class="prop-nums"><span>Yes ${t.yes} / ${t.need} needed</span><span class="${t.no ? 'blocked' : 'faint'}">No ${t.no}</span></div>
-      <p class="muted">${openProp.votes[SIM_ME] === undefined ? 'You hold 5 cards. How do you vote?' : `You voted ${openProp.votes[SIM_ME] ? 'yes' : 'no'}.`}</p>
+      <p class="muted">${openProp.votes[SIM_ME] === undefined ? `You hold ${mine.length} card${mine.length === 1 ? '' : 's'}. How do you vote?` : `You voted ${openProp.votes[SIM_ME] ? 'yes' : 'no'}.`}</p>
       <div class="actions">${openProp.votes[SIM_ME] === undefined ? '<button type="button" id="s-yes">Vote yes</button><button type="button" id="s-no">Vote no</button>' : '<button class="cta" id="s-close">Advance 48 hours · close the vote</button>'}</div>`
     : sim.step === 'buy' ? `
       <p>Live price: ${eth(listEth)}${sim.listing.value < 0 ? ' (voted, below floor)' : ' (your default)'}.</p>
@@ -1079,13 +1089,16 @@ async function pageSim() {
   </div>`);
   const go = fn => async () => { await fn(); route(); };
   $('#sim-reset').onclick = go(() => { sim = null; });
-  $('#s-dep')?.addEventListener('click', go(() => { sim.pool.slice(0, 5).forEach(c => sim.deposits.push({ credit: c, holder: SIM_ME })); sim.step = 'fill'; simLog(SIM_ME, 'Deposited 5 Credits and received 5 Credit Cards.'); }));
+  app.querySelectorAll('[data-spick]').forEach(b => b.onclick = go(() => { const id = Number(b.dataset.spick); sim.picks.has(id) ? sim.picks.delete(id) : sim.picks.add(id); }));
+  $('#s-all')?.addEventListener('click', go(() => { sim.picks = new Set(sim.wallet.map(c => c.id)); }));
+  $('#s-none')?.addEventListener('click', go(() => { sim.picks.clear(); }));
+  $('#s-dep')?.addEventListener('click', go(() => { const picked = sim.wallet.filter(c => sim.picks.has(c.id)); if (!picked.length) return; picked.forEach(c => sim.deposits.push({ credit: c, holder: SIM_ME })); sim.step = 'fill'; simLog(SIM_ME, `Deposited ${picked.length} Credit${picked.length === 1 ? '' : 's'} and received ${picked.length} Credit Card${picked.length === 1 ? '' : 's'}.`); }));
   $('#s-fill')?.addEventListener('click', go(() => {
     sim.clock += 24;
     const joiners = 3 + Math.floor(Math.random() * 3);
     for (let j = 0; j < joiners && sim.deposits.length < SLOTS; j++) {
       const who = simName(sim.deposits.length + j), n = Math.min(SLOTS - sim.deposits.length, 3 + Math.floor(Math.random() * 5));
-      sim.pool.slice(sim.deposits.length, sim.deposits.length + n).forEach(c => sim.deposits.push({ credit: c, holder: who }));
+      sim.pool.slice(sim.used, sim.used + n).forEach(c => sim.deposits.push({ credit: c, holder: who })); sim.used += n;
       simLog(who, `Deposited ${n} Credits and received ${n} Credit Cards. ${sim.deposits.length}/80.`);
     }
     if (sim.deposits.length === SLOTS) { sim.step = 'arrange'; sim.draft = null; simLog(null, 'Full at 80. Redemption closed.'); }
@@ -1112,7 +1125,7 @@ async function pageSim() {
     simLog('Ola', `Proposed selling at floor −10% (${eth(simPrice({ mode: 'floorPct', value: -10 }))}). Below the floor: needs 60 of 80.`);
     for (const v of Object.keys(votes)) simLog(v, `Voted yes with ${w[v]} card${w[v] === 1 ? '' : 's'}.`);
   }));
-  const vote = yes => go(() => { openProp.votes[SIM_ME] = yes; simLog(SIM_ME, `Voted ${yes ? 'yes' : 'no'} with 5 cards.`); });
+  const vote = yes => go(() => { openProp.votes[SIM_ME] = yes; simLog(SIM_ME, `Voted ${yes ? 'yes' : 'no'} with ${mine.length} card${mine.length === 1 ? '' : 's'}.`); });
   $('#s-yes')?.addEventListener('click', vote(true));
   $('#s-no')?.addEventListener('click', vote(false));
   $('#s-close')?.addEventListener('click', go(() => {
@@ -1125,7 +1138,7 @@ async function pageSim() {
     // The other members claim their shares as the sale lands.
     const per = sim.sold.price * 0.99 / SLOTS;
     for (const [h, k] of Object.entries(simWeights())) if (h !== SIM_ME) { simLog(h, `Claimed ${eth(per * k)} for ${k} card${k === 1 ? '' : 's'}. The cards were burned.`); simCards().filter(c => c.depositor === h).forEach(c => sim.claimed.add(c.card)); } }));
-  $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(SIM_ME, `Claimed ${eth(perCard * mine.length)} for 5 cards. The cards were burned.`); }));
+  $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(SIM_ME, `Claimed ${eth(perCard * mine.length)} for ${mine.length} card${mine.length === 1 ? '' : 's'}. The cards were burned.`); }));
 }
 
 // ---------- definitions: hovering a field label shows what it means ----------
