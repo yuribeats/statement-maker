@@ -5,6 +5,8 @@ const $ = (s, el = document) => el.querySelector(s);
 const render = (el, s) => el.replaceChildren(document.createRange().createContextualFragment(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const short = a => a ? esc(String(a).slice(0, 6) + '…' + String(a).slice(-4)) : '—';
+// Every address shown on the site links to its profile (#/u/<address>).
+const userLink = a => /^0x[0-9a-f]{40}$/.test(String(a)) ? `<a class="addr" href="#/u/${a}">${short(a)}</a>` : short(a);
 const eth = n => n == null ? '—' : (+n).toFixed(n >= 10 ? 1 : 3) + ' ETH';
 const svg = id => `/api/svg/${Number(id)}`;
 const hrs = ms => ms <= 0 ? '0h' : ms < 36e5 ? Math.ceil(ms / 6e4) + 'm' : Math.ceil(ms / 36e5) + 'h';
@@ -48,7 +50,8 @@ $('#acting').addEventListener('change', async e => {
   if (v === '__paste') { v = (prompt('Wallet address') || '').trim().toLowerCase(); if (!/^0x[0-9a-f]{40}$/.test(v)) { fillActing(); return; } }
   if (v) { fillActing(); openTermsModal(v, 'sim'); }
 });
-async function setMe(v) { me = v; try { const m = await api('auth/me'); access = m; } catch {} fillActing(); route(); }
+const navProfile = () => { const a = $('#nav-profile'); if (a) { a.hidden = !me; a.href = me ? '#/u/' + me : '#/u'; } };
+async function setMe(v) { me = v; try { const m = await api('auth/me'); access = m; } catch {} navProfile(); fillActing(); route(); }
 const hex = str => '0x' + [...new TextEncoder().encode(str)].map(b => b.toString(16).padStart(2, '0')).join('');
 
 // ---------- ordering presets ----------
@@ -216,7 +219,7 @@ async function pageParty(id) {
       <div><span>Credit</span><strong>#${Number(sel.id)}</strong></div>
       <div><span>Colors · Print</span><strong>${esc(sel.colors)} · ${esc(sel.register || sel.print)}</strong></div>
       <div><span>Weight · Eights</span><strong>${esc(sel.weight)} · ${Number(sel.eights)} (${esc(sel.tier)})</strong></div>
-      <div><span>Rarity · Depositor</span><strong>#${sel.rank.toLocaleString()} · ${short(sel.depositor)}</strong></div></div>`
+      <div><span>Rarity · Depositor</span><strong>#${sel.rank.toLocaleString()} · ${userLink(sel.depositor)}</strong></div></div>`
       : `<span class="faint">—</span><span class="muted">Select a Credit on the sheet.</span>`}</div>
    </section>
 
@@ -227,7 +230,7 @@ async function pageParty(id) {
       <div><span>Status</span><strong>${esc(p.status)}</strong></div>
       <div><span>Filled</span><strong>${p.credits.length} / 80</strong></div>
       <div style="border:0;padding:0">${filled(p)}</div>
-      <div><span>Hosts</span><strong>${p.hosts.length ? p.hosts.map(short).join(', ') : 'None yet: the first depositor hosts'}</strong></div>
+      <div><span>Hosts</span><strong>${p.hosts.length ? p.hosts.map(h => userLink(h)).join(', ') : 'None yet: the first depositor hosts'}</strong></div>
       <div><span>Eligible Credits</span><strong>${filterText(p.params.filters)} · ${p.eligible.toLocaleString()}</strong></div>
       <div><span>Vote window</span><strong>${Number(p.params.voteHours || 48)} hours default</strong></div>
       <div><span>Buy wait</span><strong>${Number(p.params.buyDelayHours ?? 1)} hour${(p.params.buyDelayHours ?? 1) === 1 ? '' : 's'} default</strong></div>
@@ -263,7 +266,7 @@ async function pageParty(id) {
      <div class="error" id="buy-err"></div></div>` : ''}
     ${p.status === 'SOLD' ? `
     <div class="panel"><h2>Sold</h2><div class="rows">
-     <div><span>Price</span><strong>${eth(p.sold.price)} to ${short(p.sold.buyer)}</strong></div>
+     <div><span>Price</span><strong>${eth(p.sold.price)} to ${userLink(p.sold.buyer)}</strong></div>
      <div><span>Statement Maker 1%</span><strong>${eth(p.sold.fee)}</strong></div>
      <div><span>Per Credit Card</span><strong>${eth(p.perCard)}</strong></div>
      <div><span>Claimed</span><strong>${p.credits.filter(c => c.claimed).length} / 80 cards</strong></div></div></div>` : ''}
@@ -285,7 +288,7 @@ async function pageParty(id) {
 
     ${p.status === 'EXPIRED' ? `
     <div class="panel"><h2>Expired</h2>
-     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their card holders by ${short(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Each Credit goes to whoever holds its card. Any member can send them all.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit')} per Credit</div>` : ''}`}
+     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their card holders by ${userLink(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Each Credit goes to whoever holds its card. Any member can send them all.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit')} per Credit</div>` : ''}`}
      <div class="error" id="ret-err"></div></div>` : ''}
     ${p.status !== 'OPEN' && p.status !== 'EXPIRED' ? `
     <div class="panel" id="proposals">
@@ -304,7 +307,7 @@ async function pageParty(id) {
         : `<div class="actions"><button type="button" class="cta" id="burn-ask">${p.manual ? 'Burn with this order' : 'Burn'}</button> ${cost('assemble')}</div>`)
         : p.manual && canHandArrange ? '<p class="note">Open Arrange to set the order, then burn.</p>' : ''}
      </div>` : ''}
-     ${p.assembled ? `<div class="prop"><div class="prop-head"><strong>Statement ${Number(p.assembled.number)}</strong><a href="#/statement/${esc(p.id)}">View →</a></div><p class="muted">Assembled by ${short(p.assembled.by)}</p></div>` : ''}
+     ${p.assembled ? `<div class="prop"><div class="prop-head"><strong>Statement ${Number(p.assembled.number)}</strong><a href="#/statement/${esc(p.id)}">View →</a></div><p class="muted">Assembled by ${userLink(p.assembled.by)}</p></div>` : ''}
      ${[...p.proposals].reverse().map(q => {
        const mine = q.votes?.[me];
        const canVote = isMember && !q.executed && !q.closed && !q.superseded && (q.snapshot ? q.snapshot[me] > 0 : true);
@@ -319,7 +322,7 @@ async function pageParty(id) {
        </div>
        <div class="prop-nums"><span>Yes ${q.yes} / ${Number(q.need)} needed${q.below ? ' · below floor' : ''}${q.override ? ' · deadlock rule' : ''}</span><span class="${q.no ? 'blocked' : 'faint'}">No ${q.no}${q.override && q.no ? ' (ignored)' : ''}</span></div>
        <div class="prop-foot">
-        <span class="faint">${short(q.by)} · ${ago(q.at)} ago · ${q.executed ? 'executed by ' + short(q.executedBy) : q.closed ? (q.executable ? 'execute within ' + hrs(q.execBy - p.now) : 'closed') : 'closes in ' + hrs(q.endsAt - p.now)}</span>
+        <span class="faint">${userLink(q.by)} · ${ago(q.at)} ago · ${q.executed ? 'executed by ' + userLink(q.executedBy) : q.closed ? (q.executable ? 'execute within ' + hrs(q.execBy - p.now) : 'closed') : 'closes in ' + hrs(q.endsAt - p.now)}</span>
         <span class="actions" style="margin:0">
          ${mine !== undefined ? `<span class="you">You voted ${mine ? 'yes' : 'no'}</span>` : ''}
          ${canVote ? `<button type="button" data-vote="${Number(q.id)}" data-yes="1" class="${mine === true ? 'on' : ''}">Yes</button><button type="button" data-vote="${Number(q.id)}" data-yes="0" class="${mine === false ? 'on no' : ''}">No</button>` : ''}
@@ -343,12 +346,12 @@ async function pageParty(id) {
 
     <div class="panel">
      <h2>Card holders · ${p.members.length}</h2>
-     <table class="table"><tbody>${p.members.slice(0, 30).map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${short(m.address)}${m.host ? ' <span class="muted">host</span>' : ''}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
+     <table class="table"><tbody>${p.members.slice(0, 30).map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${userLink(m.address)}${m.host ? ' <span class="muted">host</span>' : ''}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
     </div>
 
     <div class="panel">
      <h2>Chat</h2>
-     <div class="chat" id="chat">${p.chat.map(m => `<div class="msg"><span class="muted">${short(m.address)} · ${ago(m.at)}</span><p>${esc(m.text)}</p></div>`).join('') || '<p class="muted" style="padding:10px 0">Quiet.</p>'}</div>
+     <div class="chat" id="chat">${p.chat.map(m => `<div class="msg"><span class="muted">${userLink(m.address)} · ${ago(m.at)}</span><p>${esc(m.text)}</p></div>`).join('') || '<p class="muted" style="padding:10px 0">Quiet.</p>'}</div>
      ${isMember || isHost ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : `<p class="note">Credit Card holders and hosts can post.</p>`}
      <div class="error" id="chat-err"></div>
     </div>
@@ -516,13 +519,97 @@ async function pageWallet(addr) {
   render(app, `
   <div class="intro"><div><h1>Credits</h1><p class="muted">Look up any wallet.</p></div>
    <div class="compose" style="min-width:min(420px,100%)"><textarea id="w" rows="1" placeholder="0x…">${esc(addr)}</textarea><button type="button" id="go">Look up</button></div></div>
-  ${addr ? `<div class="caption"><h2>${short(addr)} · ${list.length} Credits</h2><span class="muted">${solo} Statement${solo === 1 ? '' : 's'} alone · ${list.length % SLOTS} left over</span></div>
+  ${addr ? `<div class="caption"><h2>${userLink(addr)} · ${list.length} Credits</h2><span class="muted">${solo} Statement${solo === 1 ? '' : 's'} alone · ${list.length % SLOTS} left over</span></div>
   <table class="table"><thead><tr><th></th><th>Credit</th><th>Colors</th><th>Print</th><th>Weight</th><th>Eights</th><th>Ink</th><th>Rarity</th><th>Party</th></tr></thead><tbody>
   ${list.slice(0, 500).map(c => `<tr><td><img src="${svg(c.id)}" alt="" loading="lazy"></td><td>#${Number(c.id)}</td><td>${esc(c.colors)}</td><td>${esc(c.register || c.print)}</td><td>${esc(c.weight)}</td><td>${Number(c.eights)}</td><td>${Number(c.marks)}</td><td>${c.rank.toLocaleString()}</td><td>${c.deposited ? 'In a party' : '—'}</td></tr>`).join('')}
   </tbody></table>` : ''}`);
   const go = () => { location.hash = '#/wallet/' + $('#w').value.trim(); };
   $('#go').onclick = go;
   $('#w').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); go(); } };
+}
+
+// ---------- profile: a user is a wallet address ----------
+// Statements owned and Statements it was part of are public; Credits, Credit Cards, redemptions and the parties it
+// could join are shown to wallets that pass the party gate (a Credit or a Credit Card), as the server enforces.
+const CARD_STATE = { redeemable: 'Redeemable', locked: 'Locked · party full', 'statement made': 'Statement made', claimable: 'Claimable', claimed: 'Claimed' };
+async function pageUser(addr) {
+  addr = String(addr || me || '').toLowerCase();
+  if (!/^0x[0-9a-f]{40}$/.test(addr)) {
+    render(app, `<div class="intro"><div><h1>Profile</h1><p class="muted">${me ? 'Not a wallet address.' : 'Connect a wallet to see your profile, or open any address shown on the site.'}</p></div></div>`);
+    return;
+  }
+  const u = await api('users/' + addr);
+  const you = me === addr;
+  const mini = ids => `<span class="mini">${ids.map(id => `<img src="${svg(id)}" alt="">`).join('')}</span>`;
+  const statementLink = (id, number, name) => `<a href="#/statement/${esc(id)}">Statement ${Number(number)}</a> <span class="faint">${esc(name)}</span>`;
+  const creditCell = c => `<span class="${c.party ? 'in-party' : ''}" title="#${Number(c.id)} · ${esc(c.colors)} · ${esc(c.print)} · ${esc(c.weight)} · rarity ${Number(c.rank).toLocaleString()}${c.party ? ' · in ' + esc(c.party.name) : ''}"><img src="${svg(c.id)}" alt="Credit ${Number(c.id)}" loading="lazy"></span>`;
+  const past = u.past.map(q => `<div><span>${statementLink(q.id, q.number, q.name)}</span><strong>${q.deposited ? `${Number(q.deposited)} deposited` : ''}${q.deposited && q.held ? ' · ' : ''}${q.held ? `${Number(q.held)} card${q.held === 1 ? '' : 's'} held` : ''} · ${q.soldPrice != null ? `sold ${eth(q.soldPrice)}` : 'not sold'}${q.claimed ? ` · <span class="dot y"></span>claimed ${eth(q.claimedEth)}` : ''}${q.claimable ? ` · ${Number(q.claimable)} claimable · <a href="#/party/${esc(q.id)}">Claim →</a>` : ''}</strong></div>`).join('');
+  const listed = u.statements.filter(p => p.resale && p.resale.seller === addr);
+  render(app, `
+  <div class="intro"><div><h1>${short(addr)}${you ? ' <span class="muted">· you</span>' : ''}</h1><p class="muted">${esc(addr)}</p></div>
+   <p class="muted"><a href="https://etherscan.io/address/${esc(addr)}" target="_blank" rel="noopener noreferrer">Etherscan ↗</a></p></div>
+  <div class="stats">
+   <div><strong>${u.statements.length}</strong><span>Statements owned</span></div>
+   <div><strong>${u.open ? n(u.credits.total) : '—'}</strong><span>Credits</span></div>
+   <div><strong>${u.open ? n(u.cards.total) : '—'}</strong><span>Credit Cards</span></div>
+   <div><strong>${n(u.pastTotal)}</strong><span>Statements part of</span></div>
+  </div>
+
+  <div class="caption"><h2>Statements · ${u.statements.length}</h2>${listed.length ? `<span class="muted">${listed.length} listed for sale</span>` : ''}</div>
+  ${u.statements.length ? `<div class="parties" style="margin-bottom:64px">${u.statements.map(p => `
+   <a class="party-card" href="#/statement/${esc(p.id)}">
+    ${sheet(p)}
+    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.resale ? 'Holder listing' : 'Owned'}</span></div>
+    <div class="price-line"><strong>${p.resale ? eth(p.resale.priceEth) : eth(p.sold?.price)}</strong><span class="muted">${p.resale ? 'listed' : 'last sale'}</span></div>
+   </a>`).join('')}</div>` : '<p class="muted" style="margin-bottom:64px">No Statements owned.</p>'}
+
+  ${u.open ? `
+  <div class="works">
+   <section>
+    <div class="panel">
+     <div class="caption" style="min-height:0;margin-bottom:10px"><h2>Credits · ${n(u.credits.total)}</h2><span class="muted">${n(u.credits.inParties)} in parties · rarest first</span></div>
+     ${u.credits.total ? `<div class="thumbs" id="credit-grid">${u.credits.items.map(creditCell).join('')}</div>
+     ${u.credits.total > u.credits.items.length ? `<div class="actions"><button type="button" id="more-credits">Show more · ${n(u.credits.total - u.credits.items.length)} left</button></div>` : ''}
+     <p class="note">Faded: already in a party.</p>` : '<p class="muted">No Credits.</p>'}
+    </div>
+    <div class="panel">
+     <h2>Could join · ${Number(u.couldJoin.total)}</h2>
+     ${u.couldJoin.parties.length ? `<div class="rows">${u.couldJoin.parties.map(q => `<div><span><a href="#/party/${esc(q.id)}">${esc(q.name)}</a> <span class="faint">${Number(q.filled)}/80 · min ${Number(q.minDeposit)}${q.house ? ' · house' : ''}</span></span><strong>${mini(q.sample)} ${Number(q.fit)} qualify · <a href="#/party/${esc(q.id)}">Deposit →</a></strong></div>`).join('')}</div>`
+       : `<p class="muted">${u.couldJoin.free ? 'No open party accepts these Credits right now.' : 'No Credits free to deposit.'}</p>`}
+    </div>
+   </section>
+   <section>
+    <div class="panel">
+     <h2>Credit Cards · ${n(u.cards.total)}</h2>
+     ${u.cards.items.length ? `<div class="sim-cards">${u.cards.items.map(c => `
+      <a class="sim-card" href="#/party/${esc(c.party)}"><img src="${svg(c.credit)}" alt="" loading="lazy"><div><strong>Credit Card</strong><span>No. ${Number(c.card)}</span><span>${esc(c.name)}</span><span>Credit #${Number(c.credit)}</span><span class="${c.status === 'claimable' ? 'you' : c.status === 'claimed' ? 'muted' : ''}">${esc(CARD_STATE[c.status] || c.status)}${c.status === 'claimable' ? ' · ' + eth(c.perCard) : ''}</span></div></a>`).join('')}</div>
+      ${u.cards.total > u.cards.items.length ? `<p class="note">Showing ${u.cards.items.length} of ${n(u.cards.total)}.</p>` : ''}` : '<p class="muted">No Credit Cards.</p>'}
+    </div>
+    <div class="panel">
+     <h2>History</h2>
+     <div class="caption" style="min-height:0;margin:0 0 8px"><span>Statements part of · ${n(u.pastTotal)}</span></div>
+     ${past ? `<div class="rows">${past}</div>` : '<p class="muted">None yet.</p>'}
+     <div class="caption" style="min-height:0;margin:24px 0 8px"><span>Credits redeemed · ${n(u.redeemed.total)}</span></div>
+     ${u.redeemed.items.length ? `<div class="rows">${u.redeemed.items.map(r => `<div><span>${mini([r.id])} #${Number(r.id)}</span><strong>${r.kind === 'returned' ? 'Returned from' : 'Redeemed from'} <a href="#/party/${esc(r.party)}">${esc(r.name)}</a> · ${ago(r.at)} ago</strong></div>`).join('')}</div>` : '<p class="muted">None recorded.</p>'}
+    </div>
+   </section>
+  </div>` : `
+  <div class="panel">
+   <h2>History</h2>
+   <div class="caption" style="min-height:0;margin:0 0 8px"><span>Statements part of · ${n(u.pastTotal)}</span></div>
+   ${past ? `<div class="rows">${past}</div>` : '<p class="muted">None yet.</p>'}
+  </div>
+  <p class="note" style="margin-top:32px">Credits, Credit Cards and open parties are shown to wallets that hold a Credit or a Credit Card.${me ? '' : ' Use “Connect wallet” at the top right.'}</p>`}`);
+  let offset = u.open ? u.credits.items.length : 0;
+  $('#more-credits')?.addEventListener('click', async e => {
+    const b = e.currentTarget; b.disabled = true;
+    try {
+      const r = await api(`users/${addr}/credits?offset=${offset}`);
+      offset += r.items.length;
+      $('#credit-grid').append(document.createRange().createContextualFragment(r.items.map(creditCell).join('')));
+      if (offset >= r.total) b.remove(); else { b.disabled = false; b.textContent = `Show more · ${n(r.total - offset)} left`; }
+    } catch (err) { b.disabled = false; b.textContent = err.message; }
+  });
 }
 
 // Parties require agreeing to the rules and terms once per browser (the wallet also signs the terms at connect).
@@ -704,15 +791,15 @@ async function pageStatement(id) {
     <div><span>Party</span><strong>${esc(p.name)}</strong></div>
     <div><span>Credits</span><strong>80, burned ${new Date(p.assembled.at).toLocaleString()}</strong></div>
     <div><span>Order</span><strong>${esc(p.orderSource === 'Manual' ? 'Manual, by the host' : arrLabel({ preset: p.orderSource }))}</strong></div>
-    <div><span>Assembled by</span><strong>${short(p.assembled.by)}</strong></div>
-    <div><span>Held by</span><strong>${p.sold ? short(p.owner) + (p.owner === me ? ' (you)' : '') : 'The party vault · ' + p.members.length + ' Credit Card holders'}</strong></div>
+    <div><span>Assembled by</span><strong>${userLink(p.assembled.by)}</strong></div>
+    <div><span>Held by</span><strong>${p.sold ? userLink(p.owner) + (p.owner === me ? ' (you)' : '') : 'The party vault · ' + p.members.length + ' Credit Card holders'}</strong></div>
     ${mine ? `<div><span>You</span><strong><span class="dot y"></span>${Number(mine.count)} of 80 Credit Cards · ${(mine.count / 80 * 100).toFixed(2)}%</strong></div>` : ''}
     <div><span>Price</span><strong>${p.sold ? 'Sold for ' + eth(p.sold.price) : p.listing ? priceLabel(p.listing) + ' · ' + eth(p.listingEth) + ' · ' + vsFloor(p.listingEth, p.floorEth) : 'Not listed'}</strong></div>
     <div><span>Floor</span><strong>${eth(p.floorEth)}</strong></div>
    </div>
    ${p.sold && p.resale ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy · holder listing</h2><strong class="big">${eth(p.resale.priceEth)}</strong></div>
-     <p class="muted">Listed by ${short(p.resale.seller)}. 1% to Statement Maker, the rest to the seller.</p>
+     <p class="muted">Listed by ${userLink(p.resale.seller)}. 1% to Statement Maker, the rest to the seller.</p>
      ${me === p.resale.seller ? `<button type="button" id="unlist">Cancel your listing</button>` : me ? `<button class="cta" id="buy-r">Buy Statement ${Number(p.assembled.number)} for ${eth(p.resale.priceEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
      <div class="error" id="buy-r-err"></div></div>` : ''}
    ${p.sold && p.owner === me && !p.resale ? `<div class="buy-box">
@@ -726,7 +813,7 @@ async function pageStatement(id) {
      ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}.</p>` : me ? `<button class="cta" id="buy-s">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
      <div class="error" id="buy-s-err"></div></div>` : ''}
    <h2 style="margin:48px 0 14px">Holders</h2>
-   <table class="table"><tbody>${p.members.map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${short(m.address)}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
+   <table class="table"><tbody>${p.members.map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${userLink(m.address)}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
    </section>
   </div>`);
   $('#png').onclick = () => statementPNG(p);
@@ -964,6 +1051,7 @@ async function route() {
     if (page === 'party') await pageParty(arg);
     else if (page === 'new') await pageNew();
     else if (page === 'wallet') await pageWallet(arg);
+    else if (page === 'u') await pageUser(arg);
     else if (page === 'rules') pageRules();
     else if (page === 'terms') pageTerms();
     else if (page === 'statements') await pageStatements();
@@ -973,4 +1061,4 @@ async function route() {
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
 window.addEventListener('hashchange', route);
-Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; access = m; }), api('stats').then(x => (stats = x))]).then(() => Promise.all([fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
+Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; access = m; }), api('stats').then(x => (stats = x))]).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
