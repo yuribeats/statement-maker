@@ -1,0 +1,24 @@
+#solidity-auditor-memory v1	key	status	scans	sha	title	kind
+party|countblocked|deadlock-self-trigger	KNOWN	2	d548e55	KNOWN: R-2 (ACCEPTED). A coalition trips deadlock and removes the minority veto 	FINDING
+party|assemble|assemble-supersedes-passed-price	NEW	1	165a33e	KNOWN: R-7. One card holder burns before a passed price executes	FINDING
+party|execute|caller-chosen-floor-reading	NEW	1	165a33e	KNOWN: R-6. The executor chooses the floor reading	LEAD
+party|raiseask|floor-reading-selection	KNOWN	2	d548e55	KNOWN: R-6. raiseAsk moves lastFloorAt forward for every caller	LEAD
+party|execute|pending-price-floor-not-rechecked	KNOWN	2	d548e55	A price that passed with 41 votes while FULL goes live below the floor at the bu	FINDING
+party|propose|fill-block-snapshot-veto-gap	NEW	1	165a33e	A proposal in the fill block gives the last depositors no weight	FINDING
+party|redeemfor|push-to-contract-holder	KNOWN	2	d548e55	redeemFor pushes a Credit to a contract that holds the card	LEAD
+party|assemble|caller-chosen-floor-reading	KNOWN	2	d548e55	KNOWN: R-6. The assembler chooses the floor reading	LEAD
+partyfactory|isvalidfloor|floor-signature-not-party-scoped	KNOWN	2	d548e55	KNOWN: R-4. A floor signature is valid in every party	LEAD
+party|execute|majority-floor-price-selfdeal	NEW	1	165a33e	41 holders vote a price at the floor and one of them buys	LEAD
+party|assemble|manual-host-zero-stake	KNOWN	2	d548e55	A Manual host with no cards chooses the burn order	LEAD
+party|raiseask|reentrant-ask-raise-during-assemble	KNOWN	2	d548e55	KNOWN: R-16. The Statement contract can call raiseAsk during make	LEAD
+statementmarket|buy|safe-transfer-before-seller-payment	KNOWN	2	d548e55	The buyer callback runs before the seller is paid	LEAD
+party|assemble|blanket-approval-exposes-extra-credits	KNOWN	2	d548e55	The Statement approval also covers stray Credits in the party	LEAD
+party|assemble|burn-scan-proposal-spam	NEW	1	d548e55	One card holder adds proposals until the burn needs more gas than the cap	FINDING
+party|assemble|floor-needed-burn-block	NEW	1	d548e55	A passed price makes every burn depend on the floor signer	LEAD
+party|claimfor|push-to-contract-holder	NEW	1	d548e55	claimFor sends a card's share to a contract that holds the card	LEAD
+party|assemble|statement-interface-assumption	NEW	1	d548e55	The real Statement contract may not match IStatement	LEAD
+party|initialize|unbounded-min-ask	NEW	1	d548e55	The host can set minAskWei with no upper bound	LEAD
+creditkeys|verifyorder|random-order-predictable	NEW	1	d548e55	A depositor knows the Random position of each deposit slot in advance	LEAD
+deploysepolia|run|traits-table-unsealed-collection	NEW	1	d548e55	The Sepolia table misses Credits minted after the build	LEAD
+deploysepolia|run|resume-reissues-known-seeds	NEW	1	d548e55	The Sepolia resume path sends seeds that are already minted	LEAD
+party|assemble|testnet-time-unit-buy-delay	NEW	1	d548e55	On a short testnet clock the buy wait is shorter than the floor age	LEAD

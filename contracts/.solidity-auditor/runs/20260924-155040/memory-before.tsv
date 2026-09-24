@@ -1,0 +1,15 @@
+#solidity-auditor-memory v1	key	status	scans	sha	title	kind
+party|countblocked|deadlock-self-trigger	NEW	1	165a33e	KNOWN: R-2. A coalition trips deadlock and removes the minority veto in two hour	FINDING
+party|assemble|assemble-supersedes-passed-price	NEW	1	165a33e	KNOWN: R-7. One card holder burns before a passed price executes	FINDING
+party|execute|caller-chosen-floor-reading	NEW	1	165a33e	KNOWN: R-6. The executor chooses the floor reading	LEAD
+party|raiseask|floor-reading-selection	NEW	1	165a33e	KNOWN: R-6. raiseAsk moves lastFloorAt forward for every caller	LEAD
+party|execute|pending-price-floor-not-rechecked	NEW	1	165a33e	A FULL-phase Fixed price is not checked against the floor at burn	FINDING
+party|propose|fill-block-snapshot-veto-gap	NEW	1	165a33e	A proposal in the fill block gives the last depositors no weight	FINDING
+party|redeemfor|push-to-contract-holder	NEW	1	165a33e	redeemFor pushes a Credit to a contract that holds the card	LEAD
+party|assemble|caller-chosen-floor-reading	NEW	1	165a33e	KNOWN: R-6. The assembler chooses the floor reading	LEAD
+partyfactory|isvalidfloor|floor-signature-not-party-scoped	NEW	1	165a33e	KNOWN: R-4. A floor signature is valid in every party	LEAD
+party|execute|majority-floor-price-selfdeal	NEW	1	165a33e	41 holders vote a price at the floor and one of them buys	LEAD
+party|assemble|manual-host-zero-stake	NEW	1	165a33e	A Manual host with no cards chooses the burn order	LEAD
+party|raiseask|reentrant-ask-raise-during-assemble	NEW	1	165a33e	KNOWN: R-16. The Statement contract can call raiseAsk during make	LEAD
+statementmarket|buy|safe-transfer-before-seller-payment	NEW	1	165a33e	The buyer callback runs before the seller is paid	LEAD
+party|assemble|blanket-approval-exposes-extra-credits	NEW	1	165a33e	The Statement approval also covers stray Credits in the party	LEAD

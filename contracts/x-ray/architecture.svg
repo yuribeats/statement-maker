@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="490" viewBox="0 0 560 196" font-family="Arial, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 8 6" refX="8" refY="3"
+      markerWidth="4" markerHeight="3" orient="auto">
+      <path d="M0.5,0.5 L7,3 L0.5,5.5" fill="none" stroke="#94A3B8"
+        stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+    </marker>
+    <filter id="shadow" x="-6%" y="-8%" width="112%" height="128%">
+      <feDropShadow dx="0" dy="0.5" stdDeviation="0.8"
+        flood-color="#000" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+  <rect width="560" height="196" fill="#F8F9FB" rx="3"/>
+  <text x="280" y="11" text-anchor="middle" font-size="6" font-weight="700" fill="#1E293B">Statement Maker Architecture</text>
+  <rect x="205" y="16" width="150" height="10" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <rect x="210" y="18.5" width="5" height="5" rx="2.5" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <text x="218" y="22.5" font-size="3.5" fill="#1E293B">Actor</text>
+  <rect x="250" y="18.5" width="5" height="5" rx="1.5" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <rect x="251" y="19.5" width="0.8" height="3" rx="0.4" fill="#3B82F6"/>
+  <text x="258" y="22.5" font-size="3.5" fill="#1E293B">Protocol</text>
+  <rect x="298" y="18.5" width="5" height="5" rx="1.5" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <rect x="299" y="19.5" width="0.8" height="3" rx="0.4" fill="#F59E0B"/>
+  <text x="306" y="22.5" font-size="3.5" fill="#1E293B">External</text>
+  <path d="M79.0,46.0 C79.0,70.0 91.5,70.0 91.5,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M262.2,46.0 C262.2,70.0 309.8,70.0 309.8,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M489.0,46.0 C489.0,70.0 309.8,70.0 309.8,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M489.0,46.0 C489.0,70.0 423.8,70.0 423.8,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M378.0,52.0 C378.0,73.0 309.8,73.0 309.8,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M132.1,112.0 C171.6,134.0 224.3,134.0 263.8,114.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M91.5,114.0 C91.5,135.0 180.5,135.0 180.5,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M91.5,114.0 C91.5,135.0 65.2,135.0 65.2,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M309.8,114.0 C309.8,135.0 180.5,135.0 180.5,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M309.8,114.0 C309.8,135.0 305.3,135.0 305.3,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M309.8,114.0 C309.8,135.0 413.9,135.0 413.9,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M423.8,114.0 C423.8,135.0 413.9,135.0 413.9,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <g filter="url(#shadow)">
+    <rect x="30.6" y="32.0" width="96.8" height="14" rx="7" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <text x="79.0" y="40.8" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Host / Depositor</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="216.2" y="32.0" width="92.0" height="14" rx="7" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <text x="262.2" y="40.8" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Card holder</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="447.8" y="32.0" width="82.4" height="14" rx="7" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <text x="489.0" y="40.8" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Buyer / Owner</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="330.2" y="32.0" width="95.6" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="333.2" y="35.0" width="1.4" height="14" rx="0.6" fill="#F59E0B"/>
+    <text x="378.0" y="41.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Floor signer</text>
+    <text x="378.0" y="46.5" text-anchor="middle" font-size="3.5" fill="#64748B">Off-chain EIP-712 key</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="50.9" y="94.0" width="81.2" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="53.9" y="97.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="91.5" y="103.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">PartyFactory</text>
+    <text x="91.5" y="108.5" text-anchor="middle" font-size="3.5" fill="#64748B">Clones, floor sig</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="263.8" y="94.0" width="92.0" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="266.8" y="97.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="309.8" y="103.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Party (clone)</text>
+    <text x="309.8" y="108.5" text-anchor="middle" font-size="3.5" fill="#64748B">Custody, votes, sale</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="377.8" y="94.0" width="92.0" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="380.8" y="97.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="423.8" y="103.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">StatementMarket</text>
+    <text x="423.8" y="108.5" text-anchor="middle" font-size="3.5" fill="#64748B">Resale asks</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="132.7" y="156.0" width="95.6" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="135.7" y="159.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="180.5" y="165.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">CreditCards</text>
+    <text x="180.5" y="170.5" text-anchor="middle" font-size="3.5" fill="#64748B">ERC-721 + checkpoints</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="250.3" y="156.0" width="110.0" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="253.3" y="159.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="305.3" y="165.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Arrangement</text>
+    <text x="305.3" y="170.5" text-anchor="middle" font-size="3.5" fill="#64748B">CreditKeys / CreditTraits</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="30.0" y="156.0" width="70.4" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="33.0" y="159.0" width="1.4" height="14" rx="0.6" fill="#F59E0B"/>
+    <text x="65.2" y="165.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Credits</text>
+    <text x="65.2" y="170.5" text-anchor="middle" font-size="3.5" fill="#64748B">Sealed ERC-721</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="382.3" y="156.0" width="63.2" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="385.3" y="159.0" width="1.4" height="14" rx="0.6" fill="#F59E0B"/>
+    <text x="413.9" y="165.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Statement</text>
+    <text x="413.9" y="170.5" text-anchor="middle" font-size="3.5" fill="#64748B">Unpublished</text>
+  </g>
+  <rect x="58.1" y="65.0" width="54.4" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="85.3" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">createParty / deposit</text>
+  <rect x="263.6" y="65.0" width="44.8" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="286.0" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">vote, burn, claim</text>
+  <rect x="385.4" y="65.0" width="28.0" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="399.4" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">buy at ask</text>
+  <rect x="434.0" y="65.0" width="44.8" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="456.4" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">list / buy resale</text>
+  <rect x="327.5" y="68.0" width="32.8" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="343.9" y="73.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">signed floor</text>
+  <rect x="185.2" y="133.0" width="25.6" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="198.0" y="138.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">onDeposit</text>
+  <rect x="118.4" y="130.0" width="35.2" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="136.0" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">registerParty</text>
+  <rect x="53.6" y="130.0" width="49.6" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="78.4" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">pull caller Credits</text>
+  <rect x="222.7" y="130.0" width="44.8" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="245.1" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">mint / burn cards</text>
+  <rect x="285.1" y="130.0" width="44.8" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="307.5" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">verify burn order</text>
+  <rect x="341.8" y="130.0" width="40.0" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="361.8" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">make + transfer</text>
+  <rect x="397.6" y="130.0" width="42.4" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="418.8" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">safeTransferFrom</text>
+</svg>

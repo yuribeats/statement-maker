@@ -19,6 +19,6 @@ Nothing is deployed to mainnet. Every item below must be done (and checked off i
 
 ## Open work
 - [ ] House-party contracts (hostless parties, launch lock, HouseAuction, SPEC §4d) are NOT implemented: the Party edit they need is awaiting approval.
-- [ ] Pashov audit findings H2, M3, L4 (in progress); H1 accepted (THREAT_MODEL R-2).
+- [x] Pashov audit findings H2, M3, L4 fixed (627e9cf, 8e8efa5, f16d5cb); re-audit M-1/M-2 fixed (e23f1e8); site mirrors landed (e031ad4, e2586f3); H1 accepted (THREAT_MODEL R-2).
 - [ ] Sepolia redeploy with the current contracts (`scripts/deploy-sepolia.sh`, now with verification); the Sepolia v1 contracts are unverified and run old rules.
 - [ ] Site: mirror every contract rule change (factory-only approvals, 10-minute floor readings, floor-relative buy wait >= 1 h, 1-hour windows, no royalty, market listing fields, Manual 1-day fallback, Time == ascending id, `burnOrderHash` instead of `burnOrder()`).

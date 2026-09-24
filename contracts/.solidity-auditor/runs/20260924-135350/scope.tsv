@@ -1,0 +1,11 @@
+name	statement-maker-2026-09-23
+mode	default
+files	./script/DeploySepolia.s.sol ./script/DeployMainnet.s.sol ./src/CreditKeys.sol ./src/StatementMarket.sol ./src/Party.sol ./src/CreditCards.sol ./src/PartyFactory.sol ./src/testnet/KeyProbe.sol
+passes_planned	2
+mem_before	0
+pass_1_agents	6/12
+mem_after	11
+mem_sha	001fe60
+pass_2_agents	12/12
+mem_after	18
+mem_sha	165a33e
