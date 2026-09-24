@@ -36,10 +36,9 @@ $('#acting').addEventListener('change', e => {
   if (!v) { setMe(''); return; }
   api('terms/' + v).then(t => {
     if (t.accepted) setMe(v);
-    else { pendingConnect = { address: v, back: location.hash || '#/' }; location.hash = '#/terms/connect'; fillActing(); }
+    else { fillActing(); openTermsModal(v); }
   });
 });
-let pendingConnect = null;
 function setMe(v) { me = v; try { localStorage.setItem('sm-acting', me); } catch {} fillActing(); route(); }
 
 // ---------- ordering presets ----------
@@ -404,29 +403,48 @@ const TERMS = [
  ['Prototype', 'This version is a local prototype. Wallets are simulated and nothing happens on-chain.'],
  ['Liability and changes', 'Statement Maker is provided as is, without warranties. To the extent the law allows, Statement Maker is not liable for losses from using it. These terms may change; you will be asked to accept any new version before your next action.'],
 ];
-function pageTerms(connecting) {
-  const pc = connecting ? pendingConnect : null;
+const termsBody = () => `<div class="rows terms">${TERMS.map(([h, t], i) => `<div><span>${String(i + 1).padStart(2, '0')} ${esc(h)}</span><strong>${esc(t)}</strong></div>`).join('')}</div>`;
+function pageTerms() {
   render(app, `
-  <div class="intro"><div><h1>Terms and conditions</h1><p class="muted">Version ${TERMS_VERSION} · <span class="demo">Draft, needs legal review before launch</span></p></div>${pc ? `<p class="muted">Connecting ${short(pc.address)}</p>` : ''}</div>
-  <div class="works"><div class="rows terms">${TERMS.map(([h, t], i) => `<div><span>${String(i + 1).padStart(2, '0')} ${esc(h)}</span><strong>${esc(t)}</strong></div>`).join('')}</div>
-  <div>${pc ? `
-   <div class="frame" style="padding:28px;position:sticky;top:30px">
-    <h2 style="margin-bottom:14px">Before you connect</h2>
-    <label class="check"><input type="checkbox" id="agree"> <span>I have read these terms. I understand that deposits lock at 80, that assembly burns my Credits permanently, that a single no vote can block a sale, and that Credit Cards may be worth nothing. I accept these terms.</span></label>
-    <button class="cta" id="accept" disabled>Accept and connect</button> <button type="button" class="muted" id="decline" style="margin-left:18px">Cancel</button>
-    <div class="error" id="t-err"></div>
-   </div>` : connecting ? `<p class="muted">Choose a wallet under “Connect wallet” to continue.</p>` : `<p class="muted">You are asked to accept these terms when you connect a wallet.</p>`}</div></div>`);
-  if (!pc) return;
+  <div class="intro"><div><h1>Terms and conditions</h1><p class="muted">Version ${TERMS_VERSION} · <span class="demo">Draft, needs legal review before launch</span></p></div></div>
+  <div style="max-width:900px">${termsBody()}</div>`);
+}
+// Connecting a wallet opens the terms as a scrollable modal over the site. Accepting is required to connect.
+function openTermsModal(address) {
+  const root = $('#modal-root');
+  const close = () => { root.replaceChildren(); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  render(root, `
+  <div class="modal-back" id="mb">
+   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+    <div class="modal-head"><h2 id="mt">Terms and conditions</h2><span class="muted">Connecting ${short(address)} · version ${TERMS_VERSION}</span></div>
+    <div class="modal-body" id="mbody">
+     <p class="muted" style="margin-bottom:18px"><span class="demo">Draft, needs legal review before launch</span> · Read to the end to continue.</p>
+     ${termsBody()}
+    </div>
+    <div class="modal-foot">
+     <label class="check"><input type="checkbox" id="agree" disabled> <span>I have read these terms. I understand that deposits lock at 80, that assembly burns my Credits permanently, that a single no vote can block a sale, and that Credit Cards may be worth nothing. I accept these terms.</span></label>
+     <div class="actions" style="margin-top:14px;align-items:center"><button class="cta" id="accept" disabled style="margin-top:0">Accept and connect</button><button type="button" id="decline">Cancel</button><span class="hint" id="scroll-hint">Scroll to the end to enable the checkbox</span></div>
+     <div class="error" id="t-err"></div>
+    </div>
+   </div>
+  </div>`);
+  document.body.style.overflow = 'hidden';
+  document.addEventListener('keydown', onKey);
+  const body = $('#mbody');
+  const atEnd = () => body.scrollTop + body.clientHeight >= body.scrollHeight - 8;
+  const unlock = () => { if (atEnd()) { $('#agree').disabled = false; $('#scroll-hint').textContent = ''; } };
+  body.addEventListener('scroll', unlock); unlock();
+  $('#mb').addEventListener('click', e => { if (e.target.id === 'mb') close(); });
   $('#agree').onchange = e => { $('#accept').disabled = !e.target.checked; };
-  $('#decline').onclick = () => { const back = pc.back; pendingConnect = null; location.hash = back; };
+  $('#decline').onclick = close;
   $('#accept').onclick = async () => {
     try {
-      await api('terms', { address: pc.address, version: TERMS_VERSION, accept: $('#agree').checked });
-      const back = pc.back.startsWith('#/terms') ? '#/' : pc.back; pendingConnect = null;
-      me = pc.address; try { localStorage.setItem('sm-acting', me); } catch {}
-      await fillActing(); location.hash = back; route();
+      await api('terms', { address, version: TERMS_VERSION, accept: $('#agree').checked });
+      close(); setMe(address);
     } catch (e) { $('#t-err').textContent = e.message; }
   };
+  $('#agree').focus?.();
 }
 
 // ---------- statements ----------
@@ -498,7 +516,7 @@ async function route() {
     else if (page === 'new') await pageNew();
     else if (page === 'wallet') await pageWallet(arg);
     else if (page === 'rules') pageRules();
-    else if (page === 'terms') pageTerms(arg === 'connect');
+    else if (page === 'terms') pageTerms();
     else if (page === 'statements') await pageStatements();
     else if (page === 'statement') await pageStatement(arg);
     else await pageParties();
