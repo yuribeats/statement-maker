@@ -5,7 +5,7 @@ Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 ## 1. Objects
 - **Party**: one group assembling one Statement. Has hosts, params (§3), 80 slots, a deadline, a page with chat.
   "Sheet" now means only the 8×10 artwork layout.
-- **Party token**: one ERC-20 per party, deployed by a factory as a minimal clone. Supply exactly 80 × 10^18 (one whole token per Credit; 18 decimals so fractions trade).
+- **Credit Card**: the token a depositor gets back for each Credit — one ERC-20 per party (symbol CARD), deployed by a factory as a minimal clone. Supply exactly 80 × 10^18 (one whole token per Credit; 18 decimals so fractions trade).
   Freely transferable. Anyone may pair it on Uniswap; the tool links to "create pool" but does not seed liquidity.
   Balance = vote weight in that party = share of any proceeds.
   Votes: OpenZeppelin ERC20Votes (checkpointed) with self-delegation by default, so holders never need a separate "delegate" transaction.
@@ -14,14 +14,14 @@ Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 ## 2. Party lifecycle
 | State | Enters when | Allowed |
 |---|---|---|
-| OPEN | host opens party | deposit (must meet the party's params); withdraw your own Credit. Deposits are recorded, no token yet |
-| FULL | 80th deposit | 80 tokens minted, 1 per Credit to each depositor. Withdraw closed. Arrangement phase (§5) |
+| OPEN | host opens party | deposit (must meet the party's params); withdraw your own Credit. Deposits are recorded, no Credit Card yet |
+| FULL | 80th deposit | 80 Credit Cards minted, 1 per Credit to each depositor. Withdraw closed. Arrangement phase (§5) |
 | ASSEMBLED | vault calls Statement contract with the approved order; Credits burned | governance on the Statement |
 | LISTED / SOLD | passed LIST proposal | anyone buys at the ask. No offers, ever |
-| DISTRIBUTED | sale settles | token holders redeem tokens for ETH pro rata (tokens burned on redeem) |
-| EXPIRED | deadline passes unfilled or unassembled | every depositor withdraws their original Credit; any minted tokens are void |
+| DISTRIBUTED | sale settles | Credit Card holders redeem Credit Cards for ETH pro rata (burned on redeem) |
+| EXPIRED | deadline passes unfilled or unassembled | every depositor withdraws their original Credit; any minted Credit Cards are void |
 
-Tokens are minted at FULL, not at deposit: a token that could be sold while OPEN would detach from the Credit it stands for and break withdrawals.
+Credit Cards are minted at FULL, not at deposit: a Credit Card that could be sold while OPEN would detach from the Credit it stands for and break withdrawals.
 Credits are never burned before assembly. If the Statement contract rejects contract callers, nothing is lost: parties expire and Credits return.
 
 ## 3. Hosts and party params
@@ -43,10 +43,11 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 
 ## 4. Party governance (binding, on-chain) — Party-style
 Borrowed from PartyGovernance.sol: propose → vote → passThresholdBps → executionDelay → execute; host veto; rage quit.
-Vote weight = ERC20Votes checkpoint at the proposal's creation block (stops buy-vote-sell, which matters now that tokens trade).
-**Pass rule:** YES weight > 50% of total supply (more than 40 of 80 tokens) AND NO weight = 0 when voting closes. Any NO vote kills the proposal. Hosts vote with their tokens like everyone else; host privileges are in §3.
+Time limits: each proposal has a voting window of 24 h, 48 h, 72 h or 7 days, chosen by the proposer (party default set by hosts, 48 h). A passed proposal must be executed within 7 days of closing or it lapses.
+Vote weight = ERC20Votes checkpoint at the proposal's creation block (stops buy-vote-sell, which matters now that Credit Cards trade).
+**Pass rule:** YES weight > 50% of total supply (more than 40 of 80 Credit Cards) AND NO weight = 0 when voting closes. Any NO vote kills the proposal. Hosts vote with their Credit Cards like everyone else; host privileges are in §3.
 Guard options (undecided):
-- Dust veto: with 18 decimals, 0.000000000000000001 token can block every proposal. Option: a NO counts only from holders of ≥ 1 whole token at the snapshot.
+- Dust veto: with 18 decimals, 0.000000000000000001 of a Credit Card can block every proposal. Option: a NO counts only from holders of ≥ 1 whole Credit Card at the snapshot.
 - Permanent deadlock: one holder can block every sale forever, leaving the Statement stuck in the vault. Option: after N failed proposals or T days, the same proposal can pass by supermajority (e.g. 2/3) despite NO votes; or dissenters may redeem at the listed price.
 Proposal types (closed set, no arbitrary calls):
 - Pre-assembly: NOMINATE_ARRANGER (address), APPROVE_ARRANGEMENT (80-id array hash), ASSEMBLE
@@ -63,8 +64,8 @@ Proposal types (closed set, no arbitrary calls):
   - Credits itself has none: no ERC-2981 (supportsInterface false) and the engine returns no recipients.
 - Platform fee: 1% of the sale price, paid in the same `buy()` transaction to the fee recipient address.
   - Rate is fixed per party when the party is created; it can never rise for an existing party.
-- Split of each sale: price → artist royalty (per lookup) → 1% platform fee → remainder to token holders pro rata.
-  Example at 3 ETH with a 5% royalty: 0.15 artist, 0.03 platform, 2.82 to holders (0.03525 per token).
+- Split of each sale: price → artist royalty (per lookup) → 1% platform fee → remainder to Credit Card holders pro rata.
+  Example at 3 ETH with a 5% royalty: 0.15 artist, 0.03 platform, 2.82 to holders (0.03525 per Credit Card).
 - Floor-relative asks:
   - Floor data is read off-chain (marketplace APIs, since other Statements will trade there) and averaged over 24 h. This is a data input only; we list nothing there.
   - A keeper updates the on-chain ask as the floor rises. The contract accepts only increases: the ask never goes down. Lowering the price requires a new LIST vote.
@@ -74,7 +75,7 @@ Proposal types (closed set, no arbitrary calls):
   - Keeper risk: a faulty keeper could only raise the price (blocking sales, never underselling). Members can CANCEL_LISTING and re-list by vote.
 
 ## 4c. Callers and gas
-Every state change is a transaction: someone calls it and pays gas. Rule: once a step is allowed, ANY party member (depositor or token holder) can call it. No host, arranger, or Statement Maker key is required to move a party forward, so no single absent person can stall it.
+Every state change is a transaction: someone calls it and pays gas. Rule: once a step is allowed, ANY party member (depositor or Credit Card holder) can call it. No host, arranger, or Statement Maker key is required to move a party forward, so no single absent person can stall it.
 
 | Function | Who may call | When | Gas (measured on a mainnet fork 2026-09-23 unless marked) |
 |---|---|---|---|
@@ -115,14 +116,14 @@ Auto-order presets:
 - Random with a published seed (reproducible)
 
 ## 6. Party pages
-One page per party: 8×10 frame, member list with token balances, chat, open proposals and vote tallies, arrangement editor, activity log (deposits, votes, sales).
-- Chat: off-chain, hosted on the VPS (SQLite). Sign-In with Ethereum. Post rights: depositors while OPEN, token holders after FULL. Reading: public or members-only (decision).
+One page per party: 8×10 frame, member list with Credit Card balances, chat, open proposals and vote tallies, arrangement editor, activity log (deposits, votes, sales).
+- Chat: off-chain, hosted on the VPS (SQLite). Sign-In with Ethereum. Post rights: depositors while OPEN, Credit Card holders after FULL. Reading: public or members-only (decision).
 - Votes are on-chain (§4); the page shows them and submits them.
 
 ## 7. Collection-wide votes (signaling, off-chain)
-- Electorate: every Credit, burned or not. Power = Credits held + party tokens held across all parties (1 burned Credit = 1 token = 1 vote).
+- Electorate: every Credit, burned or not. Power = Credits held + Credit Cards held across all parties (1 burned Credit = 1 Credit Card = 1 vote).
 - Credits contract has no vote checkpoints → power computed by our indexer at a fixed block; snapshot published as a Merkle root so anyone can verify.
-- Tokens sitting in a Uniswap pool count for no one (the pool contract cannot sign).
+- Credit Cards sitting in a Uniswap pool count for no one (the pool contract cannot sign).
 - Signed messages, zero gas.
 - Binding scope: only pool-level settings (default thresholds, theme calendar). The 1% fee is not subject to these votes. Nothing binds Jack's contracts.
 

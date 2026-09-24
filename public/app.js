@@ -169,12 +169,13 @@ async function pageParty(id) {
       <div style="border:0;padding:0">${filled(p)}</div>
       <div><span>Hosts</span><strong>${p.hosts.map(short).join(', ')}</strong></div>
       <div><span>Eligible Credits</span><strong>${filterText(p.params.filters)} · ${p.eligible.toLocaleString()}</strong></div>
+      <div><span>Vote window</span><strong>${Number(p.params.voteHours || 48)} hours default</strong></div>
       <div><span>Minimum deposit</span><strong>${Number(p.params.minDeposit)}</strong></div>
       <div><span>Target</span><strong>${targetText(p.params.target)}${p.params.target.mode !== 'fixed' ? ' · now ' + eth(p.targetEth) : ''}</strong></div>
       <div><span>Floor (80 × Credit floor)</span><strong>${eth(p.floorEth)}</strong></div>
       ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div>` : ''}
-      <div><span>Sale split</span><strong>Artist royalty · 1% Statement Maker · rest to 80 tokens</strong></div>
-      ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 ${p.status === 'OPEN' ? 'deposited' : 'tokens'}</strong></div>` : ''}
+      <div><span>Sale split</span><strong>Artist royalty · 1% Statement Maker · rest to the 80 Credit Cards</strong></div>
+      ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 ${p.status === 'OPEN' ? 'deposited' : 'Credit Cards'}</strong></div>` : ''}
      </div>
     </div>
 
@@ -198,12 +199,12 @@ async function pageParty(id) {
     ${p.status !== 'OPEN' && p.status !== 'EXPIRED' ? `
     <div class="panel">
      <h2>Proposals</h2>
-     <p class="muted" style="margin-bottom:10px">48-hour vote. Passes when YES &gt; 40 tokens and no one votes NO. Any member can then execute it.</p>
+     <p class="muted" style="margin-bottom:10px">Votes run 24 hours to 7 days (party default ${Number(p.params.voteHours || 48)}h). Passes when YES &gt; 40 Credit Cards and no one votes NO. Any member can then execute it, within 7 days, or it lapses.</p>
      ${p.status === 'FULL' && p.orderApproved ? `<div class="proposal"><div class="caption" style="min-height:0"><strong>Assemble</strong><span class="pass">Ready</span></div><div class="muted">Arrangement approved. Any member can burn the 80 into the Statement. Simulated: the Statement contract is not public yet.</div>${isMember ? `<div class="actions"><button type="button" class="cta" id="assemble">Assemble</button> ${cost('assemble')}</div>` : ''}</div>` : ''}
-     ${p.assembled ? `<div class="proposal"><strong>Assembled</strong> <span class="muted">by ${short(p.assembled.by)}</span></div>` : ''}
+     ${p.assembled ? `<div class="proposal"><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">assembled by ${short(p.assembled.by)}</span> · <a href="#/statement/${esc(p.id)}">View Statement →</a></div>` : ''}
      ${p.proposals.length ? p.proposals.map(q => `
       <div class="proposal">
-       <div class="caption" style="min-height:0"><strong>${Number(q.id)}. ${esc(q.type.replace('_', ' '))}</strong><span class="${q.executed || q.executable ? 'pass' : q.no ? 'blocked' : 'muted'}">${q.executed ? 'Executed' : q.no ? 'Blocked by NO' : q.executable ? 'Passed · ready to execute' : q.closed ? 'Failed' : q.passing ? 'Passing · closes in ' + hrs(q.endsAt - p.now) : 'Open · closes in ' + hrs(q.endsAt - p.now)}</span></div>
+       <div class="caption" style="min-height:0"><strong>${Number(q.id)}. ${esc(q.type.replace('_', ' '))}</strong><span class="${q.executed || q.executable ? 'pass' : q.no ? 'blocked' : 'muted'}">${q.executed ? 'Executed' : q.lapsed ? 'Lapsed · not executed in time' : q.no ? 'Blocked by NO' : q.executable ? 'Passed · execute within ' + hrs(q.execBy - p.now) : q.closed ? 'Failed' : q.passing ? 'Passing · closes in ' + hrs(q.endsAt - p.now) : 'Open · closes in ' + hrs(q.endsAt - p.now)}</span></div>
        <div class="muted">${q.type === 'NOMINATE_ARRANGER' ? 'Arranger: ' + short(q.args.address) : q.type === 'APPROVE_ARRANGEMENT' ? 'Order: ' + esc(q.args.preset) : q.type === 'LIST' ? 'Price: ' + priceLabel(q.args) + ' · ' + eth(priceOf(q.args, p.floorEth)) + ' · ' + vsFloor(priceOf(q.args, p.floorEth), p.floorEth) : ''} · by ${short(q.by)} · ${ago(q.at)} ago</div>
        <div class="tally"><div class="bar"><i style="width:${q.yes / SLOTS * 100}%"></i></div><span>Yes ${q.yes}</span><div class="bar no"><i style="width:${q.no / SLOTS * 100}%"></i></div><span>No ${q.no}</span></div>
        ${q.executed && q.executedBy ? `<div class="muted">Executed by ${short(q.executedBy)}</div>` : ''}
@@ -214,6 +215,7 @@ async function pageParty(id) {
       <div class="actions" style="margin-top:14px"><span class="muted">Nominate arranger</span>
        <select id="nominee" style="border:0;border-bottom:1px solid var(--line)">${p.members.map(m => `<option value="${esc(m.address)}">${short(m.address)} · ${Number(m.count)}</option>`).join('')}</select>
        <button type="button" id="nominate">Propose</button></div>` : ''}
+     ${isMember ? `<div class="actions" style="margin-top:10px"><span class="muted">Voting window</span><select id="win" style="border:0;border-bottom:1px solid var(--line)">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (p.params.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select><span class="hint">Range: 24 hours – 7 days · applies to the next proposal</span></div>` : ''}
      ${isMember ? `
       <div class="actions" style="margin-top:10px;align-items:center"><span class="muted">Propose price</span>
        <select id="pm" style="border:0;border-bottom:1px solid var(--line)"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select>
@@ -257,7 +259,7 @@ async function pageParty(id) {
       if (Number.isInteger(from) && Number.isInteger(to) && from !== to) { const o = [...partyUI.order]; [o[from], o[to]] = [o[to], o[from]]; partyUI.order = o; partyUI.preset = (partyUI.preset || 'Custom').replace(/ · edited$/, '') + ' · edited'; route(); }
     });
   }
-  $('#submit-order')?.addEventListener('click', () => act('arrange', { order: partyUI.order.map(c => c.id), preset: partyUI.preset || 'Deposit order' }, 'arr-err'));
+  $('#submit-order')?.addEventListener('click', () => act('arrange', { order: partyUI.order.map(c => c.id), preset: partyUI.preset || 'Deposit order', hours: $('#win')?.value }, 'arr-err'));
   app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const id = Number(b.dataset.pick); partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); $('#deposit').textContent = 'Deposit ' + (partyUI.picks.size || ''); });
   $('#pick-all')?.addEventListener('click', () => { partyUI.picks = new Set(eligibleMine.slice(0, remaining).map(c => c.id)); route(); });
   $('#pick-none')?.addEventListener('click', () => { partyUI.picks.clear(); route(); });
@@ -271,12 +273,12 @@ async function pageParty(id) {
     $('#ph').textContent = t.mode === 'fixed' ? 'Range: above 0 ETH' : t.mode === 'floorPct' ? 'Range: above −100% (floor ' + eth(p.floorEth) + ')' : 'Range: above −' + eth(p.floorEth) + ' (floor ' + eth(p.floorEth) + ')';
   };
   if ($('#pm')) { $('#pm').onchange = pricePreview; $('#pv').oninput = pricePreview; pricePreview(); }
-  $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
+  $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', hours: $('#win')?.value, args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
   app.querySelectorAll('[data-exec]').forEach(b => b.onclick = () => act('execute', { proposal: b.dataset.exec }, 'vote-err'));
   $('#skip')?.addEventListener('click', async () => { await api('dev/advance', { hours: 24 }); route(); });
   $('#assemble')?.addEventListener('click', () => act('assemble', {}, 'vote-err'));
   $('#return')?.addEventListener('click', () => act('return', {}, 'ret-err'));
-  $('#nominate')?.addEventListener('click', () => act('propose', { type: 'NOMINATE_ARRANGER', args: { address: $('#nominee').value } }, 'vote-err'));
+  $('#nominate')?.addEventListener('click', () => act('propose', { type: 'NOMINATE_ARRANGER', hours: $('#win')?.value, args: { address: $('#nominee').value } }, 'vote-err'));
   const send = () => { const t = $('#say').value.trim(); if (t) act('chat', { text: t }, 'chat-err'); };
   $('#send')?.addEventListener('click', send);
   $('#say')?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
@@ -295,6 +297,7 @@ async function pageNew() {
     <div class="field"><label for="n">Name</label><input id="n" value="${val(draft.name)}" placeholder="Two eights or more" maxlength="60"></div>
     <div class="field"><label for="md">Minimum deposit</label><div><input id="md" type="number" min="1" max="80" value="${val(draft.minDeposit)}">${hint('Range: 1–80 Credits per depositor')}</div></div>
     <div class="field"><label for="dd">Deadline, days</label><div><input id="dd" type="number" min="1" max="60" value="${val(draft.days)}">${hint('Range: 1–60 days')}</div></div>
+    <div class="field"><label for="vh">Vote window</label><div><select id="vh">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (draft.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select>${hint('Range: 24 hours – 7 days · default for this party’s proposals')}</div></div>
     <div class="field"><label>Target price</label><div>
       <div class="chips">${[['fixed', 'ETH'], ['floorEth', 'Floor + ETH'], ['floorPct', 'Floor + %']].map(([m, l]) => `<button type="button" data-tm="${m}" aria-pressed="${draft.target.mode === m}">${l}</button>`).join('')}</div>
       <input id="tv" type="number" step="0.01" value="${val(draft.target.value)}" style="margin-top:6px"><div class="hint" id="tvh"></div></div></div>
@@ -315,7 +318,7 @@ async function pageNew() {
    </div>
   </form>`);
   const read = () => {
-    draft.name = $('#n').value; draft.minDeposit = +$('#md').value || 1; draft.days = +$('#dd').value || 14; draft.target.value = +$('#tv').value || 0;
+    draft.name = $('#n').value; draft.voteHours = +$('#vh').value; draft.minDeposit = +$('#md').value || 1; draft.days = +$('#dd').value || 14; draft.target.value = +$('#tv').value || 0;
     const num = id => +$(id).value || undefined;
     Object.assign(draft.filters, { rankMax: num('#rk'), marksMin: num('#mk0'), marksMax: num('#mk1'), idMin: num('#id0'), idMax: num('#id1') });
   };
@@ -360,13 +363,13 @@ function pageRules() {
   <div class="works"><div class="rows">
    <div><span>01 Open</span><strong>A host opens a party and sets a minimum deposit, a target price, and which Credits qualify.</strong></div>
    <div><span>02 Deposit</span><strong>Holders deposit matching Credits. Withdraw any time before the 80th arrives.</strong></div>
-   <div><span>03 Full</span><strong>At 80, each deposited Credit becomes one party token (ERC-20). Tokens trade freely.</strong></div>
+   <div><span>03 Full</span><strong>At 80, each deposited Credit returns one Credit Card to its depositor: the party's ERC-20 share. Credit Cards trade freely and carry the vote.</strong></div>
    <div><span>04 Arrange</span><strong>The host arranges the 8 × 10 sheet unless members elect someone else. Members approve the order.</strong></div>
    <div><span>05 Assemble</span><strong>The 80 Credits are burned into one Statement, held by the party.</strong></div>
    <div><span>06 Sell</span><strong>Only at the party's own price, only on Statement Maker. No offers. No auctions. No marketplaces.</strong></div>
    <div><span>07 Price</span><strong>Fixed ETH, or floor plus or minus ETH or percent. Any price can be proposed, below the floor included. A floor-tracking price only moves up; lowering it takes a new vote.</strong></div>
-   <div><span>08 Split</span><strong>Artist royalty first, then 1% to Statement Maker, then the rest to token holders.</strong></div>
-   <div><span>09 Votes</span><strong>A proposal passes when more than 40 tokens vote yes and no one votes no.</strong></div>
+   <div><span>08 Split</span><strong>Artist royalty first, then 1% to Statement Maker, then the rest to Credit Card holders.</strong></div>
+   <div><span>09 Votes</span><strong>A proposal passes when more than 40 Credit Cards vote yes and no one votes no, within its voting window (24 hours to 7 days). Any member must execute it within 7 days or it lapses.</strong></div>
    <div><span>10 Expire</span><strong>If a party never fills or never assembles, every Credit goes back to its depositor.</strong></div>
   </div>
   <div class="rows">
@@ -375,6 +378,63 @@ function pageRules() {
    <div><span>Rarity</span><strong>Sum of −log2 frequency over Colors, Print, Weight, Eights</strong></div>
    <div><span>Status</span><strong><span class="demo">Local prototype</span> · no contracts deployed · wallets simulated</strong></div>
   </div></div>`);
+}
+
+// ---------- statements ----------
+// The real Statement image comes from Jack's Statement contract, which is not public yet.
+// Until then this renders the 80 Credits in their approved order, as jack.art previews a Statement.
+async function statementPNG(p) {
+  const order = p.credits, W = 1600, H = 2000, pad = W * 0.08, cw = (W - pad * 2) / 8, ch = (H - pad * 2) / 10;
+  const cv = Object.assign(document.createElement('canvas'), { width: W, height: H });
+  const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+  await Promise.all(order.map((c, i) => new Promise(ok => {
+    const img = new Image(); img.onload = () => { const s = Math.min(cw, ch); g.drawImage(img, pad + (i % 8) * cw + (cw - s) / 2, pad + Math.floor(i / 8) * ch + (ch - s) / 2, s, s); ok(); }; img.onerror = ok; img.src = svg(c.id);
+  })));
+  const a = Object.assign(document.createElement('a'), { href: cv.toDataURL('image/png'), download: `statement-${p.assembled.number}.png` }); a.click();
+}
+const statementCard = p => `
+   <a class="party-card" href="#/statement/${esc(p.id)}">
+    ${sheet(p)}
+    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong></span><span class="muted">${esc(p.name)}</span></div>
+    <div class="muted">${p.members.length} holders · ${p.listing ? 'Listed ' + eth(p.listingEth) : 'Not listed'}</div>
+   </a>`;
+async function pageStatements() {
+  const list = await api('statements');
+  const mine = me ? list.filter(p => p.members.some(m => m.address === me)) : [];
+  render(app, `
+  <div class="intro"><div><h1>Statements</h1><p class="muted">Made by parties on Statement Maker.</p></div><p class="muted">${list.length} made</p></div>
+  ${mine.length ? `<div class="caption"><h2><span class="dot y"></span>Yours · ${mine.length}</h2></div><div class="parties" style="margin-bottom:64px">${mine.map(statementCard).join('')}</div>` : ''}
+  <div class="caption"><h2>All</h2></div>
+  ${list.length ? `<div class="parties">${list.map(statementCard).join('')}</div>` : '<p class="muted">None yet. A party assembles its Statement once its arrangement is approved.</p>'}`);
+}
+async function pageStatement(id) {
+  const p = await api('parties/' + encodeURIComponent(id));
+  if (!p.assembled) { location.hash = '#/party/' + encodeURIComponent(id); return; }
+  const mine = p.members.find(m => m.address === me);
+  const approved = p.proposals.find(q => q.type === 'APPROVE_ARRANGEMENT' && q.executed);
+  render(app, `
+  <div class="intro"><div><h1>Statement ${Number(p.assembled.number)}</h1><p class="muted">${esc(p.name)} · assembled ${new Date(p.assembled.at).toLocaleDateString()}</p></div><a href="#/party/${esc(p.id)}" class="muted">Party page →</a></div>
+  <div class="works">
+   <section>
+    ${sheet(p)}
+    <div class="caption"><span>Statement ${Number(p.assembled.number)}</span><div class="modes"><button type="button" id="png">PNG ↓</button></div></div>
+    <p class="note">Preview from the approved order. The final image comes from the Statement contract once Jack publishes it.</p>
+   </section>
+   <section><div class="rows">
+    <div><span>Party</span><strong>${esc(p.name)}</strong></div>
+    <div><span>Credits</span><strong>80, burned ${new Date(p.assembled.at).toLocaleString()}</strong></div>
+    <div><span>Order</span><strong>${approved ? esc(approved.args.preset) : 'Deposit order'} · by ${short(approved?.by || p.arranger)}</strong></div>
+    <div><span>Assembled by</span><strong>${short(p.assembled.by)}</strong></div>
+    <div><span>Held by</span><strong>The party vault · ${p.members.length} Credit Card holders</strong></div>
+    ${mine ? `<div><span>You</span><strong><span class="dot y"></span>${Number(mine.count)} of 80 Credit Cards · ${(mine.count / 80 * 100).toFixed(2)}%</strong></div>` : ''}
+    <div><span>Price</span><strong>${p.listing ? priceLabel(p.listing) + ' · ' + eth(p.listingEth) : 'Not listed'}</strong></div>
+    <div><span>Floor</span><strong>${eth(p.floorEth)}</strong></div>
+   </div>
+   <h2 style="margin:48px 0 14px">Holders</h2>
+   <table class="table"><tbody>${p.members.map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${short(m.address)}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
+   </section>
+  </div>`);
+  $('#png').onclick = () => statementPNG(p);
 }
 
 // ---------- router ----------
@@ -389,6 +449,8 @@ async function route() {
     else if (page === 'new') await pageNew();
     else if (page === 'wallet') await pageWallet(arg);
     else if (page === 'rules') pageRules();
+    else if (page === 'statements') await pageStatements();
+    else if (page === 'statement') await pageStatement(arg);
     else await pageParties();
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }

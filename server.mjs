@@ -10,6 +10,9 @@ const PORT = Number(process.env.PORT || 8088);
 const SLOTS = 80;
 const ZERO = '0x0000000000000000000000000000000000000000';
 const VOTE_WINDOW = 48 * 36e5;
+const WINDOWS = [24, 48, 72, 168]; // allowed voting windows, hours
+const EXEC_WINDOW = 7 * 864e5; // a passed proposal lapses if nobody executes it within 7 days
+const windowMs = (h, p) => (WINDOWS.includes(Number(h)) ? Number(h) : (p.params.voteHours || 48)) * 36e5;
 // Measured on a mainnet fork (see SPEC §4c) or estimated; used to show costs next to actions.
 const GAS = { deposit: 125815, withdraw: 125815, propose: 120000, vote: 60000, execute: 80000, arrange: 2000000, assemble: 2576314, returnCredit: 125815 };
 
@@ -90,7 +93,9 @@ function tally(p, prop) {
   const endsAt = prop.endsAt || prop.at + VOTE_WINDOW;
   const closed = now() >= endsAt;
   const passing = yes > SLOTS / 2 && no === 0;
-  return { yes, no, passing, endsAt, closed, executable: closed && passing && !prop.executed };
+  const execBy = endsAt + EXEC_WINDOW;
+  const lapsed = closed && passing && !prop.executed && now() > execBy;
+  return { yes, no, passing, endsAt, closed, execBy, lapsed, executable: closed && passing && !prop.executed && !lapsed };
 }
 function priceEth(t) {
   const base = floor.credit ? floor.credit * SLOTS : null;
@@ -212,13 +217,14 @@ http.createServer(async (req, res) => {
       const owners = new Set(list.map(c => c.owner));
       return json(res, 200, { count: list.length, owners: owners.size, statements: Math.floor(list.length / SLOTS), sample: list.sort((x, y) => x.rank - y.rank).slice(0, 16).map(c => c.id) });
     }
+    if (a === 'statements') return json(res, 200, state.parties.filter(q => q.assembled).sort((x, y) => x.assembled.number - y.assembled.number).map(view));
     if (a === 'parties' && !b && req.method === 'GET') return json(res, 200, state.parties.map(view));
     if (a === 'parties' && !b && req.method === 'POST') {
       const x = await body(req);
       const host = addr(x.address);
       if (!holders.has(host)) return json(res, 400, { error: 'host must hold at least one Credit' });
       const id = (x.name || 'party').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 32) + '-' + Date.now().toString(36).slice(-4);
-      const p = { id, name: String(x.name || 'Untitled').slice(0, 60), hosts: [host], createdAt: Date.now(), deadline: Date.now() + (Number(x.days) || 14) * 864e5, params: { minDeposit: Math.max(1, Math.min(80, Number(x.minDeposit) || 1)), target: x.target || { mode: 'fixed', value: 2.5 }, filters: x.filters || {} }, deposits: [], order: null, arranger: null, proposals: [], chat: [] };
+      const p = { id, name: String(x.name || 'Untitled').slice(0, 60), hosts: [host], createdAt: Date.now(), deadline: Date.now() + (Number(x.days) || 14) * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit: Math.max(1, Math.min(80, Number(x.minDeposit) || 1)), target: x.target || { mode: 'fixed', value: 2.5 }, filters: x.filters || {} }, deposits: [], order: null, arranger: null, proposals: [], chat: [] };
       state.parties.unshift(p); save();
       return json(res, 200, view(p));
     }
@@ -260,7 +266,7 @@ http.createServer(async (req, res) => {
       }
       if (c === 'propose') {
         if (st !== 'FULL' && st !== 'ASSEMBLED') return json(res, 400, { error: 'proposals open once the party is full' });
-        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'token holders only' });
+        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
         const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'APPROVE_ARRANGEMENT', 'LIST'] : ['LIST', 'CANCEL_LISTING', 'DISTRIBUTE'];
         if (x.type === 'LIST') {
           // Any price may be proposed, including below the floor. Only a vote sets it.
@@ -272,13 +278,14 @@ http.createServer(async (req, res) => {
           x.args = { mode, value };
         }
         if (!allowed.includes(x.type)) return json(res, 400, { error: `${x.type} not allowed while ${st}` });
-        p.proposals.push({ id: p.proposals.length + 1, type: x.type, args: x.args || {}, by: who, at: now(), votes: { [who]: true } });
+        const at = now();
+        p.proposals.push({ id: p.proposals.length + 1, type: x.type, args: x.args || {}, by: who, at, endsAt: at + windowMs(x.hours, p), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
       }
       if (c === 'vote') {
         const prop = p.proposals.find(q => q.id === Number(x.proposal));
         if (!prop) return json(res, 404, { error: 'no proposal' });
-        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'token holders only' });
+        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
         if (tally(p, prop).closed) return json(res, 400, { error: 'voting has closed' });
         prop.votes[who] = !!x.yes;
         save(); return json(res, 200, view(p));
@@ -289,7 +296,7 @@ http.createServer(async (req, res) => {
         if (!prop) return json(res, 404, { error: 'no proposal' });
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         const t = tally(p, prop);
-        if (!t.executable) return json(res, 400, { error: prop.executed ? 'already executed' : !t.closed ? 'voting is still open' : 'did not pass' });
+        if (!t.executable) return json(res, 400, { error: prop.executed ? 'already executed' : !t.closed ? 'voting is still open' : t.lapsed ? 'lapsed: not executed within 7 days' : 'did not pass' });
         {
           prop.executed = true; prop.executedBy = who;
           if (prop.type === 'NOMINATE_ARRANGER') p.arranger = prop.args.address;
@@ -303,7 +310,8 @@ http.createServer(async (req, res) => {
         const order = (x.order || []).map(Number);
         const have = new Set(deposited(p));
         if (order.length !== SLOTS || new Set(order).size !== SLOTS || !order.every(id => have.has(id))) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });
-        p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: x.preset || 'custom' }, by: who, at: now(), votes: { [who]: true } });
+        const at = now();
+        p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: String(x.preset || 'custom').slice(0, 60) }, by: who, at, endsAt: at + windowMs(x.hours, p), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
       }
       if (c === 'assemble') {
@@ -311,7 +319,7 @@ http.createServer(async (req, res) => {
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         if (st !== 'FULL') return json(res, 400, { error: 'party is ' + st });
         if (!p.order) return json(res, 400, { error: 'the arrangement has not been approved' });
-        p.assembled = { by: who, at: now() };
+        p.assembled = { by: who, at: now(), number: state.parties.filter(q => q.assembled).length + 1 };
         save(); return json(res, 200, view(p));
       }
       if (c === 'return') {
