@@ -201,12 +201,6 @@ form.new{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
 .buy-box{border:1px solid var(--ink);padding:18px 20px;margin-top:32px}
 .buy-box .big{font-size:20px}
 
-.sim-steps{display:flex;gap:0;border:1px solid var(--line);margin-bottom:40px}
-.sim-steps span{flex:1;padding:10px 12px;color:#aaa;border-right:1px solid var(--line)}
-.sim-steps span:last-child{border-right:0}
-.sim-steps span.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--c)}
-.sim-steps span.done{color:var(--ink)}
-.sim-now p{text-transform:none;font-size:13px;margin-bottom:12px}
 .sim-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 .sim-card{display:grid;grid-template-columns:64px 1fr;gap:10px;border:1px solid var(--ink);padding:10px}
 .sim-card img{width:64px;height:64px}

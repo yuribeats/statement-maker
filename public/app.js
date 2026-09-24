@@ -14,7 +14,7 @@ const ensAsked = new Set();
 const nameOf = a => ensNames.get(a) || null;
 const nameTag = a => isAddress(a) ? `<span data-addr="${a}">${nameOf(a) ? esc(nameOf(a)) : short(a)}</span>` : short(a);
 // Every address shown on the site links to its profile (#/u/<address>).
-const userLink = a => isAddress(a) ? `<a class="addr" href="#/u/${a}" data-addr="${a}">${nameOf(a) ? esc(nameOf(a)) : short(a)}</a>` : short(a);
+const userLink = a => !isAddress(a) ? short(a) : launchPhase() ? `<span class="addr" data-addr="${a}">${nameOf(a) ? esc(nameOf(a)) : short(a)}</span>` : `<a class="addr" href="#/u/${a}" data-addr="${a}">${nameOf(a) ? esc(nameOf(a)) : short(a)}</a>`;
 function applyNames() {
   document.querySelectorAll('[data-addr]').forEach(el => {
     const n = nameOf(el.dataset.addr);
@@ -1060,7 +1060,7 @@ function pageGate(page, arg) {
    <div><span>Starting a party</span><strong>You must hold a Credit, and open the party by depositing at least its minimum number of Credits that meet the criteria you set.</strong></div>
    <div><span>Without a Credit</span><strong>You can view and buy Statements, read the rules, and try the simulation.</strong></div>
   </div>
-  <div><div class="actions">${me ? switchBtn : '<button type="button" class="cta" data-switch-wallet style="margin:0">Connect wallet</button>'}<a class="cta" href="#/statements" style="margin:0">View Statements →</a><a href="#/try">Try it →</a></div></div></div>
+  <div><div class="actions">${me ? switchBtn : '<button type="button" class="cta" data-switch-wallet style="margin:0">Connect wallet</button>'}<a class="cta" href="#/statements" style="margin:0">View Statements →</a></div></div></div>
   ${page === 'party' && arg ? '<div class="panel" id="log" style="margin-top:64px;max-width:900px"></div>' : ''}`);
   if (page === 'party' && arg) logPanel(arg, $('#log'));
 }
@@ -1162,164 +1162,6 @@ async function pageStatement(id) {
   $('#unlist')?.addEventListener('click', () => sAct('unlist', {}, 'buy-r-err'));
   $('#list')?.addEventListener('click', () => sAct('list', { priceEth: Number($('#lp').value) }, 'list-err'));
   $('#buy-s')?.addEventListener('click', async () => { try { await api(`parties/${encodeURIComponent(p.id)}/buy`, {}); route(); } catch (e) { $('#buy-s-err').textContent = e.message; } });
-}
-
-// ---------- simulation: play a party end to end, in the browser only ----------
-// Uses real Credits (art and traits) but invents the other members. Nothing is sent or saved.
-let sim = null;
-const SIM_ME = 'you';
-const simName = i => ['Ada', 'Bo', 'Cy', 'Dee', 'Eli', 'Fen', 'Gus', 'Hal', 'Ivy', 'Jo', 'Kit', 'Lu', 'Mo', 'Ned', 'Ola', 'Pia'][i % 16];
-// Every entry names its actor: the connected wallet (ENS or short address) for the host, otherwise a simulated handle.
-function simLog(actor, t) { sim.log.unshift({ actor, t, at: sim.clock }); }
-const simActor = a => a === SIM_ME ? (me ? userLink(me) : '<span class="demo">sim-host</span>') : a === 'buyer' ? '<span class="faint">sim-buyer</span>' : a ? `<span class="faint">sim-${esc(String(a).toLowerCase())}</span>` : '<span class="faint">party</span>';
-const simWeights = () => sim.deposits.reduce((m, d) => (m[d.holder] = (m[d.holder] || 0) + 1, m), {});
-async function simStart(theme, arrangement, pricePct) {
-  const filters = { any: {}, cyan: { colors: ['C'] }, misreg: { print: ['Nudge', 'Slip', 'Skew', 'Drift', 'Loose'] }, eights: { eights: [1, 2, 3, 4, 5] } }[theme];
-  const r = await api('sim/sample', { theme, count: SLOTS + 10 });
-  const floorEth = stats.floor ? stats.floor * SLOTS : 2.4;
-  sim = { step: 'deposit', theme, filters, arrangement, price: { mode: 'floorPct', value: pricePct }, floorEth, wallet: r.sample.slice(0, 10), picks: new Set(), pool: r.sample.slice(10), used: 0, deposits: [], order: null, proposals: [], clock: 0, log: [], listing: null, sold: null, claimed: new Set(), confirm: false };
-  simLog(SIM_ME, `Opened the party. Arrangement: ${arrangement}. Default price: floor ${pricePct >= 0 ? '+' : '−'} ${Math.abs(pricePct)}%.`);
-}
-const simCards = () => sim.deposits.map((d, i) => ({ ...d.credit, card: 1000 + i, depositor: d.holder === SIM_ME ? me || SIM_ME : d.holder }));
-const simPrice = t => t.mode === 'fixed' ? t.value : sim.floorEth * (1 + t.value / 100);
-function simTally(q) {
-  const w = {}; for (const d of sim.deposits) w[d.holder] = (w[d.holder] || 0) + 1;
-  let yes = 0, no = 0; for (const [a, v] of Object.entries(q.votes)) v ? (yes += w[a] || 0) : (no += w[a] || 0);
-  const need = simPrice(q.args) < sim.floorEth ? 60 : 41;
-  return { yes, no, need, passing: yes >= need && no === 0 };
-}
-async function pageSim() {
-  stats = stats || await api('stats');
-  if (!sim || sim.step === 'setup') {
-    const f = { theme: 'misreg', arrangement: 'Time', pct: 25, ...(sim?.form || {}) };
-    render(app, `
-    <div class="intro"><div><h1>Try it</h1><p class="muted">Play a party from start to finish: you host, deposit, the party fills, you burn, members vote on a price, a buyer pays, you claim. Real Credits, invented members. Nothing is sent or saved.</p></div></div>
-    <form class="new" id="sim-form"><div>
-     <div class="field"><label>Party theme</label><div class="chips">${[['misreg', 'Misregistered'], ['cyan', 'Cyan only'], ['eights', 'One eight or more'], ['any', 'Any Credit']].map(([k, l]) => `<button type="button" data-st="${k}" aria-pressed="${f.theme === k}">${l}</button>`).join('')}</div></div>
-     <div class="field"><label>Arrangement</label><div><div class="chips">${['Time', 'Rarity', 'Colors', 'Print', 'Ink', 'Manual'].map(k => `<button type="button" data-sa="${k}" aria-pressed="${f.arrangement === k}">${k}</button>`).join('')}</div><div class="hint ${f.arrangement === 'Manual' ? 'alert-c' : ''}">${f.arrangement === 'Manual' ? 'Manual: you order the 80 by hand when you burn.' : 'Applied automatically at the burn.'}</div></div></div>
-     <div class="field"><label>Default price</label><div><div style="display:flex;gap:12px;align-items:center"><span class="muted">Floor +</span><input id="sp" type="number" value="${f.pct}" style="width:80px">%</div><div class="hint">Floor now ${eth(stats.floor ? stats.floor * SLOTS : null)} · range above −100%</div></div></div>
-     <button class="cta" id="sim-go" type="button">Open the party</button>
-    </div><div><div class="rows terms">
-     <div><span>01</span><strong>You open a party and pick which of your Credits to deposit. You get one Credit Card for each.</strong></div>
-     <div><span>02</span><strong>Fifteen others deposit until it reaches 80.</strong></div>
-     <div><span>03</span><strong>You arrange (by hand if Manual) and burn in one step.</strong></div>
-     <div><span>04</span><strong>Your default price goes live. Someone proposes a lower one; see how the vote runs.</strong></div>
-     <div><span>05</span><strong>A buyer pays. You claim for your cards.</strong></div></div></div></form>`);
-    sim = { step: 'setup', form: f };
-    app.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { sim.form = { ...f, theme: b.dataset.st, pct: +$('#sp').value }; route(); });
-    app.querySelectorAll('[data-sa]').forEach(b => b.onclick = () => { sim.form = { ...f, arrangement: b.dataset.sa, pct: +$('#sp').value }; route(); });
-    $('#sim-go').onclick = async e => { const b = e.currentTarget; b.disabled = true; b.textContent = 'Opening…'; try { await simStart(f.theme, f.arrangement, Number($('#sp').value) || 0); route(); } catch (err) { b.disabled = false; b.textContent = 'Open the party'; b.insertAdjacentHTML('afterend', `<p class="blocked">${esc(err.message)}</p>`); } };
-    return;
-  }
-  const cards = simCards();
-  const mine = cards.filter(c => c.depositor === (me || SIM_ME));
-  const full = sim.deposits.length === SLOTS;
-  const order = sim.order || (sim.step === 'arrange' && sim.draft) || cards;
-  const party = { credits: order };
-  const openProp = sim.proposals.find(q => !q.done);
-  const t = openProp && simTally(openProp);
-  const listEth = sim.listing ? simPrice(sim.listing) : null;
-  const perCard = sim.sold ? sim.sold.price * 0.99 / SLOTS : null;
-  const stepNo = { deposit: 1, fill: 2, arrange: 3, listed: 4, vote: 4, buy: 5, sold: 5 }[sim.step] || 1;
-  render(app, `
-  <div class="intro"><div><h1>Try it · ${esc(sim.theme === 'misreg' ? 'Misregistered' : sim.theme === 'cyan' ? 'Cyan only' : sim.theme === 'eights' ? 'One eight or more' : 'Any Credit')}</h1><p class="muted">Simulation · you are the host · nothing is sent or saved · day ${Math.floor(sim.clock / 24)} hour ${sim.clock % 24}</p></div><div><button type="button" id="sim-reset" class="muted">Start over</button></div></div>
-  <div class="sim-steps">${['Deposit', 'Fill', 'Arrange + burn', 'Price vote', 'Sale + claim'].map((l, i) => `<span class="${i + 1 === stepNo ? 'on' : i + 1 < stepNo ? 'done' : ''}">${String(i + 1).padStart(2, '0')} ${l}</span>`).join('')}</div>
-  <div class="works">
-   <section>
-    ${sheet(party, { interactive: sim.step === 'arrange' && sim.arrangement === 'Manual', order })}
-    <div class="caption"><span>${sim.order ? 'Statement · burned' : `${sim.deposits.length}/80`}${sim.step === 'arrange' && sim.arrangement === 'Manual' ? ' · drag to swap' : ''}</span><span class="${sim.arrangement === 'Manual' ? 'alert-c' : 'muted'}">Arrangement: ${esc(sim.arrangement)}</span></div>
-    ${sim.step === 'arrange' && sim.arrangement === 'Manual' ? `<div class="modes" style="margin-bottom:12px">${Object.keys(PRESETS).map(k => `<button type="button" data-sp="${k}">${k}</button>`).join('')}</div>` : ''}
-    <div class="panel"><h2>Log · ${sim.log.length}</h2><div class="rows" style="max-height:460px;overflow:auto">${sim.log.map(l => `<div><span>D${Math.floor(l.at / 24)} ${String(l.at % 24).padStart(2, '0')}h · ${simActor(l.actor)}</span><strong style="text-transform:none">${esc(l.t)}</strong></div>`).join('')}</div></div>
-   </section>
-   <section>
-    <div class="panel sim-now"><h2>Now</h2>
-    ${sim.step === 'deposit' ? `
-      <p>Your wallet holds ${sim.wallet.length} Credits that fit this party. Pick the ones to deposit (at least 1); the rest stay in the wallet. Each deposit returns a Credit Card: its vote, its Credit until the party fills, and 1/80 of the sale.</p>
-      <div class="picker" style="grid-template-columns:repeat(10,1fr)">${sim.wallet.map(c => `<button type="button" data-spick="${Number(c.id)}" aria-pressed="${sim.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt=""></button>`).join('')}</div>
-      <div class="actions"><button type="button" id="s-all">Select all</button><button type="button" id="s-none">Clear</button></div>
-      <button class="cta" id="s-dep" ${sim.picks.size ? '' : 'disabled'}>Deposit ${sim.picks.size} Credit${sim.picks.size === 1 ? '' : 's'}</button>`
-    : sim.step === 'fill' ? `
-      <p>${sim.deposits.length}/80. Others are joining. Until 80, any card holder can redeem a card for its Credit.</p>
-      <div class="actions"><button class="cta" id="s-fill">Advance a day</button></div>`
-    : sim.step === 'arrange' ? (sim.arrangement === 'Manual' ? `
-      <p class="alert-c">Full. Manual: the host orders the 80 by hand by the metric stated at creation, starting from a preset if useful, and burns. If the host does not burn within 1 day of filling, any card holder can burn in Time order.</p>` : `
-      <p>Full. Arrangement is locked as ${esc(sim.arrangement)}.</p>`) + burnAlert(sim.arrangement) + (sim.confirm
-        ? `<div class="actions"><span class="blocked">Burning is permanent. 80 Credits become one Statement.</span><button class="cta" id="s-burn">Confirm burn</button><button type="button" id="s-burn-x">Cancel</button></div>`
-        : `<div class="actions"><button class="cta" id="s-burn-ask">${sim.arrangement === 'Manual' ? 'Burn with this order' : 'Burn'}</button></div>`)
-    : sim.step === 'listed' ? `
-      <p>Statement made. Your default price is live: ${eth(listEth)}. Buying opens 1 hour after a price goes live (the party default).</p>
-      <p class="muted">Ola thinks it is too high and proposes 10% below the floor. Below-floor prices need 60 of 80 yes and zero no.</p>
-      <div class="actions"><button class="cta" id="s-prop">Ola proposes floor −10%</button><button type="button" id="s-skip">Skip to the sale</button></div>`
-    : sim.step === 'vote' ? `
-      <p>Proposal: sell for ${eth(simPrice(openProp.args))} <span class="blocked">below floor</span>.</p>
-      <div class="meter"><i class="yes" style="width:${t.yes / 80 * 100}%"></i><b style="left:${t.need / 80 * 100}%"></b></div>
-      <div class="prop-nums"><span>Yes ${t.yes} / ${t.need} needed</span><span class="${t.no ? 'blocked' : 'faint'}">No ${t.no}</span></div>
-      <p class="muted">${openProp.votes[SIM_ME] === undefined ? `You hold ${mine.length} card${mine.length === 1 ? '' : 's'}. How do you vote?` : `You voted ${openProp.votes[SIM_ME] ? 'yes' : 'no'}.`}</p>
-      <div class="actions">${openProp.votes[SIM_ME] === undefined ? '<button type="button" id="s-yes">Vote yes</button><button type="button" id="s-no">Vote no</button>' : '<button class="cta" id="s-close">Advance 48 hours · close the vote</button>'}</div>`
-    : sim.step === 'buy' ? `
-      <p>Live price: ${eth(listEth)}${sim.listing.value < 0 ? ' (voted, below floor)' : ' (your default)'}.</p>
-      <div class="actions"><button class="cta" id="s-buy">Advance 1 hour · a buyer pays</button></div>`
-    : `
-      <p>Sold for ${eth(sim.sold.price)}. 1% to Statement Maker (${eth(sim.sold.price * 0.01)}), then ${eth(perCard)} per Credit Card.</p>
-      ${mine.some(c => !sim.claimed.has(c.card)) ? `<button class="cta" id="s-claim">Claim for your ${mine.filter(c => !sim.claimed.has(c.card)).length} cards · ${eth(perCard * mine.filter(c => !sim.claimed.has(c.card)).length)}</button>` : `<p><span class="dot y"></span>Claimed ${eth(perCard * mine.length)}. Your cards are burned. That is the whole cycle.</p><a class="cta" href="#/new">Start a real party →</a>`}`}
-    </div>
-    ${mine.length ? `<div class="panel"><h2>Your Credit Cards · ${mine.length}</h2><div class="sim-cards">${mine.map(c => `
-      <div class="sim-card"><img src="${svg(c.id)}" alt=""><div><strong>Credit Card</strong><span>No. ${c.card}</span><span>Credit #${c.id}</span><span class="${sim.claimed.has(c.card) ? 'muted' : ''}">${sim.claimed.has(c.card) ? 'Redeemed' : sim.sold ? 'Claim ' + eth(perCard) : sim.order ? 'Statement made' : full ? 'Locked · party full' : 'Redeemable'}</span></div></div>`).join('')}</div></div>` : ''}
-    <div class="panel"><h2>Members</h2><div class="rows">${Object.entries(sim.deposits.reduce((m, d) => (m[d.holder] = (m[d.holder] || 0) + 1, m), {})).map(([a, n]) => `<div><span>${a === SIM_ME ? '<span class="dot y"></span>' + simActor(a) + ' (host)' : simActor(a)}</span><strong>${n} cards</strong></div>`).join('')}</div></div>
-   </section>
-  </div>`);
-  const go = fn => async () => { await fn(); route(); };
-  $('#sim-reset').onclick = go(() => { sim = null; });
-  app.querySelectorAll('[data-spick]').forEach(b => b.onclick = go(() => { const id = Number(b.dataset.spick); sim.picks.has(id) ? sim.picks.delete(id) : sim.picks.add(id); }));
-  $('#s-all')?.addEventListener('click', go(() => { sim.picks = new Set(sim.wallet.map(c => c.id)); }));
-  $('#s-none')?.addEventListener('click', go(() => { sim.picks.clear(); }));
-  $('#s-dep')?.addEventListener('click', go(() => { const picked = sim.wallet.filter(c => sim.picks.has(c.id)); if (!picked.length) return; picked.forEach(c => sim.deposits.push({ credit: c, holder: SIM_ME })); sim.step = 'fill'; simLog(SIM_ME, `Deposited ${picked.length} Credit${picked.length === 1 ? '' : 's'} and received ${picked.length} Credit Card${picked.length === 1 ? '' : 's'}.`); }));
-  $('#s-fill')?.addEventListener('click', go(() => {
-    sim.clock += 24;
-    const joiners = 3 + Math.floor(Math.random() * 3);
-    for (let j = 0; j < joiners && sim.deposits.length < SLOTS; j++) {
-      const who = simName(sim.deposits.length + j), n = Math.min(SLOTS - sim.deposits.length, 3 + Math.floor(Math.random() * 5));
-      sim.pool.slice(sim.used, sim.used + n).forEach(c => sim.deposits.push({ credit: c, holder: who })); sim.used += n;
-      simLog(who, `Deposited ${n} Credits and received ${n} Credit Cards. ${sim.deposits.length}/80.`);
-    }
-    if (sim.deposits.length === SLOTS) { sim.step = 'arrange'; sim.draft = null; simLog(null, 'Full at 80. Redemption closed.'); }
-  }));
-  app.querySelectorAll('[data-sp]').forEach(b => b.onclick = go(() => { sim.draft = PRESETS[b.dataset.sp](sim.draft || cards); }));
-  if (sim.step === 'arrange' && sim.arrangement === 'Manual') {
-    const el = $('#sheet'); let from = null;
-    el.addEventListener('dragstart', e => { from = Number(e.target.closest('button')?.dataset.i); });
-    el.addEventListener('dragover', e => e.preventDefault());
-    el.addEventListener('drop', e => { e.preventDefault(); const to = Number(e.target.closest('button')?.dataset.i); if (Number.isInteger(from) && Number.isInteger(to) && from !== to) { const o = [...(sim.draft || cards)]; [o[from], o[to]] = [o[to], o[from]]; sim.draft = o; route(); } });
-  }
-  $('#s-burn-ask')?.addEventListener('click', go(() => { sim.confirm = true; }));
-  $('#s-burn-x')?.addEventListener('click', go(() => { sim.confirm = false; }));
-  $('#s-burn')?.addEventListener('click', go(() => {
-    sim.order = sim.arrangement === 'Manual' ? (sim.draft || cards) : PRESETS[sim.arrangement](cards);
-    sim.listing = sim.price; sim.step = 'listed'; sim.confirm = false;
-    simLog(SIM_ME, `Burned the 80 (${sim.arrangement === 'Manual' ? 'the host’s posted order' : sim.arrangement}). Statement made. Default price live: ${eth(simPrice(sim.price))}.`);
-  }));
-  $('#s-skip')?.addEventListener('click', go(() => { sim.step = 'buy'; }));
-  $('#s-prop')?.addEventListener('click', go(() => {
-    const votes = { Ola: true }; for (const d of sim.deposits) if (d.holder !== SIM_ME && d.holder !== 'Ola' && Math.random() < 0.8) votes[d.holder] = true;
-    sim.proposals.push({ type: 'LIST', args: { mode: 'floorPct', value: -10 }, votes }); sim.step = 'vote';
-    const w = simWeights();
-    simLog('Ola', `Proposed selling at floor −10% (${eth(simPrice({ mode: 'floorPct', value: -10 }))}). Below the floor: needs 60 of 80.`);
-    for (const v of Object.keys(votes)) simLog(v, `Voted yes with ${w[v]} card${w[v] === 1 ? '' : 's'}.`);
-  }));
-  const vote = yes => go(() => { openProp.votes[SIM_ME] = yes; simLog(SIM_ME, `Voted ${yes ? 'yes' : 'no'} with ${mine.length} card${mine.length === 1 ? '' : 's'}.`); });
-  $('#s-yes')?.addEventListener('click', vote(true));
-  $('#s-no')?.addEventListener('click', vote(false));
-  $('#s-close')?.addEventListener('click', go(() => {
-    sim.clock += 48; const r = simTally(openProp); openProp.done = true;
-    if (r.passing) { sim.listing = openProp.args; simLog(null, `Vote closed: ${r.yes} yes, 0 no. Passed.`); simLog('Ola', `Executed the proposal. The price is now ${eth(simPrice(openProp.args))}.`); }
-    else simLog(null, `Vote closed: ${r.yes} yes, ${r.no} no. ${r.no ? 'One no blocks it.' : `Needed ${r.need}.`} The default price stays.`);
-    sim.step = 'buy';
-  }));
-  $('#s-buy')?.addEventListener('click', go(() => { sim.clock += 1; sim.sold = { price: simPrice(sim.listing) }; sim.step = 'sold'; simLog('buyer', `Paid ${eth(sim.sold.price)} on Statement Maker. The Statement is theirs.`);
-    // The other members claim their shares as the sale lands.
-    const per = sim.sold.price * 0.99 / SLOTS;
-    for (const [h, k] of Object.entries(simWeights())) if (h !== SIM_ME) { simLog(h, `Claimed ${eth(per * k)} for ${k} card${k === 1 ? '' : 's'}. The cards were burned.`); simCards().filter(c => c.depositor === h).forEach(c => sim.claimed.add(c.card)); } }));
-  $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(SIM_ME, `Claimed ${eth(perCard * mine.length)} for ${mine.length} card${mine.length === 1 ? '' : 's'}. The cards were burned.`); }));
 }
 
 // ---------- definitions: hovering a field label shows what it means ----------
@@ -1567,9 +1409,9 @@ async function route() {
     // View-only visitors (no wallet) read them without it; every action needs a wallet, then the agreement.
     if (me && (['minute', 'party', 'new', 'wallet'].includes(page) || !page) && !rulesAgreed()) return toRules();
     if (page === 'minute') return await pageMinute(arg);
-    if (launch && (page === 'new' || page === 'wallet' || page === 'party')) return pageLater();
+    if (launch && (page === 'new' || page === 'wallet' || page === 'party' || page === 'u')) return pageLater();
     if (launch && !page) return await pageFour();
-    // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements, Try it and Terms only.
+    // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements and Terms only.
     const gated = !page || page === 'new' || page === 'wallet' || page === 'party';
     if (gated && me && !rulesAgreed()) return toRules();
     if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page, arg);
@@ -1580,7 +1422,6 @@ async function route() {
     else if (page === 'rules') pageRules();
     else if (page === 'terms') pageTerms();
     else if (page === 'statements') await pageStatements();
-    else if (page === 'try') await pageSim();
     else if (page === 'statement') await pageStatement(arg);
     else await pageParties();
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
