@@ -101,7 +101,7 @@ contract SaleTest is UnitBase {
     // ------------------------------------------------------------------ split
 
     function _checkSplit(Party p, uint256 price, uint256 royaltyBps, address royaltyTo) internal {
-        uint256 cap = price * 1000 / 10_000;
+        uint256 cap = price * 100 / 10_000; // ROYALTY_CAP_BPS = 1%
         uint256 royalty = price * royaltyBps / 10_000;
         if (royaltyTo == address(0)) royalty = 0;
         if (royalty > cap) royalty = cap;
@@ -135,23 +135,24 @@ contract SaleTest is UnitBase {
         p.assemble(dep, noFloor());
     }
 
-    function test_split_royalty5pct() public {
+    function test_split_royaltyHalfPct_underCap() public {
         address artist = makeAddr("artist");
-        statement.setRoyalty(artist, 500);
+        statement.setRoyalty(artist, 50);
         _open();
         _buy(3 ether, 3 ether);
-        _checkSplit(party, 3 ether, 500, artist);
-        assertEq(party.owed(artist), 0.15 ether);
-        assertEq(party.perCard(), 0.03525 ether, "spec example");
+        _checkSplit(party, 3 ether, 50, artist);
+        assertEq(party.owed(artist), 0.015 ether);
+        assertEq(party.perCard(), 0.0369375 ether); // (3 - 0.015 - 0.03) / 80
     }
 
-    function test_split_royaltyCappedAt10pct() public {
+    function test_split_royaltyCappedAt1pct() public {
         address artist = makeAddr("artist");
-        statement.setRoyalty(artist, 2500);
+        statement.setRoyalty(artist, 500); // 5% asked
         _open();
         _buy(3 ether, 3 ether);
-        assertEq(party.owed(artist), 0.3 ether);
-        _checkSplit(party, 3 ether, 2500, artist);
+        assertEq(party.owed(artist), 0.03 ether, "capped at 1%");
+        assertEq(party.perCard(), 0.03675 ether, "spec example: 0.03 artist, 0.03 platform, 2.94 to holders");
+        _checkSplit(party, 3 ether, 500, artist);
     }
 
     function test_split_royaltyReceiverZeroIgnored() public {
@@ -167,11 +168,11 @@ contract SaleTest is UnitBase {
         statement.setRoyalty(address(r), 500);
         _open();
         _buy(3 ether, 3 ether);
-        assertEq(party.owed(address(r)), 0.15 ether);
+        assertEq(party.owed(address(r)), 0.03 ether);
         vm.prank(address(r));
         vm.expectRevert(bad("send"));
         party.withdraw();
-        assertEq(party.owed(address(r)), 0.15 ether, "still owed");
+        assertEq(party.owed(address(r)), 0.03 ether, "still owed");
         // holders unaffected
         uint256[] memory mine = cardsOf(party, holders[1]);
         vm.prank(holders[1]);

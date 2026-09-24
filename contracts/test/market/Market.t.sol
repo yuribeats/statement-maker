@@ -131,12 +131,12 @@ contract MarketTest is Test {
         assertEq(m.owed(address(r)), 0.99 ether);
     }
 
-    function test_royaltyCappedAt10pct_andMalformedIgnored() public {
+    function test_royaltyCappedAt1pct_andMalformedIgnored() public {
         st.setRoyalty(makeAddr("artist"), 5000);
         _list(1 ether);
         vm.prank(buyer);
         m.buy{value: 1 ether}(1, 1 ether);
-        assertEq(m.owed(makeAddr("artist")), 0.1 ether);
+        assertEq(m.owed(makeAddr("artist")), 0.01 ether, "50% asked, capped at 1%");
         // malformed 32-byte royaltyInfo answer: sale still works, no royalty
         st.mint(seller, 3);
         st.setRaw(abi.encode(uint256(1)));
@@ -237,14 +237,14 @@ contract MarketTest is Test {
         assertTrue(m.isLive(1));
     }
 
-    /// A royaltyInfo that delegates (~100k gas) is honoured; the 10% cap still applies.
+    /// A royaltyInfo that delegates (~100k gas) is honoured; the 1% cap still applies.
     function test_royalty_delegatingImplementationPaid() public {
-        st.setRoyalty(makeAddr("artist"), 500);
+        st.setRoyalty(makeAddr("artist"), 50);
         st.setBurn(45);
         _list(2 ether);
         vm.prank(buyer);
         m.buy{value: 2 ether}(1, 2 ether);
-        assertEq(m.owed(makeAddr("artist")), 0.1 ether);
+        assertEq(m.owed(makeAddr("artist")), 0.01 ether);
     }
 
     function test_royalty_tooHungryIgnored() public {

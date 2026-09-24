@@ -37,7 +37,7 @@ interface IFactory {
 ///    1/24/48/72/168 hours; passed proposals must be executed within 7 days; executing one supersedes the rest.
 ///  - The Statement leaves only through buy(), at the current ask, once that price's wait has passed (voted with
 ///    the price; the host sets the default, 0..72 hours). No offers, auctions or other transfer path exist.
-///  - Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 10%), 1% fee, and the rest
+///  - Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 1%), 1% fee, and the rest
 ///    in 80 equal shares; rounding dust goes to the fee recipient. Fee and royalty are pull payments.
 contract Party is Initializable, ReentrancyGuardTransient {
     using CreditKeys for CreditKeys.Preset;
@@ -54,7 +54,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint256 public constant MANUAL_GRACE = 1 days; // a Manual host's time to burn after FULL; then anyone, Time order
     /// @notice A signed floor reading is accepted for 10 minutes (real time), and never one older than the last used here.
     uint256 public constant FLOOR_MAX_AGE = 10 minutes;
-    uint256 public constant ROYALTY_CAP_BPS = 1000;
+    uint256 public constant ROYALTY_CAP_BPS = 100; // 1%
     uint256 public constant ROYALTY_GAS = 150_000;
     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
 

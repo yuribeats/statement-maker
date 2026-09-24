@@ -11,7 +11,7 @@ contract PartyLogic {
     uint256 public constant PASS = 41; // :44
     uint256 public constant PASS_BELOW_FLOOR = 60; // :45
     uint256 public constant PASS_DEADLOCK = 54; // :46
-    uint256 public constant ROYALTY_CAP_BPS = 1000; // :53
+    uint256 public constant ROYALTY_CAP_BPS = 100; // Party.sol (1%)
     uint16 public constant FEE_BPS = 100; // PartyFactory.sol FEE_BPS constant
 
     enum PriceMode { Fixed, FloorPct, FloorDelta }
@@ -105,7 +105,7 @@ contract PartyHalmos is Test {
 
     function _split(uint256 price, bool hasReceiver, uint256 amt) internal view {
         try L.split(price, hasReceiver, amt) returns (uint256 royalty, uint256 fee, uint256 share, uint256 dust) {
-            assert(royalty <= price * 1000 / 10_000); // cap holds
+            assert(royalty <= price * 100 / 10_000); // cap holds
             assert(fee == price / 100);
             assert(dust < 80);
             assert(royalty + fee + 80 * share + dust == price); // exact conservation, nothing minted or lost

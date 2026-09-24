@@ -121,7 +121,7 @@ Behavior assumed by `Party.assemble` / `Party.buy`:
 3. The order of `creditIds` is meaningful to the artwork. Unverified: order semantics are unknown.
 4. Contract callers are allowed. If the real contract rejects contract callers (`tx.origin` checks, EOA-only, a signature from the owner), no party can assemble. Parties then expire and every Credit is redeemable (SPEC §2).
 5. The Statement is a standard ERC-721 that `transferFrom(party, buyer, id)` can move with no restrictions. If transfers are restricted, `buy` reverts and the Statement stays in the party forever, because no other exit exists.
-6. Optional `royaltyInfo(tokenId, price)` (ERC-2981) on the Statement contract. It is called by raw `staticcall` with a 150,000-gas stipend (room for a delegating implementation); a revert, a short or dirty answer, or running out of that gas counts as no royalty. The result is capped at 10%.
+6. Optional `royaltyInfo(tokenId, price)` (ERC-2981) on the Statement contract. It is called by raw `staticcall` with a 150,000-gas stipend (room for a delegating implementation); a revert, a short or dirty answer, or running out of that gas counts as no royalty. The result is capped at 1%.
 7. `make` does not re-enter the party. Every state-changing entry point except `propose`/`vote`/`countBlocked`/`raiseAsk`/`transferHost` shares one transient reentrancy lock.
 
 `MockStatement` implements exactly 1, 2, 5, and 6. Its `make` requires `ids.length == 80`.

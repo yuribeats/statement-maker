@@ -73,7 +73,7 @@ Notes:
 
 ```
 price = ask (buyer pays msg.value ≥ price; excess refunded by call at the end)
-royalty = min(royaltyInfo(statementId, price).amount, price × 10%)  if the Statement contract answers within 150k gas (ROYALTY_GAS) and receiver ≠ 0
+royalty = min(royaltyInfo(statementId, price).amount, price × 1%)   if the Statement contract answers within 150k gas (ROYALTY_GAS) and receiver ≠ 0
 fee     = price × FEE_BPS / 10_000                                   (FEE_BPS = 100 → 1%)
 pot     = price − royalty − fee
 perCard = pot / 80
@@ -89,7 +89,7 @@ Conservation: `royalty + fee + dust + 80 × perCard == price`. Party ETH balance
 
 `receive()` reverts, so the only ETH that enters is `buy`'s `msg.value` (plus forced ETH, which no accounting reads).
 
-Differences from SPEC §4b: the royalty is read only from the Statement contract's ERC-2981. There is no Royalty Registry fallback, and the cap is 10%, not "e.g. 25%".
+Differences from SPEC §4b: the royalty is read only from the Statement contract's ERC-2981. There is no Royalty Registry fallback, and the cap is 1% (`ROYALTY_CAP_BPS = 100`), not "e.g. 25%".
 
 ## 6. Price governance
 
@@ -174,7 +174,7 @@ Trust: the signer is fully trusted for floor values. See THREAT_MODEL.md §3 for
 | Deadlock "of a kind"; "30 days since FULL/assembly" | One counter for LIST only, never reset. Clock runs from FULL or the last execution; assembly does not reset it. |
 | "Executing supersedes every other pending proposal of the same kind" | Supersedes all proposals of both kinds, and assembly supersedes too |
 | "Any party member" can execute / assemble | Must hold ≥ 1 card **now** (`heldNow`). Depositors who moved their cards cannot. |
-| Royalty: ERC-2981, then Royalty Registry; cap e.g. 25% | ERC-2981 on the Statement contract only; cap 10% |
+| Royalty: ERC-2981, then Royalty Registry; cap e.g. 25% | ERC-2981 on the Statement contract only; cap 1% |
 | `claimFor(holder)`: push, anyone calls | `claim` by the holder only. The fee recipient and royalty receiver withdraw. |
 | Rarity from OpenSea OpenRarity | On-chain table from sealed-supply trait frequencies |
 | openParty by "any Credit holder" | Anyone |

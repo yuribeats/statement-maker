@@ -19,7 +19,7 @@ interface IERC721Min {
 ///         30 days, at most 180), and cancelAll() voids every listing the caller has ever made (per-seller counter).
 ///         Re-acquiring a token revives its listing only within that listing's own expiry and only if the seller has
 ///         not called cancelAll() since; re-list after re-acquiring (list overwrites the old price).
-///         Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 10%), 1% fee, the rest to
+///         Sale split: royalty (only if the Statement contract declares ERC-2981, capped at 1%), 1% fee, the rest to
 ///         the seller. The seller is paid directly; if that transfer fails the amount is held for withdrawal, so a
 ///         seller cannot block their own sale path. Fee and royalty are always pull payments.
 ///         No owner, no admin, no upgrade path.
@@ -27,7 +27,7 @@ contract StatementMarket is ReentrancyGuardTransient {
     IERC721Min public immutable statement;
     address public immutable feeRecipient;
     uint256 public constant FEE_BPS = 100;
-    uint256 public constant ROYALTY_CAP_BPS = 1000;
+    uint256 public constant ROYALTY_CAP_BPS = 100; // 1%
     uint256 public constant ROYALTY_GAS = 150_000;
     uint256 public constant DEFAULT_DURATION = 30 days;
     uint256 public constant MAX_DURATION = 180 days;

@@ -72,12 +72,12 @@ Proposal types (closed set, no arbitrary calls):
 - Artist royalty: honored on every sale, paid out of the price in the same `buy()` transaction, before members' proceeds.
   - Lookup: the Statement contract's own ERC-2981 `royaltyInfo(tokenId, price)` only (as implemented; the Royalty Registry engine is not queried directly). The call gets a 150,000-gas stipend, enough for an implementation that delegates (proxy, registry or splitter lookup); a reverting, malformed or more gas-hungry answer counts as no royalty and never blocks the sale.
   - Read at sale time, not at assembly, so a later change by the artist is followed.
-  - Hard cap: 10% of the price, so a faulty or hostile royalty lookup cannot drain the sale.
+  - Hard cap: 1% of the price (`ROYALTY_CAP_BPS = 100`, Party and StatementMarket), so a faulty or hostile royalty lookup cannot drain the sale.
   - Credits itself has none: no ERC-2981 (supportsInterface false) and the engine returns no recipients.
 - Platform fee: 1% of the sale price, paid in the same `buy()` transaction to the fee recipient address.
   - Rate is fixed per party when the party is created; it can never rise for an existing party.
 - Split of each sale: price → artist royalty (per lookup) → 1% platform fee → remainder to Credit Card holders pro rata.
-  Example at 3 ETH with a 5% royalty: 0.15 artist, 0.03 platform, 2.82 to holders (0.03525 per Credit Card).
+  Example at 3 ETH with a declared 5% royalty (capped at 1%): 0.03 artist, 0.03 platform, 2.94 to holders (0.03675 per Credit Card).
 - Floor-relative asks:
   - Floor data is read off-chain (marketplace APIs, since other Statements will trade there) and averaged over 24 h. This is a data input only; we list nothing there.
   - A keeper updates the on-chain ask as the floor rises. The contract accepts only increases: the ask never goes down. Lowering the price requires a new LIST vote.
@@ -88,6 +88,17 @@ Proposal types (closed set, no arbitrary calls):
 - A LIST can be proposed while FULL; it takes effect when the Statement is assembled.
   - The LIST proposal carries an absolute minimum in ETH as the starting ask.
   - Keeper risk: a faulty keeper could only raise the price (blocking sales, never underselling). Members can CANCEL_LISTING and re-list by vote.
+
+## 4d. House-party auction (design; NOT implemented: the Party edit it needs is awaiting approval)
+Applies only to the four house parties (hostless, created at deployment). Hosted parties keep asks only, no auctions.
+- Burn: needs a valid signed floor reading (fresh + monotonic rules). Reserve = 100 × the Credits floor at the burn. The Statement goes to the factory's HouseAuction contract, which holds it until settlement.
+- No end before the first bid: the auction stays open with no deadline until someone bids at or above the reserve. There is **no fallback** to an ask or to price votes, ever: the Statement leaves only through the auction.
+- Timer: 24 h (time-unit scaled on testnet) from the first bid. A bid in the last 5 minutes moves the end to bid time + 5 minutes.
+- Bids: first bid ≥ reserve; each later bid ≥ current high bid + 0.1 ETH.
+- Outbid refunds: the outbid bidder is refunded immediately in the same transaction (push with a gas stipend). If that push fails, the amount is credited to a pull balance the bidder can withdraw at any time, including while the auction is still live. A failing refund never blocks a new bid.
+- Settle: after the end, anyone settles once: the Statement to the winner, the winning bid paid into the party and split exactly like a sale (ERC-2981 royalty capped at 1%, 1% fee, the rest 1/80 per card via claims).
+- During the auction: no price proposals, no raiseAsk, no buy on the party.
+- Accounting invariants: auction balance == current high bid + all pull balances; the Statement is always with the auction, the winner, or (before the burn completes) the party.
 
 ## 4c. Callers and gas
 Every state change is a transaction: someone calls it and pays gas. Rule: once a step is allowed, ANY party member (depositor or Credit Card holder) can call it. No host, arranger, or Statement Maker key is required to move a party forward, so no single absent person can stall it.

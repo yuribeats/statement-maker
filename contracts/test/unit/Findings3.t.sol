@@ -166,10 +166,10 @@ contract Findings3Test is FixesBase {
     function test_royalty_delegatingImplementationPaid() public {
         address artist = makeAddr("artist");
         uint256 snap = vm.snapshotState();
-        Party party = _buyWeird3(6, artist, 0.1 ether);
-        assertEq(party.owed(artist), 0.1 ether);
+        Party party = _buyWeird3(6, artist, 0.02 ether); // under the 1% cap of 3 ETH
+        assertEq(party.owed(artist), 0.02 ether);
         vm.revertToState(snap);
-        party = _buyWeird3(7, artist, 0.1 ether);
+        party = _buyWeird3(7, artist, 0.02 ether);
         assertEq(party.owed(artist), 0);
         assertEq(party.perCard(), (3 ether - 3 ether / 100) / 80);
     }

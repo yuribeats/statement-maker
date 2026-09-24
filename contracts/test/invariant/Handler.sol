@@ -837,7 +837,7 @@ contract Handler is Test {
             vm.warp((extra >> 128) % 4 == 0 && opensAt > block.timestamp + 1 hours ? opensAt - 1 - (extra >> 132) % 1 hours : opensAt + extra % 2 hours);
         }
         address who = _actor(aSeed);
-        uint96 bps = uint96(extra % 2001);
+        uint96 bps = uint96(extra % 301); // 0..3%: both sides of the 1% cap
         address rTo = (extra >> 16) % 4 == 0 ? address(0) : royaltyTo;
         statement.setRoyalty(rTo, bps);
         uint256 maxPrice = (variant >> 4) % 7 == 1 && ask > 0 ? ask - 1 : ask + (extra >> 32) % 1 ether;
@@ -866,7 +866,7 @@ contract Handler is Test {
         uint256 royD = p.owed(royaltyTo) - roy0;
         uint256 fee = ask / 100;
         uint256 wantRoy = rTo == address(0) ? 0 : ask * bps / 10_000;
-        if (wantRoy > ask / 10) wantRoy = ask / 10;
+        if (wantRoy > ask * 100 / 10_000) wantRoy = ask * 100 / 10_000; // ROYALTY_CAP_BPS = 1%
         if (royD != wantRoy) _fail("I5: royalty wrong or above cap");
         if (feeD < fee || feeD - fee >= 80) _fail("I5: fee/dust wrong");
         if (royD + feeD + 80 * p.perCard() != ask) _fail("I5: split does not sum to price");

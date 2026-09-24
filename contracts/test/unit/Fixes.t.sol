@@ -754,11 +754,11 @@ contract FixesSaleTest is FixesBase {
     function test_royalty_wellFormed_longAnswer_zeroReceiver_cap() public {
         address artist = makeAddr("artist");
         uint256 snap = vm.snapshotState();
-        Party party = _buyWeird(5, artist, 0.1 ether); // 96-byte answer: first two words used
-        assertEq(party.owed(artist), 0.1 ether);
+        Party party = _buyWeird(5, artist, 0.02 ether); // 96-byte answer: first two words used
+        assertEq(party.owed(artist), 0.02 ether);
         vm.revertToState(snap);
-        party = _buyWeird(0, artist, 1 ether); // 33% asked, capped at 10%
-        assertEq(party.owed(artist), 0.3 ether);
+        party = _buyWeird(0, artist, 1 ether); // 33% asked, capped at 1%
+        assertEq(party.owed(artist), 0.03 ether);
         vm.revertToState(snap);
         party = _buyWeird(0, address(0), 0.1 ether); // zero receiver: ignored
         assertEq(party.owed(address(0)), 0);
