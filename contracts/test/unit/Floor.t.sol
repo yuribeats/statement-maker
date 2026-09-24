@@ -71,13 +71,13 @@ contract FloorTest is UnitBase {
         _try(f, bad("stale floor"));
     }
 
-    function test_olderThanOneHour() public {
-        Party.Floor memory f = floorAt(5 ether, 0, uint64(block.timestamp - 1 hours - 1), signerKey, factory);
+    function test_olderThanTenMinutes() public {
+        Party.Floor memory f = floorAt(5 ether, 0, uint64(block.timestamp - 10 minutes - 1), signerKey, factory);
         _try(f, bad("stale floor"));
     }
 
-    function test_exactlyOneHourOld_ok() public {
-        Party.Floor memory f = floorAt(5 ether, 0, uint64(block.timestamp - 1 hours), signerKey, factory);
+    function test_exactlyTenMinutesOld_ok() public {
+        Party.Floor memory f = floorAt(5 ether, 0, uint64(block.timestamp - 10 minutes), signerKey, factory);
         _try(f, "");
     }
 

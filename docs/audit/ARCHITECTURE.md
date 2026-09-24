@@ -34,6 +34,8 @@ Jack Butcher's Credits (122,154 sealed ERC-721s) can be burned 80 at a time into
 | `seed` | any | Random preset seed (public) |
 | `defaultPrice` | `PriceSpec` | Goes live at assembly unless a LIST executed while FULL |
 | `floorMode` | Avg24h / Latest | Bound into the floor signature (`mode` field) |
+| `minAskWei` | wei | Lowest ask a **floor-relative** price can resolve to (required > 0 if the default is floor-relative). It never bounds a Fixed price: 41 (60 below the floor) can vote any fixed price. |
+| `buyDelayHours` | 0..72 | Default buy wait. At least 1 for a floor-relative default (also enforced on every floor-relative LIST), so a stale-low reading can be raised with `raiseAsk` before buying opens. |
 
 The first host is `msg.sender` of `PartyFactory.createParty`. Anyone can create a party; no Credit ownership is required. The host can call `transferHost(to)`. There is exactly one host. The host cannot edit params, close the party early, or veto anything.
 
@@ -71,7 +73,7 @@ Notes:
 
 ```
 price = ask (buyer pays msg.value ≥ price; excess refunded by call at the end)
-royalty = min(royaltyInfo(statementId, price).amount, price × 10%)  if the Statement contract answers within 50k gas and receiver ≠ 0
+royalty = min(royaltyInfo(statementId, price).amount, price × 10%)  if the Statement contract answers within 150k gas (ROYALTY_GAS) and receiver ≠ 0
 fee     = price × FEE_BPS / 10_000                                   (FEE_BPS = 100 → 1%)
 pot     = price − royalty − fee
 perCard = pot / 80
@@ -146,7 +148,7 @@ Sequence:
 1. Resolve the live price: `pendingPrice` if one executed while FULL, else `defaultPrice`. Floor-relative prices need a valid floor attestation, or the call reverts.
 2. Effects: `assembled = true`, `_burnOrder`, `ask`, `askSpec`, `askLiveAt = now`, `++priceEpoch`.
 3. `credits.setApprovalForAll(statement, true)`, then `_assembling = true`, then `statement.make(order)`, then `_assembling = false`, then revoke approval.
-4. Verify: `statement.ownerOf(sid) == party`, and for each of the 80, `credits.ownerOf(id)` either reverts (burned) or is not the party. A Credit moved elsewhere passes this check.
+4. Verify: `statement.ownerOf(sid) == party`, and for each of the 80, `credits.ownerOf(id)` reverts with `ERC721NonexistentToken` (selector `0x7e273289`, the mainnet Credits error for a burned or never-minted id, checked on chain 2026-09-24). A Credit that still has any owner, or any other revert, fails with `not burned`.
 
 Measured cost: the worst-case trait preset (80 `CreditArt.describe` calls) is about 11.7M gas on a mainnet fork. That figure comes from the project's own fork measurements and excludes the real Statement contract's `make`. Mainnet block gas limit read on 2026-09-24: 59,882,873.
 
@@ -155,7 +157,7 @@ Measured cost: the worst-case trait preset (80 `CreditArt.describe` calls) is ab
 - The off-chain server takes OpenSea readings every minute and keeps 25 h of them. It produces either a 24 h average or the latest reading, per `floorMode`. The source is the Statement collection floor once it exists, otherwise 80 × the Credits floor (SPEC §13).
 - `floorSigner` (immutable in the factory) signs the EIP-712 message `Floor(uint256 floorWei, uint8 mode, uint64 issuedAt)`. The domain is `name="Statement Maker"`, `version="1"`, plus chainId and the factory address.
 - The message contains **no party address**. One signature is valid for every party with the same `floorMode`.
-- A party accepts a reading if `issuedAt ≤ now`, `now − issuedAt ≤ 1 hour`, the signature recovers to `floorSigner` (`ECDSA.tryRecover`, which rejects malleable signatures), and `floorWei > 0`.
+- A party accepts a reading if `issuedAt ≤ now`, `now − issuedAt ≤ 10 minutes` (`FLOOR_MAX_AGE`, real time), `issuedAt ≥ lastFloorAt` (never older than the last reading this party used), the signature recovers to `floorSigner` (`ECDSA.tryRecover`, which rejects malleable signatures), and `floorWei > 0`.
 - Uses: resolving floor-relative prices at `assemble` and `execute`, the below-floor 60-vote rule at `execute`, and `raiseAsk`.
 - Whoever submits the transaction chooses which valid reading from the last hour to use.
 - `raiseAsk(floor)` (anyone, ASSEMBLED, `ask > 0`, floor-relative `askSpec`) sets the ask to `resolve(askSpec, floor)` only if it is strictly higher. It does not reset `askLiveAt`. Buyers are protected against a same-block raise by `buy(maxPrice)`.

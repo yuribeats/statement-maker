@@ -97,7 +97,7 @@ Burn semantics (`research/Credits.sol` lines 88-102):
 - `burn(address owner_, uint256[] ids) returns (bytes21[] seeds)`
 - Reverts unless `isSealed`, unless `ids` is non-empty, and unless `msg.sender == owner_` or `isApprovedForAll(owner_, msg.sender)`.
 - Every id must be owned by `owner_`. Duplicates revert (O(n²) check). Seeds come back in call order and stay readable in `seedOf` after the burn.
-- A burned id makes `ownerOf` revert (OZ `ERC721NonexistentToken`). `Party.assemble` relies on this.
+- A burned id makes `ownerOf` revert (OZ `ERC721NonexistentToken`, selector `0x7e273289`; confirmed against mainnet Credits 0x9763…3043 on 2026-09-24). `Party.assemble` requires exactly this revert for every one of the 80.
 
 Functions Party uses: `transferFrom` (never `safeTransferFrom`), `ownerOf`, `setApprovalForAll`, `seedOf`, `timestampOf`, `art`. CreditKeys uses `seedOf`, `timestampOf`, and `CreditArt.describe`.
 
@@ -121,7 +121,7 @@ Behavior assumed by `Party.assemble` / `Party.buy`:
 3. The order of `creditIds` is meaningful to the artwork. Unverified: order semantics are unknown.
 4. Contract callers are allowed. If the real contract rejects contract callers (`tx.origin` checks, EOA-only, a signature from the owner), no party can assemble. Parties then expire and every Credit is redeemable (SPEC §2).
 5. The Statement is a standard ERC-721 that `transferFrom(party, buyer, id)` can move with no restrictions. If transfers are restricted, `buy` reverts and the Statement stays in the party forever, because no other exit exists.
-6. Optional `royaltyInfo(tokenId, price)` (ERC-2981) on the Statement contract. It is called with a 50,000-gas stipend inside try/catch, and the result is capped at 10%.
+6. Optional `royaltyInfo(tokenId, price)` (ERC-2981) on the Statement contract. It is called by raw `staticcall` with a 150,000-gas stipend (room for a delegating implementation); a revert, a short or dirty answer, or running out of that gas counts as no royalty. The result is capped at 10%.
 7. `make` does not re-enter the party. Every state-changing entry point except `propose`/`vote`/`countBlocked`/`raiseAsk`/`transferHost` shares one transient reentrancy lock.
 
 `MockStatement` implements exactly 1, 2, 5, and 6. Its `make` requires `ids.length == 80`.

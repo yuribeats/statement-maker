@@ -16,7 +16,7 @@ Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 |---|---|---|
 | OPEN | host opens party | deposit (must meet the party's params) → one Credit Card per Credit; a card's holder may redeem it for its Credit (card burned) |
 | FULL | 80th deposit | redemption closed. Arrangement phase (§5) |
-| ASSEMBLED | vault calls Statement contract with the approved order; Credits burned | governance on the Statement |
+| ASSEMBLED | vault calls Statement contract with the approved order; Credits burned (the vault checks every one of the 80 no longer exists: `Credits.ownerOf` must revert with `ERC721NonexistentToken`, so a Statement contract that keeps or moves the Credits is refused) | governance on the Statement |
 | LISTED / SOLD | passed LIST proposal | anyone buys at the ask. No offers, ever |
 | DISTRIBUTED | sale settles | each card's holder claims 1/80 of net proceeds (card burned on claim) |
 | EXPIRED | deadline passes unfilled or unassembled | each Credit goes to whoever holds its card (any member can push all) |
@@ -67,9 +67,9 @@ Proposal types (closed set, no arbitrary calls):
 - Reason: offer-taking and marketplace mechanics invite predatory lowballs aimed at thin or inattentive parties.
 - Buyer pays the ask in ETH; the Statement transfers in the same transaction; party moves to SOLD.
 - Artist royalty: honored on every sale, paid out of the price in the same `buy()` transaction, before members' proceeds.
-  - Lookup order: the Statement contract's own ERC-2981 `royaltyInfo(tokenId, price)`; if absent, the Royalty Registry engine on mainnet (0x0385603ab55642cb4Dd5De3aE9e306809991804f, verified live on chain), which also covers Manifold/Rarible-style royalty settings and registry overrides.
+  - Lookup: the Statement contract's own ERC-2981 `royaltyInfo(tokenId, price)` only (as implemented; the Royalty Registry engine is not queried directly). The call gets a 150,000-gas stipend, enough for an implementation that delegates (proxy, registry or splitter lookup); a reverting, malformed or more gas-hungry answer counts as no royalty and never blocks the sale.
   - Read at sale time, not at assembly, so a later change by the artist is followed.
-  - Hard cap on the total paid (e.g. 25%) so a faulty or hostile royalty lookup cannot drain the sale.
+  - Hard cap: 10% of the price, so a faulty or hostile royalty lookup cannot drain the sale.
   - Credits itself has none: no ERC-2981 (supportsInterface false) and the engine returns no recipients.
 - Platform fee: 1% of the sale price, paid in the same `buy()` transaction to the fee recipient address.
   - Rate is fixed per party when the party is created; it can never rise for an existing party.
@@ -78,6 +78,9 @@ Proposal types (closed set, no arbitrary calls):
 - Floor-relative asks:
   - Floor data is read off-chain (marketplace APIs, since other Statements will trade there) and averaged over 24 h. This is a data input only; we list nothing there.
   - A keeper updates the on-chain ask as the floor rises. The contract accepts only increases: the ask never goes down. Lowering the price requires a new LIST vote.
+  - Signed readings: a reading is accepted for 10 minutes after it is issued (real time), and never one older than the last reading the party used. The caller of assemble/execute/raiseAsk still chooses among the readings of those 10 minutes (residual cherry-pick, bounded by 10 minutes of floor movement).
+  - A floor-relative price needs a buy wait of at least 1 hour (default at creation and every LIST). Because a reading is only good for 10 minutes, anyone can raise a stale-low ask with a fresher reading before buying opens.
+  - Minimum ask (`minAskWei`): clamps floor-relative prices only. It never bounds a Fixed price: 41 votes (60 below the floor) can still set any fixed price.
 - Manual prices: any member may propose a LIST at any price, including below the floor (fixed ETH, or floor minus ETH/percent). The floor is shown as context, never enforced. Only the pass rule decides.
 - A LIST can be proposed while FULL; it takes effect when the Statement is assembled.
   - The LIST proposal carries an absolute minimum in ETH as the starting ask.
@@ -165,6 +168,7 @@ One page per party: 8×10 frame, member list with Credit Card balances, chat, op
 ## 12. Buyers and cards
 - Statements gallery is buyer-first: For sale (sortable by price or newest, with buy countdowns), Sold, Not listed, Yours. Buy from the Statement page or the party page.
 - Credit Cards are ERC-721s and can be listed and traded on OpenSea or any marketplace. Only the Statement is restricted to sale on Statement Maker.
+- Resale (StatementMarket): a Statement's owner lists at a fixed ask; the token stays in their wallet. A listing is buyable only while the seller owns the token, the market is approved, the listing has not expired, and the seller has not called `cancelAll()` since. Listings expire: `list` = 30 days, `listFor` = seller-chosen, 1 second to 180 days. A listing cannot see transfers, so a token that leaves and returns to the seller revives its old listing within that listing's expiry unless the seller called `cancelAll()` or re-listed.
 - "Try it" page: a browser-only simulation of hosting a party end to end, using real Credits and invented members.
 
 ## 13. Floor

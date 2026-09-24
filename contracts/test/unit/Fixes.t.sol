@@ -539,15 +539,15 @@ contract FixesTest is FixesBase {
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
         p.minAskWei = 1 ether; // fixed 3 ETH default; floor-relative votes still clamp
         (Party party, address[] memory v) = _assembled(p, noFloor(), one(80));
-        uint256 id = _prop(party, v[0], _pct(-5000), 0);
+        uint256 id = _prop(party, v[0], _pct(-5000), 1);
         _end(party, id);
         _ex(party, v[0], id, floorSig(1 gwei, 0));
         assertEq(party.ask(), 1 ether);
-        uint256 id2 = _prop(party, v[0], _delta(-1 ether), 0);
+        uint256 id2 = _prop(party, v[0], _delta(-1 ether), 1);
         _end(party, id2);
         _ex(party, v[0], id2, floorSig(1.5 ether, 0)); // 0.5 ETH resolved
         assertEq(party.ask(), 1 ether);
-        uint256 id3 = _prop(party, v[0], _delta(-1 ether), 0);
+        uint256 id3 = _prop(party, v[0], _delta(-1 ether), 1);
         _end(party, id3);
         _ex(party, v[0], id3, floorSig(4 ether, 0)); // 3 ETH resolved, above the minimum
         assertEq(party.ask(), 3 ether);
@@ -560,7 +560,7 @@ contract FixesTest is FixesBase {
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
         p.minAskWei = 0.8 ether;
         (Party party, address[] memory v) = _assembled(p, noFloor(), c2(59, 21));
-        uint256 id = _prop(party, v[0], _pct(-5000), 0); // 0.5 ETH at a 1 ETH floor, clamped to 0.8 < 1
+        uint256 id = _prop(party, v[0], _pct(-5000), 1); // 0.5 ETH at a 1 ETH floor, clamped to 0.8 < 1
         _end(party, id);
         assertEq(party.needFor(id, 0.8 ether, 1 ether), 60);
         _exFail(party, v[0], id, floorSig(1 ether, 0), bad("did not pass"));
@@ -597,7 +597,7 @@ contract FixesTest is FixesBase {
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
         p.minAskWei = 1 ether;
         (Party party, address[] memory v) = _assembled(p, noFloor(), one(80));
-        uint256 id = _prop(party, v[0], _delta(-2 ether), 0);
+        uint256 id = _prop(party, v[0], _delta(-2 ether), 1);
         _end(party, id);
         _exFail(party, v[0], id, floorSig(1 ether, 0), bad("price <= 0"));
     }
@@ -610,28 +610,28 @@ contract FixesTest is FixesBase {
         (Party party,) = _assembled(p, floorSig(2 ether, 0), one(80));
         uint64 t0 = uint64(block.timestamp);
         assertEq(party.lastFloorAt(), t0, "assembly records the reading it used");
-        vm.warp(t0 + 40 minutes);
-        Party.Floor memory newer = floorAt(3 ether, 0, t0 + 30 minutes, signerKey, factory);
-        Party.Floor memory older = floorAt(4 ether, 0, t0 + 20 minutes, signerKey, factory);
+        vm.warp(t0 + 8 minutes);
+        Party.Floor memory newer = floorAt(3 ether, 0, t0 + 6 minutes, signerKey, factory);
+        Party.Floor memory older = floorAt(4 ether, 0, t0 + 4 minutes, signerKey, factory);
         party.raiseAsk(newer);
-        assertEq(party.lastFloorAt(), t0 + 30 minutes);
+        assertEq(party.lastFloorAt(), t0 + 6 minutes);
         vm.expectRevert(bad("older floor"));
-        party.raiseAsk(older); // fresh (< 1h) and higher, but older than the last reading used
-        Party.Floor memory same = floorAt(3.5 ether, 0, t0 + 30 minutes, signerKey, factory);
+        party.raiseAsk(older); // fresh (< 10 min) and higher, but older than the last reading used
+        Party.Floor memory same = floorAt(3.5 ether, 0, t0 + 6 minutes, signerKey, factory);
         party.raiseAsk(same); // same issuedAt is allowed
         assertEq(party.ask(), 3.5 ether);
     }
 
-    /// Grief (T-4): the executor cannot cherry-pick the lowest reading of the past hour once a newer one was used.
+    /// Grief (T-4): the executor cannot cherry-pick the lowest reading of the past 10 minutes once a newer one was used.
     function test_grief_staleOlderFloorRejectedAtExecute() public {
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
         p.defaultPrice = _pct(0);
         (Party party, address[] memory v) = _assembled(p, floorSig(2 ether, 0), one(80));
-        uint256 id = _prop(party, v[0], _pct(-1000), 0);
+        uint256 id = _prop(party, v[0], _pct(-1000), 1);
         _end(party, id);
         uint64 t = uint64(block.timestamp);
-        Party.Floor memory low = floorAt(1 ether, 0, t - 30 minutes, signerKey, factory);
-        party.raiseAsk(floorAt(5 ether, 0, t - 10 minutes, signerKey, factory)); // a keeper used a newer reading
+        Party.Floor memory low = floorAt(1 ether, 0, t - 8 minutes, signerKey, factory);
+        party.raiseAsk(floorAt(5 ether, 0, t - 4 minutes, signerKey, factory)); // a keeper used a newer reading
         _exFail(party, v[0], id, low, bad("older floor"));
         _ex(party, v[0], id, floorAt(5 ether, 0, t, signerKey, factory));
         assertEq(party.ask(), 4.5 ether);
@@ -696,7 +696,7 @@ contract FixesTest is FixesBase {
 
     function test_floorRelativeNoFloor_rejected() public {
         (Party party, address[] memory v) = assembledWithVoters(one(80));
-        uint256 id = _prop(party, v[0], _delta(1 ether), 0);
+        uint256 id = _prop(party, v[0], _delta(1 ether), 1);
         _end(party, id);
         _exFail(party, v[0], id, noFloor(), bad("stale floor"));
     }

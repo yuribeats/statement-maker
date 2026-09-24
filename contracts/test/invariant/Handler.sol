@@ -305,9 +305,9 @@ contract Handler is Test {
         valid = true;
         kind = kind % 10;
         bool badLen;
-        if (kind == 4) at = uint64(block.timestamp - 1 hours); // boundary: still fresh
+        if (kind == 4) at = uint64(block.timestamp - 10 minutes); // boundary: still fresh (FLOOR_MAX_AGE)
         else if (kind == 5) { at = uint64(block.timestamp + 1); valid = false; } // future
-        else if (kind == 6) { at = uint64(block.timestamp - 1 hours - 1); valid = false; } // stale
+        else if (kind == 6) { at = uint64(block.timestamp - 10 minutes - 1); valid = false; } // stale
         else if (kind == 7) { m = mode ^ 1; valid = false; } // wrong floor mode
         else if (kind == 8) { key = 0xBAD; valid = false; } // forged
         else if (kind == 9) { fw = 0; valid = false; } // signed zero
@@ -356,7 +356,7 @@ contract Handler is Test {
         bool minAskOk = k == 0 || p.minAskWei > 0;
         uint16[6] memory waits = [uint16(0), 1, 1, 24, 72, 73]; // 73 must be refused
         p.buyDelayHours = waits[(durSeed >> 32) % 6];
-        minAskOk = minAskOk && p.buyDelayHours <= 72;
+        minAskOk = minAskOk && p.buyDelayHours <= 72 && (k == 0 || p.buyDelayHours > 0); // floor-relative needs a wait >= 1h
 
         // opening deposit: between minDeposit and everything the host owns (at most 80)
         uint256[] memory owned = credits.tokensOf(who);
@@ -554,7 +554,7 @@ contract Handler is Test {
         }
         bool statusOk = cancel ? (st == Party.Status.ASSEMBLED && p.ask() > 0) : (st == Party.Status.FULL || st == Party.Status.ASSEMBLED);
         bool expected = statusOk && cards.heldNow(address(p), who) > 0 && cards.heldAt(address(p), who, block.number - 1) > 0
-            && open < 3 && (cancel || (_priceOk(price) && h != 25 && d <= 72
+            && open < 3 && (cancel || (_priceOk(price) && h != 25 && d <= 72 && (price.mode == Party.PriceMode.Fixed || d > 0)
                 && (price.mode == Party.PriceMode.Fixed || p.params().minAskWei > 0))); // no lifetime cap; cancels always run 24h; floor-relative needs a host minimum ask
         bool expectDeadlock = _deadlockModel(p);
 
