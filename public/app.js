@@ -883,7 +883,7 @@ async function pageUser(addr) {
 // Signed in, the server's record is what counts (it rejects every party action without it); the browser flag only
 // carries an agreement made before connecting, and is copied to the wallet's record at sign-in.
 // Launch and full launch have separate rules (and versions); the flag is kept per version.
-const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? '2026-09-24.L1' : '2026-09-24.2');
+const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? '2026-09-24.L2' : '2026-09-24.3');
 const localRules = () => { try { return localStorage.getItem(rulesKey()) === '1'; } catch { return false; } };
 const rulesAgreed = () => (me ? !!access.rules : localRules());
 async function syncRules() {
@@ -905,10 +905,10 @@ function pageRulesLaunch() {
    ['05 Order', 'The 80 are arranged in mint order, earliest first. The order cannot be changed.'],
    ['06 Burn', 'Once all 80 are deposited, any card holder can burn them into one Statement. Burning is permanent. Whoever burns pays the gas: about 6–11M gas plus the Statement mint.'],
    ['07 Auction', 'The Statement is sold by auction on Statement Maker. Opening bid: 100 × the Credits floor at the burn. Each bid must be at least 0.1 ETH above the last. The 24-hour clock starts with the first bid. A bid in the last 5 minutes moves the end to 5 minutes after that bid. Outbid bidders are refunded.'],
-   ['08 No bids', 'If nobody bids within 7 days of the burn, card holders set the price by vote. A price passes with 41 of 80 cards voting yes and none voting no; a price below the floor needs 60. After 3 blocked prices or 30 days, 54 yes passes and no votes are ignored. Anyone may then buy at that price on Statement Maker.'],
+   ['08 No bids', 'If nobody bids within 7 days of the burn, anyone can close the auction. The opening bid becomes the price, and anyone may buy at it on Statement Maker from 1 hour later. Card holders may vote a different price: it passes with 41 of 80 cards voting yes and none voting no; a price below the floor needs 60. After 3 blocked prices or 30 days, 54 yes passes and no votes are ignored.'],
    ['09 Sold only here', 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. The buyer owns it and may resell it anywhere.'],
    ['10 The split', '1% of the sale goes to Statement Maker. Any creator royalty the Statement contract declares, up to 10%, is paid first. The rest goes to card holders, 1/80 per card.'],
-   ['11 Deadline', `If a party does not reach 80 by ${dl ? dl : 'its deadline'}, every card can be redeemed for its Credit.`],
+   ['11 Deadline', `If a party is not burned by ${dl ? dl : 'its deadline'}, every card can be redeemed for its Credit.`],
    ['12 Preview', 'Until the Statement contract is published, deposits, bids and sales here are recorded by Statement Maker only. Nothing moves on-chain.'],
   ];
   render(app, `
@@ -967,7 +967,7 @@ function bindRules() {
 
 // ---------- terms ----------
 // Launch phase has its own terms version; only the rows describing party mechanics differ (TERMS_LAUNCH below).
-const termsVer = () => (launchPhase() ? '2026-09-24.L1' : '2026-09-24.2');
+const termsVer = () => (launchPhase() ? '2026-09-24.L2' : '2026-09-24.3');
 const TERMS = [
  ['What Statement Maker is', 'Statement Maker is a tool that lets holders of Credits pool them in groups called parties. When a party collects 80 Credits, the party can burn them to create one Statement and then sell it. Statement Maker provides the website and the smart contracts. It does not hold your Credits or your money; the party contracts do.'],
  ['Not affiliated with Jack Butcher', 'Statement Maker is independent. It is not made, endorsed, or operated by Jack Butcher, jack.art, the Credits project, or X. Credits and Statements are Jack Butcher’s work. We only coordinate holders who choose to use the burn function his contracts provide.'],
@@ -996,7 +996,7 @@ const TERMS = [
 const TERMS_LAUNCH = {
  'How a party works': 'At launch there are four parties, one for each of the four minutes of the Credits mint that produced exactly 80 Credits. Nobody runs them; their settings are fixed and identical. Only a minute’s own 80 Credits can be deposited into its party. Each deposited Credit returns one Credit Card; whoever holds a card can redeem it for its Credit until the party reaches 80. The 80 are arranged in mint order, earliest first, and the order cannot be changed. Once all 80 are deposited, any card holder can burn them into one Statement.',
  'Voting': 'Every Credit Card is one vote. Votes are used only if nobody bids within 7 days of the burn: card holders then set the price by vote. A price passes with 41 of 80 cards voting yes and none voting no within its voting window, which lasts 1 hour to 7 days; a price below the floor needs 60. After 3 blocked prices or 30 days, 54 yes passes and no votes are ignored. Any card holder must then execute a passed price within 7 days or it lapses. A single no vote can block a price, so a Statement can go unsold indefinitely.',
- 'Selling': 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker, by auction: the opening bid is 100 × the Credits floor at the burn, each bid must be at least 0.1 ETH above the last, the 24-hour clock starts with the first bid, and a bid in the last 5 minutes moves the end to 5 minutes after that bid. Outbid bidders are refunded. If nobody bids within 7 days of the burn, card holders set the price by vote and anyone may buy at that price on Statement Maker. After the sale, the buyer owns it and may resell it anywhere.',
+ 'Selling': 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker, by auction: the opening bid is 100 × the Credits floor at the burn, each bid must be at least 0.1 ETH above the last, the 24-hour clock starts with the first bid, and a bid in the last 5 minutes moves the end to 5 minutes after that bid. Outbid bidders are refunded. If nobody bids within 7 days of the burn, anyone can close the auction; the opening bid becomes the price, anyone may buy at it on Statement Maker from 1 hour later, and card holders may vote a different price. After the sale, the buyer owns it and may resell it anywhere.',
  'Members act for themselves': 'Members, card holders, bidders and buyers each act on their own behalf. A party is not a partnership, joint venture, company or fund, and joining one creates no duty of care or trust between members, or between any member and Statement Maker. Voting is a technical mechanism, not a management right.',
  'Burning is permanent': 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party does not reach 80 by its deadline, every card can be redeemed for its Credit.',
 };
