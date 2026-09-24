@@ -219,6 +219,7 @@ async function pageParty(id) {
       <div><span>Hosts</span><strong>${p.hosts.map(short).join(', ')}</strong></div>
       <div><span>Eligible Credits</span><strong>${filterText(p.params.filters)} · ${p.eligible.toLocaleString()}</strong></div>
       <div><span>Vote window</span><strong>${Number(p.params.voteHours || 48)} hours default</strong></div>
+      <div><span>Buy wait</span><strong>${Number(p.params.buyDelayHours ?? 1)} hour${(p.params.buyDelayHours ?? 1) === 1 ? '' : 's'} default</strong></div>
       <div><span>Minimum deposit</span><strong>${Number(p.params.minDeposit)}</strong></div>
       <div><span>Default price</span><strong>${targetText(p.params.target)}${p.params.target.mode !== 'fixed' ? ' · now ' + eth(p.targetEth) : ''}${p.defaultBelowFloor ? ' · <span class="blocked">below floor</span>' : ''}</strong></div>
       <div><span>Arrangement</span><strong${p.manual ? ' class="alert-c"' : ''}>${esc(arrLabel(p.params.arrangement))}${p.manual ? ' · host orders by hand' : ''}${p.assembled && p.orderSource ? ' · burned with ' + esc(p.orderSource === 'Manual' ? 'the host’s order' : arrLabel({ preset: p.orderSource })) : ''}</strong></div>
@@ -297,7 +298,7 @@ async function pageParty(id) {
        const mine = q.votes?.[me];
        const canVote = isMember && !q.executed && !q.closed && !q.superseded && (q.snapshot ? q.snapshot[me] > 0 : true);
        const state = q.executed ? ['Executed', 'done'] : q.superseded ? ['Superseded', 'muted'] : q.lapsed ? ['Lapsed', 'muted'] : q.executable ? ['Passed · execute', 'pass'] : q.no && !q.override ? ['Blocked by no', 'blocked'] : q.closed ? ['Failed', 'muted'] : q.passing ? ['Passing', 'pass'] : ['Voting', 'open'];
-       const what = q.type === 'LIST' ? `Sell for ${eth(priceOf(q.args, p.floorEth))} <span class="faint">(${priceLabel(q.args)})</span> ${vsFloor(priceOf(q.args, p.floorEth), p.floorEth)}` : q.type === 'CANCEL_LISTING' ? 'Cancel the listing' : esc(q.type);
+       const what = q.type === 'LIST' ? `Sell for ${eth(priceOf(q.args, p.floorEth))} <span class="faint">(${priceLabel(q.args)} · buying opens ${Number(q.args.buyDelayHours ?? 1)}h after it goes live)</span> ${vsFloor(priceOf(q.args, p.floorEth), p.floorEth)}` : q.type === 'CANCEL_LISTING' ? 'Cancel the listing' : esc(q.type);
        return `
       <div class="prop s-${state[1]}">
        <div class="prop-head"><span><span class="faint">#${Number(q.id)}</span> <strong>${esc({ NOMINATE_ARRANGER: 'Arranger', APPROVE_ARRANGEMENT: 'Arrangement', LIST: 'Price', CANCEL_LISTING: 'Cancel listing' }[q.type] || q.type)}</strong></span><span class="chip ${state[1]}">${state[0]}</span></div>
@@ -320,6 +321,7 @@ async function pageParty(id) {
      <div class="composer">
       <div class="caption" style="min-height:0"><h2>New proposal</h2></div>
        <div class="field"><label>Price</label><div><div style="display:flex;gap:12px;align-items:center"><select id="pm"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select><input id="pv" type="number" step="0.01" value="${p.floorEth ? (p.floorEth * 1.1).toFixed(2) : 1}" style="width:110px"><span id="pp" class="muted"></span></div><div class="hint" id="ph"></div></div></div>
+      <div class="field"><label>Buy wait, hours</label><div><input id="bw2" type="number" min="0" max="72" value="${Number(p.params.buyDelayHours ?? 1)}" style="width:80px"><div class="hint">Range: 0–72 · voted with this price · party default ${Number(p.params.buyDelayHours ?? 1)}h</div></div></div>
       <div class="field"><label>Voting window</label><div><select id="win">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (p.params.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select><div class="hint">Range: 24 hours – 7 days</div></div></div>
       <div class="actions" style="margin-top:12px"><button type="button" class="cta" id="propose-price" style="margin:0">Propose</button> ${cost('propose')} <span class="hint">Your yes vote is cast automatically.</span></div>
      </div>` : `<p class="note">Only Credit Card holders can propose and vote.</p>`}
@@ -375,7 +377,7 @@ async function pageParty(id) {
     $('#ph').textContent = t.mode === 'fixed' ? 'Range: above 0 ETH' : t.mode === 'floorPct' ? 'Range: above −100% (floor ' + eth(p.floorEth) + ')' : 'Range: above −' + eth(p.floorEth) + ' (floor ' + eth(p.floorEth) + ')';
   };
   if ($('#pm')) { $('#pm').onchange = pricePreview; $('#pv').oninput = pricePreview; pricePreview(); }
-  $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', hours: $('#win')?.value, args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
+  $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', hours: $('#win')?.value, buyDelayHours: Number($('#bw2')?.value ?? 1), args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
   app.querySelectorAll('[data-exec]').forEach(b => b.onclick = () => act('execute', { proposal: b.dataset.exec }, 'vote-err'));
   $('#skip')?.addEventListener('click', async () => { await api('dev/advance', { hours: 24 }); route(); });
   $('#rules-t')?.addEventListener('click', () => { partyUI.rules = !partyUI.rules; route(); });
@@ -414,6 +416,7 @@ async function pageNew() {
     <div class="field"><label for="vh">Vote window</label><div><select id="vh">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (draft.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select>${hint('Range: 24 hours – 7 days · default for this party’s proposals')}</div></div>
     <div class="field"><label>Default arrangement</label><div><div class="chips">${['Deposit', ...Object.keys(PRESETS), 'Manual'].map(k => `<button type="button" data-arr="${k}" aria-pressed="${(draft.arrangement?.preset || 'Rarity') === k}">${k === 'Deposit' ? 'Deposit order' : k}</button>`).join('')}</div><div class="hint${draft.arrangement?.preset === 'Manual' ? ' alert-c' : ''}" id="arr-hint">${draft.arrangement?.preset === 'Manual' ? 'Manual: you will order the 80 by hand and burn in the same step. Nobody else can burn this party.' : 'Fixed at the burn. You are the only arranger; there is no vote on arrangement.'}</div></div></div>
     <div class="field"><label>Floor reference</label><div><div class="chips">${[['avg24h', '24-hour average'], ['latest', 'Latest reading']].map(([k, l]) => `<button type="button" data-fm="${k}" aria-pressed="${(draft.floorMode || 'avg24h') === k}">${l}</button>`).join('')}</div>${hint('Floor = the Statement collection floor once Statements trade; until then 80 × the Credits floor. Read from OpenSea every minute. The average resists one cheap listing moving it; the latest follows the market as it is. Used for floor-based prices and the 60/80 below-floor rule.')}</div></div>
+    <div class="field"><label for="bw">Buy wait, hours</label><div><input id="bw" type="number" min="0" max="72" value="${val(draft.buyDelayHours ?? 1)}">${hint('Range: 0–72 hours · default 1 · how long after a price goes live before anyone can buy. Every price vote can set its own.')}</div></div>
     <div class="field"><label>Default price</label><div>
       <div class="chips">${[['fixed', 'ETH'], ['floorEth', 'Floor + ETH'], ['floorPct', 'Floor + %']].map(([m, l]) => `<button type="button" data-tm="${m}" aria-pressed="${draft.target.mode === m}">${l}</button>`).join('')}</div>
       <input id="tv" type="number" step="0.01" value="${val(draft.target.value)}" style="margin-top:6px"><div class="hint" id="tvh"></div></div></div>
@@ -447,7 +450,7 @@ async function pageNew() {
   </form>`);
   $('#new-form').addEventListener('submit', e => e.preventDefault());
   const read = () => {
-    draft.name = $('#n').value; draft.description = $('#ds').value; draft.voteHours = +$('#vh').value; draft.minDeposit = +$('#md').value || 1; draft.days = +$('#dd').value || 14; draft.target.value = +$('#tv').value || 0;
+    draft.name = $('#n').value; draft.buyDelayHours = Math.max(0, Math.min(72, Math.round(+$('#bw').value || 0))); draft.description = $('#ds').value; draft.voteHours = +$('#vh').value; draft.minDeposit = +$('#md').value || 1; draft.days = +$('#dd').value || 14; draft.target.value = +$('#tv').value || 0;
     const num = id => +$(id).value || undefined;
     Object.assign(draft.filters, { rankMax: num('#rk'), marksMin: num('#mk0'), marksMax: num('#mk1'), idMin: num('#id0'), idMax: num('#id1') });
   };
@@ -507,9 +510,12 @@ async function pageWallet(addr) {
   $('#w').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); go(); } };
 }
 
+// Parties require agreeing to the rules and terms once per browser (the wallet also signs the terms at connect).
+const RULES_KEY = 'sm-rules-ok-' + '2026-09-24';
+const rulesAgreed = () => { try { return localStorage.getItem(RULES_KEY) === '1'; } catch { return false; } };
 function pageRules() {
   render(app, `
-  <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div><a class="cta" href="#/" style="margin:0">Continue to parties →</a></div>
+  <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div></div>
   <div class="works"><div class="rows terms">
    <div><span>01 Open</span><strong>A host opens a party and sets its defaults: which Credits qualify, minimum deposit, default arrangement, default price, voting window, deadline.</strong></div>
    <div><span>02 Deposit</span><strong>Deposit matching Credits. Each one returns a Credit Card (ERC-721). Depositing accepts the party's defaults.</strong></div>
@@ -517,11 +523,13 @@ function pageRules() {
    <div><span>04 Full</span><strong>At 80, redemption closes.</strong></div>
    <div><span>05 Arrange</span><strong>The host is the only arranger. The arrangement is a party setting: an auto-order, or Manual, where the host orders the 80 by hand. There is no vote on arrangement.</strong></div>
    <div><span>06 Assemble</span><strong>Arranging and burning are one step. With an auto-order, any card holder can burn; with Manual, the host burns with their order. The Statement is held by the party and the default price goes live.</strong></div>
-   <div class="rule-strong"><span>07 Sold only here</span><strong>A party sells its Statement only on Statement Maker, at the party’s own price. The party contract has no other way to release it: the party cannot list, offer or auction it on OpenSea or any other marketplace. No offers, no auctions. After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. Buying opens 24 hours after a price goes live. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
+   <div><span>07 Sold only here</span><strong>A party sells its Statement only on Statement Maker, at the party’s own price. The party contract has no other way to release it: the party cannot list, offer or auction it on OpenSea or any other marketplace. No offers, no auctions. Each price carries its own wait before buying opens, voted with the price (the host sets the default, 1 hour unless changed). After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
    <div><span>08 Split</span><strong>1% to Statement Maker, the rest split across the 80 Credit Cards.</strong></div>
    <div><span>09 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
    <div><span>10 Time</span><strong>Votes run 24 hours to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
    <div><span>11 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
+   <div class="agree"><label class="check"><input type="checkbox" id="rules-ok" ${rulesAgreed() ? 'checked' : ''}> <span>I have read the rules and agree to the <a href="#/terms">terms and conditions</a>.</span></label>
+    <button class="cta" id="rules-go" ${rulesAgreed() ? '' : 'disabled'}>Continue to parties →</button></div>
   </div>
   <div class="rows">
    <div><span>Contract</span><strong><a href="https://etherscan.io/address/0x97630aa70ab14ed9883b41dafccbc11349723043" target="_blank" rel="noopener noreferrer">Credits 0x9763…3043, Ethereum ↗</a></strong></div>
@@ -530,6 +538,8 @@ function pageRules() {
    <div><span>Rarity</span><strong>Sum of −log2 frequency over Colors, Print, Weight, Eights</strong></div>
    <div><span>Status</span><strong><span class="demo">Preview</span> · the Statement contract is not published yet · nothing here moves Credits or ETH</strong></div>
   </div></div>`);
+  $('#rules-ok').onchange = e => { try { localStorage.setItem(RULES_KEY, e.target.checked ? '1' : '0'); } catch {} $('#rules-go').disabled = !e.target.checked; };
+  $('#rules-go').onclick = () => { if ($('#rules-ok').checked) location.hash = '#/'; };
 }
 
 // ---------- terms ----------
@@ -791,7 +801,7 @@ async function pageSim() {
         ? `<div class="actions"><span class="blocked">Burning is permanent. 80 Credits become one Statement.</span><button class="cta" id="s-burn">Confirm burn</button><button type="button" id="s-burn-x">Cancel</button></div>`
         : `<div class="actions"><button class="cta" id="s-burn-ask">${sim.arrangement === 'Manual' ? 'Burn with this order' : 'Burn'}</button> ${cost('assemble')}</div>`)
     : sim.step === 'listed' ? `
-      <p>Statement made. Your default price is live: ${eth(listEth)}. Buying opens 24 hours after a price goes live.</p>
+      <p>Statement made. Your default price is live: ${eth(listEth)}. Buying opens 1 hour after a price goes live (the party default).</p>
       <p class="muted">Ola thinks it is too high and proposes 10% below the floor. Below-floor prices need 60 of 80 yes and zero no.</p>
       <div class="actions"><button class="cta" id="s-prop">Ola proposes floor −10%</button><button type="button" id="s-skip">Skip to the sale</button></div>`
     : sim.step === 'vote' ? `
@@ -802,7 +812,7 @@ async function pageSim() {
       <div class="actions">${openProp.votes[SIM_ME] === undefined ? '<button type="button" id="s-yes">Vote yes</button><button type="button" id="s-no">Vote no</button>' : '<button class="cta" id="s-close">Advance 48 hours · close the vote</button>'}</div>`
     : sim.step === 'buy' ? `
       <p>Live price: ${eth(listEth)}${sim.listing.value < 0 ? ' (voted, below floor)' : ' (your default)'}.</p>
-      <div class="actions"><button class="cta" id="s-buy">Advance 24 hours · a buyer pays</button></div>`
+      <div class="actions"><button class="cta" id="s-buy">Advance 1 hour · a buyer pays</button></div>`
     : `
       <p>Sold for ${eth(sim.sold.price)}. 1% to Statement Maker (${eth(sim.sold.price * 0.01)}), then ${eth(perCard)} per Credit Card.</p>
       ${mine.some(c => !sim.claimed.has(c.card)) ? `<button class="cta" id="s-claim">Claim for your ${mine.filter(c => !sim.claimed.has(c.card)).length} cards · ${eth(perCard * mine.filter(c => !sim.claimed.has(c.card)).length)}</button>` : `<p><span class="dot y"></span>Claimed ${eth(perCard * mine.length)}. Your cards are burned. That is the whole cycle.</p><a class="cta" href="#/new">Start a real party →</a>`}`}
@@ -853,7 +863,7 @@ async function pageSim() {
     else simLog(`Vote closed: ${r.yes} yes, ${r.no} no. ${r.no ? 'One no blocks it.' : `Needed ${r.need}.`} The default price stays.`);
     sim.step = 'buy';
   }));
-  $('#s-buy')?.addEventListener('click', go(() => { sim.clock += 24; sim.sold = { price: simPrice(sim.listing) }; sim.step = 'sold'; simLog(`A buyer paid ${eth(sim.sold.price)} on Statement Maker. The Statement is theirs.`); }));
+  $('#s-buy')?.addEventListener('click', go(() => { sim.clock += 1; sim.sold = { price: simPrice(sim.listing) }; sim.step = 'sold'; simLog(`A buyer paid ${eth(sim.sold.price)} on Statement Maker. The Statement is theirs.`); }));
   $('#s-claim')?.addEventListener('click', go(() => { mine.forEach(c => sim.claimed.add(c.card)); simLog(`You claimed ${eth(perCard * mine.length)} for 5 cards. The cards were burned.`); }));
 }
 
@@ -885,6 +895,8 @@ const DEFS = {
   'defaults': 'Settings the host chose when opening the party. They apply automatically.',
   'you': 'How many of this party’s 80 Credit Cards your connected wallet holds.',
   'floor': 'The reference price for a Statement: the Statement collection floor once it exists, 80 × the Credits floor until then. Prices below it need 60 of 80 votes.',
+  'buy wait, hours': 'How long after a price goes live before anyone can buy it. The host sets the default; each price vote can set its own.',
+  'buy wait': 'How long after a price goes live before anyone can buy it. The host sets the default; each price vote can set its own.',
   'approved price': 'The price in force now, set by the host default or by a vote.',
 };
 function addDefs(root = app) {
@@ -916,6 +928,7 @@ async function route() {
   try {
     // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements, Try it and Terms only.
     const gated = !page || page === 'new' || page === 'wallet' || page === 'party';
+    if (gated && !rulesAgreed()) { location.hash = '#/rules'; return; }
     if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page);
     if (page === 'party') await pageParty(arg);
     else if (page === 'new') await pageNew();
