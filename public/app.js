@@ -227,7 +227,7 @@ async function pageParty(id) {
       <div><span>Status</span><strong>${esc(p.status)}</strong></div>
       <div><span>Filled</span><strong>${p.credits.length} / 80</strong></div>
       <div style="border:0;padding:0">${filled(p)}</div>
-      <div><span>Hosts</span><strong>${p.hosts.map(short).join(', ')}</strong></div>
+      <div><span>Hosts</span><strong>${p.hosts.length ? p.hosts.map(short).join(', ') : 'None yet: the first depositor hosts'}</strong></div>
       <div><span>Eligible Credits</span><strong>${filterText(p.params.filters)} · ${p.eligible.toLocaleString()}</strong></div>
       <div><span>Vote window</span><strong>${Number(p.params.voteHours || 48)} hours default</strong></div>
       <div><span>Buy wait</span><strong>${Number(p.params.buyDelayHours ?? 1)} hour${(p.params.buyDelayHours ?? 1) === 1 ? '' : 's'} default</strong></div>
