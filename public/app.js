@@ -745,7 +745,7 @@ const simName = i => ['Ada', 'Bo', 'Cy', 'Dee', 'Eli', 'Fen', 'Gus', 'Hal', 'Ivy
 function simLog(t) { sim.log.unshift({ t, at: sim.clock }); }
 async function simStart(theme, arrangement, pricePct) {
   const filters = { any: {}, cyan: { colors: ['C'] }, misreg: { print: ['Nudge', 'Slip', 'Skew', 'Drift', 'Loose'] }, eights: { eights: [1, 2, 3, 4, 5] } }[theme];
-  const r = await api('eligible', { ...filters, sampleSize: 80, random: true });
+  const r = await api('sim/sample', { theme });
   const floorEth = stats.floor ? stats.floor * SLOTS : 2.4;
   sim = { step: 'deposit', theme, filters, arrangement, price: { mode: 'floorPct', value: pricePct }, floorEth, pool: r.sample, deposits: [], order: null, proposals: [], clock: 0, log: [], listing: null, sold: null, claimed: new Set(), confirm: false };
   simLog(`You opened the party. Arrangement: ${arrangement}. Default price: floor ${pricePct >= 0 ? '+' : '−'} ${Math.abs(pricePct)}%.`);
@@ -778,7 +778,7 @@ async function pageSim() {
     sim = { step: 'setup', form: f };
     app.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { sim.form = { ...f, theme: b.dataset.st, pct: +$('#sp').value }; route(); });
     app.querySelectorAll('[data-sa]').forEach(b => b.onclick = () => { sim.form = { ...f, arrangement: b.dataset.sa, pct: +$('#sp').value }; route(); });
-    $('#sim-go').onclick = async () => { await simStart(f.theme, f.arrangement, Number($('#sp').value) || 0); route(); };
+    $('#sim-go').onclick = async e => { const b = e.currentTarget; b.disabled = true; b.textContent = 'Opening…'; try { await simStart(f.theme, f.arrangement, Number($('#sp').value) || 0); route(); } catch (err) { b.disabled = false; b.textContent = 'Open the party'; b.insertAdjacentHTML('afterend', `<p class="blocked">${esc(err.message)}</p>`); } };
     return;
   }
   const cards = simCards();
