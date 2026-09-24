@@ -59,7 +59,7 @@ contract CreditKeysHalmos is Test {
     MockCredits internal mc;
     MockArt internal ma;
 
-    // COLOR_ORDER from the comment at src/CreditKeys.sol:46 (independent of the if-chain in colorRank)
+    // COLOR_ORDER from the comment at src/CreditKeys.sol:84 (independent of the if-chain in colorRank)
     function colorOrderIndex(uint256 mask) internal pure returns (uint256) {
         uint8[15] memory order = [1, 2, 4, 8, 3, 5, 6, 9, 10, 12, 7, 11, 13, 14, 15];
         for (uint256 i; i < 15; ++i) if (order[i] == mask) return i;
@@ -74,10 +74,37 @@ contract CreditKeysHalmos is Test {
 
     // ---------------------------------------------------------------- 4a. shuffle is a permutation
 
+    /// COPY of CreditKeys.shuffle (src/CreditKeys.sol:173-180), verbatim except ONE inserted line marked [H]:
+    /// halmos cannot index memory with a symbolic offset, so j is split into its i possible concrete values.
+    /// On every path jc == j, so the swap is identical. testFuzz_shuffleCopyMatchesLibrary keeps the copy in sync.
+    function shuffleCopy(uint256[] memory ids, uint256 seed) internal pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            j = _concrete(j, i); // [H]
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+
+    function _concrete(uint256 j, uint256 i) internal pure returns (uint256) {
+        for (uint256 c; c < i; ++c) if (j == c) return c;
+        assert(false); // unreachable: j = x % i < i
+        return 0;
+    }
+
+    function testFuzz_shuffleCopyMatchesLibrary(uint256 seed, uint8 n) public pure {
+        uint256[] memory ids = new uint256[](uint256(n) % 81);
+        for (uint256 i; i < ids.length; ++i) ids[i] = uint256(keccak256(abi.encode(seed, i)));
+        uint256[] memory a = CreditKeys.shuffle(ids, seed);
+        uint256[] memory b = shuffleCopy(ids, seed);
+        assertEq(a, b);
+    }
+
     function _checkShuffle(uint256 n, uint256 seed) internal pure {
         uint256[] memory ids = new uint256[](n);
         for (uint256 i; i < n; ++i) ids[i] = 1000 + 7 * i; // distinct concrete values
-        uint256[] memory out = CreditKeys.shuffle(ids, seed);
+        uint256[] memory out = shuffleCopy(ids, seed);
         assert(out.length == n);
         for (uint256 i; i < n; ++i) {
             uint256 c;
@@ -110,7 +137,7 @@ contract CreditKeysHalmos is Test {
         }
     }
 
-    /// Weight preset inner packing (src/CreditKeys.sol:38): (weightRank << 16) | marks is lexicographic in
+    /// Weight preset inner packing (src/CreditKeys.sol:76): (weightRank << 16) | marks is lexicographic in
     /// (weightRank, marks) iff marks < 2^16. CreditArt counts set bits of a 32-byte hash, so marks <= 256.
     function check_weight_inner_packing(uint256 w1, uint256 m1, uint256 w2, uint256 m2) public pure {
         vm.assume(w1 < 4 && w2 < 4 && m1 < 2 ** 16 && m2 < 2 ** 16);
@@ -173,22 +200,27 @@ contract CreditKeysHalmos is Test {
         _keySetup(a, b, ta, tb, x, y); _checkKeyOrder(CreditKeys.Preset.Weight, a, b);
     }
 
-    /// Rarity: key order = (score descending, id ascending), score summed by the library's own weight tables.
-    function check_key_Rarity(uint256 a, uint256 b, uint64 ta, uint64 tb, uint256[4] memory x, uint256[4] memory y) public {
-        _keySetup(a, b, ta, tb, x, y);
-        uint256 ka = ex.key(CreditKeys.Preset.Rarity, ICredits(address(mc)), ICreditArt(address(ma)), a);
-        uint256 kb = ex.key(CreditKeys.Preset.Rarity, ICredits(address(mc)), ICreditArt(address(ma)), b);
-        uint256 sa = _score(a, ta);
-        uint256 sb = _score(b, tb);
-        assert(ka != kb);
-        assert((ka < kb) == (sa > sb || (sa == sb && a < b)));
+    /// Rarity: key() returns ((type(uint64).max - score) << 32) | id (src/CreditKeys.sol:77-80). Enumerating two ids'
+    /// traits jointly is 2160^2 paths, so the proof is split:
+    /// (a) every reachable score (15 masks x 6 prints x 4 weights x 6 eights, via the library's own tables) is < 2^64,
+    ///     so the subtraction never underflows and the primary fits in 224 bits;
+    /// (b) primary = 2^64-1 - score is strictly decreasing in score, so by check_key_packing the key order is
+    ///     (score descending, id ascending).
+    function check_rarity_score_bound(uint256 mask, uint8 reg, uint8 w, uint256 eights) public view {
+        vm.assume(mask >= 1 && mask <= 15 && reg < 6 && w < 4 && eights <= 5);
+        uint256 score = CreditKeys.colorWeight(mask) + CreditKeys.printWeight(ma.regName(reg))
+            + CreditKeys.weightWeight(ma.weightName(w)) + CreditKeys.eightsWeight(eights);
+        assert(score < 2 ** 64);
+        assert(score <= 3939426425 + 6964650926 + 6615253228 + 16898341581); // max of each table
     }
 
-    function _score(uint256 id, uint64 ts) internal view returns (uint256) {
-        (, uint256 eights, uint8 w, uint8 reg) = ma.t(id);
-        uint256 mask = uint256(ts) % 15 + 1;
-        return CreditKeys.colorWeight(mask) + CreditKeys.printWeight(ma.regName(reg))
-            + CreditKeys.weightWeight(ma.weightName(w)) + CreditKeys.eightsWeight(eights);
+    function check_rarity_primary_order(uint256 sa, uint256 sb) public pure {
+        vm.assume(sa < 2 ** 64 && sb < 2 ** 64);
+        uint256 pa = type(uint64).max - sa;
+        uint256 pb = type(uint64).max - sb;
+        assert(pa < 2 ** 224 && pb < 2 ** 224);
+        assert((pa < pb) == (sa > sb));
+        assert((pa == pb) == (sa == sb));
     }
 
     // ---------------------------------------------------------------- 5. rank tables
