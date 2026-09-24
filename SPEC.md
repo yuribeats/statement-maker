@@ -26,12 +26,7 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 Approvals: a user approves exactly one contract, the PartyFactory (`Credits.setApprovalForAll(factory, true)`, once), never a party or a predicted party address. The factory moves Credits only from its own caller into one of its own parties (`isParty`), and the party records the deposit (`onDeposit`, callable only by the factory) after checking it received each Credit. Opening: `factory.createParty(params, ids, proofs)`. Later deposits: `factory.deposit(party, ids, proofs)`.
 
 ## 3. Hosts and party params
-- The address that opens a party is its first host. Hosts can add or remove hosts (last host cannot leave without naming a replacement).
-- Host privileges:
-  - Set and edit params while OPEN (see below).
-  - Set the deadline; close a party early (triggers EXPIRED, everyone withdraws).
-  - Open proposals.
-  - Moderate the party chat.
+- The address that opens a party is its host (exactly one; `transferHost` hands it on). On-chain host powers are only those listed below under "Host powers"; there is no early close, no param editing after creation, and no host veto. Off-chain the host may moderate the party chat.
 - Params (set by hosts):
   - **Minimum deposit**: fewest Credits one depositor may add. Final slots are exempt: when fewer slots remain than the minimum, the deposit may equal the remainder, so the party can always reach exactly 80.
   - **Target sell price**, one of two modes:
@@ -50,7 +45,7 @@ Approvals: a user approves exactly one contract, the PartyFactory (`Credits.setA
 - Arranging: the host is the ONLY arranger. Arrangement is a party setting: an auto-order preset, or Manual (host orders by hand; flagged cyan in the UI). No arranger or arrangement votes.
 - Arranging and burning are ONE step: auto-order → once FULL any card holder burns and the preset is applied at that moment; Manual → only the host burns, sending the hand-made order in the same call, within 1 day of the party filling (`MANUAL_GRACE`, scaled by the time unit). After that the host has no say: any card holder may burn with the Time order, so a host cannot stall. UI asks for a second confirmation.
 - Host powers, complete list: the params at creation, the Manual order and burn inside that 1-day window, `transferHost`. Nothing else.
-- Buying opens 24 h after a price goes live (default or voted), so card holders can react before a sale.
+- Buying opens after the price's buy wait: voted with each price (0..72 h; at least 1 h for a floor-relative price), host default at creation (the site defaults to 1 h).
 
 ## 4. Party governance (binding, on-chain) — Party-style
 Borrowed from PartyGovernance.sol: propose → vote → close → execute. No host veto, no rage quit (Statements cannot be split back into Credits).
@@ -66,7 +61,7 @@ Proposal types (closed set, no arbitrary calls):
 - Post-assembly: LIST (price rule, duration) · CANCEL_LISTING · DISTRIBUTE
 
 ## 4b. Selling — our site only, asks only
-- The party sells in exactly one place: the vault's `buy()` at the approved price, surfaced on the party page. No OpenSea or other marketplace listings. No offers. No auctions. None of these have a code path in the contracts.
+- Hosted parties sell in exactly one place: the vault's `buy()` at the approved price, surfaced on the party page. No OpenSea or other marketplace listings, no offers, no auctions: none of these have a code path in the Party contract. House parties: English auction per §4d (design, not implemented).
 - Reason: offer-taking and marketplace mechanics invite predatory lowballs aimed at thin or inattentive parties.
 - Buyer pays the ask in ETH; the Statement transfers in the same transaction; party moves to SOLD.
 - No creator royalty: the contracts pay none (Party and StatementMarket never call `royaltyInfo`; a royalty the Statement contract may declare under ERC-2981 is ignored). The `Sold` events keep their `royalty` field for indexers; it is always 0.
@@ -103,24 +98,23 @@ Every state change is a transaction: someone calls it and pays gas. Rule: once a
 |---|---|---|---|
 | factory.createParty(params, ids, proofs) | any Credit holder (becomes host), after approving the factory once | any time | est. ~250k (vault clone; cards share one ERC-721 collection) + the opening deposit |
 | factory.deposit(party, ids, proofs) | the Credits' owner, after approving the factory once | OPEN | ~126k per Credit transfer (measured 125,815) + card mint (est. ~60–90k) |
-| withdraw(ids) | the depositor | OPEN or EXPIRED | ~ same as deposit |
+| redeem(cardIds) | the card holder | OPEN or EXPIRED | ~ same as deposit |
 | propose(type, args) | any member | per state | est. ~80–150k |
 | vote(id, yes) | any member | voting window open | est. ~50–70k |
-| execute(id) | **any member** | voting window closed, YES > 40, NO = 0 | est. ~60–100k (LIST, NOMINATE) |
-| submitArrangement(order) | the arranger (host by default) | FULL | est. ~2M (stores 80 ids) |
+| execute(id, floor) | **any member** | voting window closed, YES ≥ 41 (60 below floor, 54 in deadlock), NO = 0 | est. ~60–100k |
 | assemble() | **any member** | arrangement approved + Statement contract open | burn of 80 measured: 2,576,314, plus the Statement contract's own mint (unknown until it ships) |
 | raiseAsk(floorAttestation) | **any member** | LISTED, floor-relative ask | est. ~60k |
 | buy() | anyone (buyer) | LISTED | est. ~100–200k (fee + transfer) |
 | claimFor(holder) | **anyone**, pays out to the holder | SOLD | est. ~60k per holder |
-| returnCredits(depositor) | **any member**, returns to the depositor | EXPIRED | ~126k per Credit |
+| redeemFor(cardIds) | **anyone**, returns each Credit to its card holder | EXPIRED | ~126k per Credit |
 
 Cost at 0.077 gwei and ETH $2,688: one transfer ≈ $0.03; burn of 80 ≈ $0.53. At a 10 gwei spike: ≈ $3.40 and ≈ $69.
 
 Design consequences:
 - Payouts and refunds are push-to-owner and callable by anyone, so a member who never returns still gets their ETH or Credits.
-- Voting window: fixed (default 48 h). A proposal can only be executed after the window closes, because a single NO anywhere in the window kills it.
-- Floor data is off-chain. raiseAsk takes a floor value signed by the Statement Maker price key; the contract checks the signature and that the new ask is higher. Any member can submit it. Trust point: the key can only ever raise an ask, never lower one or move funds.
-- Arranger stall: if the arranger does not submit within N days of the party filling, members can elect another by vote.
+- Voting window: 1, 24, 48, 72 h or 7 days (default 48 h). A proposal can only be executed after the window closes, because a single NO anywhere in the window kills it.
+- Floor data is off-chain. raiseAsk takes a floor value signed by the Statement Maker price key; the contract checks the signature and that the new ask is higher. Any member can submit it. Trust point: the key also sets floor-relative prices at the burn and at execution and the 41/60 below-floor threshold (see THREAT_MODEL R-4); it cannot move funds.
+- Arranger stall: a Manual host who has not burned within 1 day of FULL loses the order; any card holder burns in Time order.
 - Undecided: reimburse the assemble() caller's gas from sale proceeds (largest single cost), or let the caller absorb it.
 
 ## 5. Arrangement (the 8×10 order)
@@ -179,7 +173,6 @@ One page per party: 8×10 frame, member list with Credit Card balances, chat, op
 - Statements gallery is buyer-first: For sale (sortable by price or newest, with buy countdowns), Sold, Not listed, Yours. Buy from the Statement page or the party page.
 - Credit Cards are ERC-721s and can be listed and traded on OpenSea or any marketplace. Only the Statement is restricted to sale on Statement Maker.
 - Resale (StatementMarket): a Statement's owner lists at a fixed ask; the token stays in their wallet. A listing is buyable only while the seller owns the token, the market is approved, the listing has not expired, and the seller has not called `cancelAll()` since. Listings expire: `list` = 30 days, `listFor` = seller-chosen, 1 second to 180 days. A listing cannot see transfers, so a token that leaves and returns to the seller revives its old listing within that listing's expiry unless the seller called `cancelAll()` or re-listed.
-- "Try it" page: a browser-only simulation of hosting a party end to end, using real Credits and invented members.
 
 ## 13. Floor
 - Readings every minute from OpenSea, kept 25 h. Host picks per party: 24-hour average (default) or latest reading.
