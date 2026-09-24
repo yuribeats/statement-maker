@@ -558,10 +558,12 @@ http.createServer(async (req, res) => {
       return json(res, 200, ids.map(id => ({ ...card(byId.get(id)), deposited: inParty.has(id) })).sort((x, y) => x.rank - y.rank));
     }
     if (a === 'eligible' && req.method === 'POST') {
-      const f = cleanFilters(await body(req));
+      const raw = await body(req);
+      const f = cleanFilters(raw);
       const list = [...byId.values()].filter(c => matches(c, f));
+      const n = int(raw.sampleSize, 1, SLOTS) || 16;
       const owners = new Set(list.map(c => c.owner));
-      return json(res, 200, { count: list.length, owners: owners.size, statements: Math.floor(list.length / SLOTS), sample: list.sort((x, y) => x.rank - y.rank).slice(0, 16).map(c => c.id) });
+      return json(res, 200, { count: list.length, owners: owners.size, statements: Math.floor(list.length / SLOTS), sample: (raw.random ? list.sort(() => Math.random() - 0.5) : list.sort((x, y) => x.rank - y.rank)).slice(0, n).map(c => card(c)) });
     }
     if (a === 'statements') return json(res, 200, state.parties.filter(q => q.assembled).sort((x, y) => x.assembled.number - y.assembled.number).map(view));
     if (a === 'parties' && !b && req.method === 'GET') {
