@@ -81,7 +81,7 @@ contract OneHourWindowTest is FixesBase {
     /// Testnet time unit scales the 1 h window like every other rule window (60 s per hour -> 60 s).
     function test_oneHour_timeUnitScaled() public {
         TestnetPartyFactory tf = new TestnetPartyFactory(
-            ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner, 60
+            ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner, traits, 60
         );
         Party.Params memory p = params(CreditKeys.Preset.Deposit);
         Party party = openPartyWith(tf, p, holders[0], first(holders[0], 60), new bytes32[][](0));

@@ -91,8 +91,7 @@ contract LifecycleTest is Base {
         party.assemble(rev, noFloor());
         vm.prank(WHALE);
         party.assemble(rev, noFloor());
-        uint256[] memory burned = party.burnOrder();
-        assertEq(burned[0], ids[79]);
+        assertEq(party.burnOrderHash(), keccak256(abi.encodePacked(rev)));
     }
 
     function test_redeem_followsTheCard() public {

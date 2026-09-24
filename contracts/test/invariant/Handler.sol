@@ -779,8 +779,7 @@ contract Handler is Test {
         ghostBuyableAt[address(p)] = uint64(block.timestamp + wait * 1 hours);
         if (p.buyableAt() != ghostBuyableAt[address(p)]) _fail("assemble: buyableAt != now + default/pending wait");
         if (p.ask() != wantAsk) _fail("assembled ask != clamped resolved price");
-        uint256[] memory burned = p.burnOrder();
-        for (uint256 i; i < 80; ++i) if (burned[i] != order[i]) return _fail("burn order not stored");
+        if (p.burnOrderHash() != keccak256(abi.encodePacked(order))) return _fail("burn order not recorded");
     }
 
     function _correctOrder(Party.Params memory prm, uint256[] memory dep, uint256 variant)

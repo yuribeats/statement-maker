@@ -16,7 +16,7 @@ contract PartyInvariants is LocalBase {
         super.setUp();
         address[] memory eoas = new address[](6);
         for (uint256 i; i < 6; ++i) eoas[i] = holders[i];
-        h = new Handler(credits, factory, statement, new KeyProbe(), signerKey, feeTo, eoas);
+        h = new Handler(credits, factory, statement, new KeyProbe(traits), signerKey, feeTo, eoas);
 
         // Hostile contracts get Credits from holders 6 and 7: 40 / 40 / 40.
         uint256[] memory c6 = credits.tokensOf(holders[6]);
@@ -154,7 +154,7 @@ contract PartyInvariants is LocalBase {
             } else {
                 assertEq(credits.balanceOf(address(p)), 0, "I3: credits left after burn");
                 assertEq(p.count(), 80, "count after burn");
-                uint256[] memory burned = p.burnOrder();
+                uint256[] memory burned = p.depositOrder(); // the burned set is exactly the deposits
                 assertEq(burned.length, 80, "burn order length");
                 for (uint256 k; k < 80; ++k) {
                     bool exists;

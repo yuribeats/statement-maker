@@ -5,12 +5,21 @@ import {LocalBase} from "../LocalBase.t.sol";
 import {Party} from "../../src/Party.sol";
 import {PartyFactory} from "../../src/PartyFactory.sol";
 import {CreditKeys} from "../../src/CreditKeys.sol";
-import {ICredits, ICreditArt} from "../../src/interfaces/IExternal.sol";
+import {ICredits, ICreditArt, ICreditTraits} from "../../src/interfaces/IExternal.sol";
 
-/// @notice Exposes the library's key() and shuffle() so tests can build the exact preset orders.
+/// @notice The keys Party verifies (the collection's CreditTraits table) and shuffle(), so tests can build the exact
+///         preset orders.
 contract UnitKeyProbe {
-    function key(CreditKeys.Preset p, ICredits c, uint256 id) external view returns (uint256) {
-        return CreditKeys.key(p, c, ICreditArt(c.art()), id);
+    ICreditTraits public immutable traits;
+
+    constructor(ICreditTraits t) {
+        traits = t;
+    }
+
+    function key(CreditKeys.Preset p, ICredits, uint256 id) external view returns (uint256) {
+        uint256[] memory one = new uint256[](1);
+        one[0] = id;
+        return traits.keys(uint8(p), one)[0];
     }
 
     function shuffle(uint256[] memory ids, uint256 seed) external pure returns (uint256[] memory) {
@@ -48,7 +57,7 @@ abstract contract UnitBase is LocalBase {
 
     function setUp() public virtual override {
         super.setUp();
-        probe = new UnitKeyProbe();
+        probe = new UnitKeyProbe(traits);
     }
 
     function bad(string memory why) internal pure returns (bytes memory) {

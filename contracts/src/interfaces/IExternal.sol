@@ -39,3 +39,8 @@ interface IStatement {
     function ownerOf(uint256 id) external view returns (address);
     function transferFrom(address from, address to, uint256 id) external;
 }
+
+/// @notice The sealed per-Credit trait table (CreditTraits). `preset` is a CreditKeys.Preset value.
+interface ICreditTraits {
+    function keys(uint8 preset, uint256[] calldata ids) external view returns (uint256[] memory);
+}

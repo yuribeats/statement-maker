@@ -26,8 +26,8 @@ const nums = body => [...body.matchAll(/return (\d{6,});/g)].map(m => Number(m[1
 const maskOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 const tables = {
   colors: [nums(fnBody('colorWeight')), maskOrder.map(letters)],
-  print: [nums(fnBody('printWeight')), S.PRINT_ORDER],
-  weight: [nums(fnBody('weightWeight')), S.WEIGHT_ORDER],
+  print: [nums(fnBody('printWeightR')), S.PRINT_ORDER], // weights by rank (printWeight(string) delegates to it)
+  weight: [nums(fnBody('weightWeightR')), S.WEIGHT_ORDER],
   eights: [nums(fnBody('eightsWeight')), ['0', '1', '2', '3', '4', '5']],
 };
 let checked = 0;

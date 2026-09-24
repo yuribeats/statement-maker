@@ -6,7 +6,7 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {CreditCards} from "./CreditCards.sol";
 import {Party} from "./Party.sol";
-import {ICredits, IStatement} from "./interfaces/IExternal.sol";
+import {ICredits, IStatement, ICreditTraits} from "./interfaces/IExternal.sol";
 
 /// @title Statement Maker factory
 /// @notice Deploys one Party per party (minimal clone) and the shared Credit Card collection.
@@ -18,6 +18,7 @@ contract PartyFactory is EIP712 {
     Party public immutable implementation;
     address public immutable feeRecipient;
     address public immutable floorSigner;
+    ICreditTraits public immutable traits; // sealed per-Credit trait table the sorted presets verify against
     uint16 public constant FEE_BPS = 100; // 1%
 
     bytes32 public constant FLOOR_TYPEHASH = keccak256("Floor(uint256 floorWei,uint8 mode,uint64 issuedAt)");
@@ -28,8 +29,9 @@ contract PartyFactory is EIP712 {
     event PartyCreated(address indexed party, address indexed host, uint256 index);
 
     /// @param collectionOwner_ becomes CreditCards.owner(): marketplace collection-page editing only, no protocol powers.
-    constructor(ICredits credits_, IStatement statement_, address feeRecipient_, address floorSigner_, address collectionOwner_) EIP712("Statement Maker", "1") {
-        require(address(credits_) != address(0) && address(statement_) != address(0) && feeRecipient_ != address(0) && floorSigner_ != address(0), "zero");
+    constructor(ICredits credits_, IStatement statement_, address feeRecipient_, address floorSigner_, address collectionOwner_, ICreditTraits traits_) EIP712("Statement Maker", "1") {
+        require(address(credits_) != address(0) && address(statement_) != address(0) && feeRecipient_ != address(0) && floorSigner_ != address(0) && address(traits_).code.length > 0, "zero");
+        traits = traits_;
         credits = credits_;
         statement = statement_;
         feeRecipient = feeRecipient_;

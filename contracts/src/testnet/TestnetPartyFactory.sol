@@ -2,15 +2,15 @@
 pragma solidity 0.8.28;
 
 import {PartyFactory} from "../PartyFactory.sol";
-import {ICredits, IStatement} from "../interfaces/IExternal.sol";
+import {ICredits, IStatement, ICreditTraits} from "../interfaces/IExternal.sol";
 
 /// @notice Testnet-only factory: identical parties with a shorter clock, so a full party can be rehearsed in
 ///         minutes. Refuses to deploy on Ethereum mainnet.
 contract TestnetPartyFactory is PartyFactory {
     uint256 internal immutable _unit;
 
-    constructor(ICredits c, IStatement s, address fee, address signer, address collectionOwner, uint256 unit)
-        PartyFactory(c, s, fee, signer, collectionOwner)
+    constructor(ICredits c, IStatement s, address fee, address signer, address collectionOwner, ICreditTraits traits_, uint256 unit)
+        PartyFactory(c, s, fee, signer, collectionOwner, traits_)
     {
         require(block.chainid != 1, "testnet only");
         require(unit > 0 && unit <= 1 hours, "unit");

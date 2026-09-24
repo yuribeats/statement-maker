@@ -51,8 +51,7 @@ contract AssembleTest is UnitBase {
         vm.prank(arranger);
         party.assemble(want, noFloor());
         assertTrue(party.assembled());
-        uint256[] memory burned = party.burnOrder();
-        for (uint256 i; i < 80; ++i) assertEq(burned[i], want[i]);
+        assertEq(party.burnOrderHash(), keccak256(abi.encodePacked(want)));
         // Statement received the seeds in exactly this order
         bytes21[] memory seeds = statement.seedsOf(party.statementId());
         for (uint256 i; i < 80; ++i) assertEq(seeds[i], credits.seedOf(want[i]));
@@ -102,7 +101,7 @@ contract AssembleTest is UnitBase {
         assertEq(cards.heldNow(address(party), arranger), 0);
         vm.prank(arranger);
         party.assemble(mine, noFloor());
-        assertEq(party.burnOrder()[0], dep[79]);
+        assertEq(party.burnOrderHash(), keccak256(abi.encodePacked(mine)));
     }
 
     function test_manual_transferredHostAssembles() public {
@@ -160,8 +159,15 @@ contract AssembleTest is UnitBase {
         uint256[] memory dep = party.depositOrder();
         dep[79] = dep[0];
         vm.prank(arranger);
-        vm.expectRevert(bad("repeat"));
+        vm.expectRevert(bad("order")); // Deposit: must equal the stored order
         party.assemble(dep, noFloor());
+        Party m = newParty(params(CreditKeys.Preset.Manual)); // host holders[0]
+        fill(m);
+        uint256[] memory md = m.depositOrder();
+        md[79] = md[0];
+        vm.prank(holders[0]);
+        vm.expectRevert(bad("repeat"));
+        m.assemble(md, noFloor());
     }
 
     function test_notDeposited() public {
@@ -169,12 +175,19 @@ contract AssembleTest is UnitBase {
         uint256[] memory dep = party.depositOrder();
         dep[40] = first(holders[0], 1)[0];
         vm.prank(arranger);
-        vm.expectRevert(bad("not deposited"));
+        vm.expectRevert(bad("order")); // Deposit: must equal the stored order
         party.assemble(dep, noFloor());
-        dep[40] = 0;
-        vm.prank(arranger);
+        Party m = newParty(params(CreditKeys.Preset.Manual)); // host holders[0]
+        fill(m);
+        uint256[] memory md = m.depositOrder();
+        md[40] = first(holders[4], 1)[0];
+        vm.prank(holders[0]);
         vm.expectRevert(bad("not deposited"));
-        party.assemble(dep, noFloor());
+        m.assemble(md, noFloor());
+        md[40] = 0;
+        vm.prank(holders[0]);
+        vm.expectRevert(bad("not deposited"));
+        m.assemble(md, noFloor());
     }
 
     function test_nonCardHolder_autoPreset() public {

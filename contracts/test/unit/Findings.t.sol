@@ -118,7 +118,7 @@ contract FindingsTest is UnitBase {
     //     make buy() revert forever while decoding royaltyInfo's return value.
     function test_REGRESSION_shortRoyaltyReturnDoesNotBrickBuy() public {
         CatchAllStatement st = new CatchAllStatement(address(credits));
-        PartyFactory f2 = new PartyFactory(ICredits(address(credits)), IStatement(address(st)), feeTo, vm.addr(signerKey), collectionOwner);
+        PartyFactory f2 = new PartyFactory(ICredits(address(credits)), IStatement(address(st)), feeTo, vm.addr(signerKey), collectionOwner, traits);
         Party party = openPartyWith(f2, params(CreditKeys.Preset.Deposit), holders[0], first(holders[0], 60), new bytes32[][](0));
         deposit(party, holders[1], first(holders[1], 20));
         uint256[] memory dep = party.depositOrder();

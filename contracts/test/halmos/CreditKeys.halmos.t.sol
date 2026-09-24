@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {CreditKeys} from "../../src/CreditKeys.sol";
+import {CreditKeysRef} from "../ref/CreditKeysRef.sol";
 import {ICredits, ICreditArt} from "../../src/interfaces/IExternal.sol";
 
 /// Exposes CreditKeys (a library of internal functions) through external calls so reverts can be observed.
@@ -11,7 +12,7 @@ contract CreditKeysExposed {
     function printRank(string memory s) external pure returns (uint256) { return CreditKeys.printRank(s); }
     function weightRank(string memory s) external pure returns (uint256) { return CreditKeys.weightRank(s); }
     function key(CreditKeys.Preset p, ICredits c, ICreditArt a, uint256 id) external view returns (uint256) {
-        return CreditKeys.key(p, c, a, id);
+        return CreditKeysRef.key(p, c, a, id); // reference path (the table must reproduce it)
     }
 }
 

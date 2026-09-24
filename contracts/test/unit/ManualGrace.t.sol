@@ -41,7 +41,7 @@ contract ManualGraceTest is UnitBase {
         party.assemble(time, noFloor());
         vm.prank(host);
         party.assemble(mine, noFloor());
-        assertEq(party.burnOrder()[0], dep[79]);
+        assertEq(party.burnOrderHash(), keccak256(abi.encodePacked(mine)));
     }
 
     function test_manual_afterGrace_anyMemberBurnsTimeOrder() public {
@@ -57,7 +57,7 @@ contract ManualGraceTest is UnitBase {
         party.assemble(other, noFloor());
         vm.prank(holders[2]);
         party.assemble(time, noFloor());
-        assertEq(party.burnOrder()[0], time[0]);
+        assertEq(party.burnOrderHash(), keccak256(abi.encodePacked(time)));
     }
 
     function test_manual_afterGrace_hostHasNoOrderPower() public {

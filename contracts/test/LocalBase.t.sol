@@ -10,6 +10,9 @@ import {CreditCards} from "../src/CreditCards.sol";
 import {CreditKeys} from "../src/CreditKeys.sol";
 import {MockStatement} from "../src/mocks/MockStatement.sol";
 import {ICredits, ICreditArt, IStatement} from "../src/interfaces/IExternal.sol";
+import {CreditTraits} from "../src/CreditTraits.sol";
+import {TraitsTable} from "../script/TraitsTable.sol";
+import {RefProbe} from "./ref/CreditKeysRef.sol";
 
 /// @notice Local harness: deploys Jack's verified Credits source (test/credits, MIT) and distributes synthetic
 ///         Credits, so fuzzing runs fast without an RPC. Same bytecode logic as mainnet; only seeds differ.
@@ -18,6 +21,8 @@ abstract contract LocalBase is Test {
     PartyFactory factory;
     MockStatement statement;
     CreditCards cards;
+    CreditTraits traits; // this collection's sealed trait table, built from its own art (RefProbe.packed)
+    RefProbe ref;
     uint256 signerKey = 0xA11CE;
     address feeTo = makeAddr("fee");
     address collectionOwner = makeAddr("collectionOwner"); // CreditCards.owner(): marketplace page only
@@ -31,9 +36,25 @@ abstract contract LocalBase is Test {
         _distribute(8, 60); // 8 holders × 60 Credits = 480
         credits.seal();
         statement = new MockStatement(address(credits));
-        factory = new PartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner);
+        ref = new RefProbe();
+        traits = buildTraits(ICredits(address(credits)), 480);
+        factory = new PartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner, traits);
         cards = factory.cards();
         _etchMutants(factory);
+    }
+
+    /// The packed trait table of ids 1..n of `c`, from its own art contract, deployed as CreditTraits.
+    function buildTraits(ICredits c, uint256 n) internal returns (CreditTraits) {
+        uint256[] memory ids = new uint256[](n);
+        for (uint256 i; i < n; ++i) ids[i] = i + 1;
+        uint256[] memory v = ref.packed(c, ids);
+        bytes memory t = new bytes(n * 3);
+        for (uint256 i; i < n; ++i) {
+            t[3 * i] = bytes1(uint8(v[i] >> 16));
+            t[3 * i + 1] = bytes1(uint8(v[i] >> 8));
+            t[3 * i + 2] = bytes1(uint8(v[i]));
+        }
+        return TraitsTable.deploy(t);
     }
 
     // ------------------------------------------------------------------ mutation-testing hook

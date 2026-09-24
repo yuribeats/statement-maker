@@ -97,7 +97,8 @@ contract KeysSpecTest is UnitBase {
         ++eightsSeen[r.eights];
 
         assertEq(probe.key(CreditKeys.Preset.Number, c, id), id, "Number");
-        assertEq(probe.key(CreditKeys.Preset.Time, c, id), (uint256(paidAt) << 32) | id, "Time");
+        assertEq(probe.key(CreditKeys.Preset.Time, c, id), id, "Time: ascending id (payment times never decrease with id)");
+        if (id > 1) assertGe(paidAt, c.timestampOf(id - 1), "Time property: paidAt non-decreasing in id");
         assertEq(probe.key(CreditKeys.Preset.Colors, c, id), (ci << 32) | id, "Colors");
         assertEq(probe.key(CreditKeys.Preset.Ink, c, id), (r.marks << 32) | id, "Ink");
         assertEq(probe.key(CreditKeys.Preset.Eights, c, id), ((uint256(type(uint32).max) - r.eights) << 32) | id, "Eights");
@@ -129,12 +130,16 @@ contract KeysSpecTest is UnitBase {
 
     function test_key_rejectsWideIdsAndNonKeyPresets() public {
         ICredits c = ICredits(address(credits));
-        vm.expectRevert(bytes("id"));
+        vm.expectRevert(bad("id"));
         probe.key(CreditKeys.Preset.Number, c, 2 ** 32);
+        vm.expectRevert(bad("id")); // outside the table (ids 1..count)
+        probe.key(CreditKeys.Preset.Rarity, c, 481);
+        vm.expectRevert(bad("id"));
+        probe.key(CreditKeys.Preset.Rarity, c, 0);
         uint256 id = first(holders[0], 1)[0];
         CreditKeys.Preset[3] memory none = [CreditKeys.Preset.Deposit, CreditKeys.Preset.Random, CreditKeys.Preset.Manual];
         for (uint256 i; i < 3; ++i) {
-            vm.expectRevert(bytes("preset"));
+            vm.expectRevert(bad("preset"));
             probe.key(none[i], c, id);
         }
     }

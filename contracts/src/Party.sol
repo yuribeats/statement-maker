@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import {ICredits, ICreditArt, IStatement} from "./interfaces/IExternal.sol";
+import {ICredits, IStatement, ICreditTraits} from "./interfaces/IExternal.sol";
 import {CreditKeys} from "./CreditKeys.sol";
 import {CreditCards} from "./CreditCards.sol";
 
@@ -15,6 +15,7 @@ interface IFactory {
     function feeRecipient() external view returns (address);
     function FEE_BPS() external view returns (uint16);
     function timeUnit() external view returns (uint256);
+    function traits() external view returns (ICreditTraits);
     function isValidFloor(uint256 floorWei, uint8 mode, uint64 issuedAt, bytes calldata sig) external view returns (bool);
 }
 
@@ -118,7 +119,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     // assembly and sale
     bool public assembled;
     uint256 public statementId;
-    uint256[] internal _burnOrder;
+    bytes32 public burnOrderHash; // keccak256(abi.encodePacked(order)); the order itself is in the Assembled event
     bool internal _assembling;
     uint256 public ask; // wei; 0 = not listed
     PriceSpec public askSpec;
@@ -187,7 +188,6 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
     function params() external view returns (Params memory) { return _params; }
     function depositOrder() external view returns (uint256[] memory) { return _order; }
-    function burnOrder() external view returns (uint256[] memory) { return _burnOrder; }
     function count() public view returns (uint256) { return _order.length; }
     function proposalCount() external view returns (uint256) { return _proposals.length; }
     function proposal(uint256 id) external view returns (Proposal memory) { return _proposals[id]; }
@@ -290,7 +290,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
             if (p == CreditKeys.Preset.Manual) p = CreditKeys.Preset.Time;
             if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
         }
-        CreditKeys.verifyOrder(p, credits, _order, order, _params.seed);
+        CreditKeys.verifyOrder(p, factory.traits(), _order, cardOfCredit, order, _params.seed);
 
         // Price that goes live: the one voted while FULL, else the host default. Resolve before external calls.
         PriceSpec memory spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
@@ -299,7 +299,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         // Effects
         assembled = true;
         assembledAt = uint64(block.timestamp);
-        _burnOrder = order;
+        burnOrderHash = keccak256(abi.encodePacked(order));
         ask = price;
         askSpec = spec;
         askLiveAt = uint64(block.timestamp);

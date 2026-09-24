@@ -31,7 +31,8 @@ ce2ff1dc71441941240cdf58b60f3804466fb280d742c8293d3565ee7ce8b686  contracts/src/
 | `contracts/src/Party.sol` | 564 | 456 | One party: deposits, redemption, verified burn, price governance, sale, claims. Deployed as a minimal clone. |
 | `contracts/src/PartyFactory.sol` | 59 | 45 | Deploys party clones, owns the shared card collection, verifies EIP-712 floor signatures. No admin. |
 | `contracts/src/CreditCards.sol` | 120 | 96 | Shared ERC-721 for all parties. Per-party vote checkpoints. On-chain SVG/JSON metadata. |
-| `contracts/src/CreditKeys.sol` | 143 | 121 | Library: arrangement presets, sort keys from on-chain Credits data, rarity table, seeded shuffle. |
+| `contracts/src/CreditKeys.sol` | — | — | Library: arrangement presets, burn-order verification, trait-key formulas, rarity table, seeded shuffle. |
+| `contracts/src/CreditTraits.sol` | — | — | Sealed per-Credit trait table (SSTORE2 chunks) and `keys(preset, ids)`. Data: `contracts/data/keytable/table.bin` (keccak in `table.keccak`), built and verified by `scripts/keytable/`. |
 | `contracts/src/interfaces/IExternal.sol` | 45 | 34 | Interfaces for Credits, CreditArt, the unpublished Statement contract. |
 | **Total** | **931** | **752** | |
 
@@ -99,7 +100,7 @@ Burn semantics (`research/Credits.sol` lines 88-102):
 - Every id must be owned by `owner_`. Duplicates revert (O(n²) check). Seeds come back in call order and stay readable in `seedOf` after the burn.
 - A burned id makes `ownerOf` revert (OZ `ERC721NonexistentToken`, selector `0x7e273289`; confirmed against mainnet Credits 0x9763…3043 on 2026-09-24). `Party.assemble` requires exactly this revert for every one of the 80.
 
-Functions Party uses: `transferFrom` (never `safeTransferFrom`), `ownerOf`, `setApprovalForAll`, `seedOf`, `timestampOf`, `art`. CreditKeys uses `seedOf`, `timestampOf`, and `CreditArt.describe`.
+Functions Party uses: `transferFrom` (never `safeTransferFrom`), `ownerOf`, `setApprovalForAll` (the factory: `transferFrom` from the depositor). CreditKeys no longer calls Credits or the art contract at a burn (trait keys come from CreditTraits). The reference path (`test/ref/CreditKeysRef.sol`, tests and the table generator only) uses `seedOf`, `timestampOf`, and `CreditArt.describe`.
 
 ### 5.3 Statement contract (unpublished; `MockStatement` stands in)
 

@@ -138,7 +138,7 @@ contract Findings3Test is FixesBase {
 
     function _keeperParty(address sink) internal returns (Party party, KeepingStatement st) {
         st = new KeepingStatement(address(credits), sink);
-        PartyFactory f2 = new PartyFactory(ICredits(address(credits)), IStatement(address(st)), feeTo, vm.addr(signerKey), collectionOwner);
+        PartyFactory f2 = new PartyFactory(ICredits(address(credits)), IStatement(address(st)), feeTo, vm.addr(signerKey), collectionOwner, traits);
         party = openPartyWith(f2, params(CreditKeys.Preset.Deposit), holders[0], first(holders[0], 60), new bytes32[][](0));
         deposit(party, holders[1], first(holders[1], 20));
     }

@@ -8,11 +8,22 @@ import {CreditCards} from "../src/CreditCards.sol";
 import {CreditKeys} from "../src/CreditKeys.sol";
 import {MockStatement} from "../src/mocks/MockStatement.sol";
 import {ICredits, ICreditArt, IStatement} from "../src/interfaces/IExternal.sol";
+import {CreditTraits} from "../src/CreditTraits.sol";
+import {TraitsTable} from "../script/TraitsTable.sol";
+import {RefProbe} from "./ref/CreditKeysRef.sol";
 
-/// @notice Exposes the library's key() so tests can build correct preset orders.
+/// @notice The keys Party verifies (the sealed CreditTraits table), so tests can build correct preset orders.
 contract KeyProbe {
-    function key(CreditKeys.Preset p, ICredits c, uint256 id) external view returns (uint256) {
-        return CreditKeys.key(p, c, ICreditArt(c.art()), id);
+    CreditTraits public immutable traits;
+
+    constructor(CreditTraits t) {
+        traits = t;
+    }
+
+    function key(CreditKeys.Preset p, ICredits, uint256 id) external view returns (uint256) {
+        uint256[] memory one = new uint256[](1);
+        one[0] = id;
+        return traits.keys(uint8(p), one)[0];
     }
 
     function shuffle(uint256[] memory ids, uint256 seed) external pure returns (uint256[] memory) {
@@ -31,6 +42,8 @@ abstract contract Base is Test {
     MockStatement statement;
     CreditCards cards;
     KeyProbe probe;
+    CreditTraits traits;
+    RefProbe ref; // the original describe()-based key path, as reference oracle
     uint256 signerKey = 0xA11CE;
     address feeTo = makeAddr("fee");
     address collectionOwner = makeAddr("collectionOwner");
@@ -38,9 +51,11 @@ abstract contract Base is Test {
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_RPC_URL"), FORK_BLOCK);
         statement = new MockStatement(address(CREDITS));
-        factory = new PartyFactory(CREDITS, IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner);
+        traits = TraitsTable.deploy(vm.readFileBinary("data/keytable/table.bin")); // the committed mainnet table
+        factory = new PartyFactory(CREDITS, IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner, traits);
         cards = factory.cards();
-        probe = new KeyProbe();
+        probe = new KeyProbe(traits);
+        ref = new RefProbe();
     }
 
     function params(CreditKeys.Preset arr) internal pure returns (Party.Params memory p) {

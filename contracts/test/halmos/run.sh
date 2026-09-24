@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Halmos proofs for Party/CreditKeys. Usage (from contracts/): bash test/halmos/run.sh [party|keys|shuffle|perm|slow|all]
-#   all   = party + keys + shuffle + perm (about 20 min on an M4 Max; perm N=6 alone is ~2 h, set PERM_MAX=6 to include)
+# Halmos proofs for Party/CreditKeys. Usage (from contracts/): bash test/halmos/run.sh [party|keys|shuffle|slow|all]
+#   all   = party + keys + shuffle
 #   slow  = the direct 256-bit multiply/divide proofs that TIME OUT on every solver tried (kept to re-try new solvers)
 # Builds into a private out/cache dir (other `forge build` runs drop the AST halmos needs) and compiles only src/
 # and test/halmos/, so unrelated test edits cannot break the proof build.
@@ -35,13 +35,9 @@ if on shuffle; then
   done
 fi
 
-# 6: verifyOrder permutation check, N = 3..PERM_MAX; order lengths N-1, N, N+1
-if on perm; then
-  for n in $(seq 3 "${PERM_MAX:-5}"); do
-    "$H" "${C[@]}" --match-contract '^PermutationHalmos$' --match-test "perm_N$n\\(" --loop $(((n + 1) * (n + 1) + 2)) \
-      --array-lengths "stored=$n,order={$((n - 1)),$n,$((n + 1))}"
-  done
-fi
+# 6: (removed) the verifyOrder permutation proof covered the old O(n^2) scan. The current check (membership via the
+#    credit -> card mapping, distinctness via transient marks) uses symbolic mapping keys halmos cannot model
+#    (NotConcreteError); it is covered by test/unit/PermutationFuzz.t.sol against an independent definition.
 
 if [[ $G == slow ]]; then
   "$H" "${C[@]}" --match-contract '^(PartyHalmos|SplitLemmaHalmos)$' --solver bitwuzla --loop 4 --match-test "^check_($SLOW)"

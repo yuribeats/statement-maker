@@ -6,7 +6,7 @@ import {Party} from "../../src/Party.sol";
 import {PartyFactory} from "../../src/PartyFactory.sol";
 import {TestnetPartyFactory} from "../../src/testnet/TestnetPartyFactory.sol";
 import {CreditKeys} from "../../src/CreditKeys.sol";
-import {ICredits, IStatement} from "../../src/interfaces/IExternal.sol";
+import {ICredits, IStatement, ICreditTraits} from "../../src/interfaces/IExternal.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
@@ -720,7 +720,7 @@ contract FixesSaleTest is FixesBase {
     function _weirdParty(uint8 mode, address r, uint256 a) internal returns (Party party, WeirdStatement st) {
         st = new WeirdStatement(address(credits));
         st.set(mode, r, a);
-        PartyFactory f2 = new PartyFactory(ICredits(address(credits)), IStatement(address(st)), feeTo, vm.addr(signerKey), collectionOwner);
+        PartyFactory f2 = new PartyFactory(ICredits(address(credits)), IStatement(address(st)), feeTo, vm.addr(signerKey), collectionOwner, traits);
         party = openPartyWith(f2, params(CreditKeys.Preset.Deposit), holders[0], first(holders[0], 60), new bytes32[][](0));
         deposit(party, holders[1], first(holders[1], 20));
         uint256[] memory dep = party.depositOrder();
@@ -885,7 +885,7 @@ contract FixesSaleTest is FixesBase {
 
     function test_timeUnit_scalesBuyWaitAndGrace() public {
         TestnetPartyFactory tf = new TestnetPartyFactory(
-            ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner, 60
+            ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner, traits, 60
         );
         Party.Params memory p = params(CreditKeys.Preset.Deposit); // 24h wait, 1 day duration below
         p.durationDays = 1;
@@ -986,26 +986,36 @@ contract FixesSaleTest is FixesBase {
 
     function test_verifyOrder_sameRevertDataAsParty() public {
         assertEq(CreditKeys.Bad.selector, Party.Bad.selector);
-        uint256[] memory dep = new uint256[](3);
-        dep[0] = 5;
-        dep[1] = 6;
-        dep[2] = 7;
-        OrderProbe op = new OrderProbe();
+        OrderProbe op = new OrderProbe(c3(5, 6, 7));
         vm.expectRevert(bad("length"));
-        op.verify(CreditKeys.Preset.Deposit, ICredits(address(credits)), dep, c2(5, 6));
+        op.verify(CreditKeys.Preset.Deposit, traits, c2(5, 6));
         vm.expectRevert(bad("repeat"));
-        op.verify(CreditKeys.Preset.Manual, ICredits(address(credits)), dep, c3(5, 5, 6));
+        op.verify(CreditKeys.Preset.Manual, traits, c3(5, 5, 6));
         vm.expectRevert(bad("not deposited"));
-        op.verify(CreditKeys.Preset.Manual, ICredits(address(credits)), dep, c3(5, 6, 8));
+        op.verify(CreditKeys.Preset.Manual, traits, c3(5, 6, 8));
         vm.expectRevert(bad("order"));
-        op.verify(CreditKeys.Preset.Deposit, ICredits(address(credits)), dep, c3(6, 5, 7));
-        op.verify(CreditKeys.Preset.Manual, ICredits(address(credits)), dep, c3(7, 5, 6));
-        op.verify(CreditKeys.Preset.Deposit, ICredits(address(credits)), dep, c3(5, 6, 7));
+        op.verify(CreditKeys.Preset.Deposit, traits, c3(6, 5, 7));
+        vm.expectRevert(bad("order"));
+        op.verify(CreditKeys.Preset.Time, traits, c3(5, 7, 6)); // Time/Number: strictly ascending ids
+        vm.expectRevert(bad("not deposited"));
+        op.verify(CreditKeys.Preset.Number, traits, c3(5, 6, 8));
+        op.verify(CreditKeys.Preset.Manual, traits, c3(7, 5, 6));
+        op.verify(CreditKeys.Preset.Manual, traits, c3(7, 5, 6)); // transient marks are cleared after a check
+        op.verify(CreditKeys.Preset.Deposit, traits, c3(5, 6, 7));
+        op.verify(CreditKeys.Preset.Time, traits, c3(5, 6, 7));
     }
 }
 
+/// Party-shaped storage (deposit order + credit -> card map) for calling CreditKeys.verifyOrder directly.
 contract OrderProbe {
-    function verify(CreditKeys.Preset p, ICredits c, uint256[] memory dep, uint256[] calldata order) external view {
-        CreditKeys.verifyOrder(p, c, dep, order, 0);
+    uint256[] internal dep;
+    mapping(uint256 => uint256) internal cardOf;
+
+    constructor(uint256[] memory ids) {
+        for (uint256 i; i < ids.length; ++i) { dep.push(ids[i]); cardOf[ids[i]] = i + 1; }
+    }
+
+    function verify(CreditKeys.Preset p, ICreditTraits t, uint256[] calldata order) external {
+        CreditKeys.verifyOrder(p, t, dep, cardOf, order, 0);
     }
 }

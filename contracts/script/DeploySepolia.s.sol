@@ -7,7 +7,10 @@ import {TestnetPartyFactory} from "../src/testnet/TestnetPartyFactory.sol";
 import {KeyProbe} from "../src/testnet/KeyProbe.sol";
 import {StatementMarket, IERC721Min} from "../src/StatementMarket.sol";
 import {MockStatement} from "../src/mocks/MockStatement.sol";
-import {ICredits, IStatement} from "../src/interfaces/IExternal.sol";
+import {ICredits, IStatement, ICreditArt} from "../src/interfaces/IExternal.sol";
+import {CreditTraits} from "../src/CreditTraits.sol";
+import {TraitsTable} from "./TraitsTable.sol";
+import {CreditKeysRef} from "../test/ref/CreditKeysRef.sol";
 
 /// @notice Sepolia rehearsal: Jack's verified Credits source (identical code), test Credits, the Statement stand-in,
 ///         and Statement Maker. Refuses to run on any chain but Sepolia.
@@ -24,14 +27,19 @@ contract DeploySepolia is Script {
         // Reuse an already-deployed test Credits + Statement stand-in when given (EXISTING_CREDITS/EXISTING_STATEMENT).
         address existing = vm.envOr("EXISTING_CREDITS", address(0));
         if (existing != address(0)) {
-            TestnetPartyFactory f = new TestnetPartyFactory(ICredits(existing), IStatement(vm.envAddress("EXISTING_STATEMENT")), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), vm.envUint("TIME_UNIT"));
-            KeyProbe kp = new KeyProbe();
+            vm.stopBroadcast();
+            bytes memory t0 = _table(ICredits(existing));
+            vm.startBroadcast();
+            CreditTraits tr0 = TraitsTable.deploy(t0);
+            TestnetPartyFactory f = new TestnetPartyFactory(ICredits(existing), IStatement(vm.envAddress("EXISTING_STATEMENT")), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), tr0, vm.envUint("TIME_UNIT"));
+            KeyProbe kp = new KeyProbe(tr0);
             StatementMarket mk = new StatementMarket(IERC721Min(vm.envAddress("EXISTING_STATEMENT")), feeTo);
             vm.stopBroadcast();
             console2.log("StatementMarket", address(mk));
             console2.log("PartyFactory", address(f));
             console2.log("CreditCards", address(f.cards()));
             console2.log("KeyProbe", address(kp));
+            console2.log("CreditTraits", address(tr0));
             return;
         }
         // Resume with an already-deployed, unsealed test Credits (EXISTING_UNSEALED_CREDITS) if a previous run stopped early.
@@ -54,8 +62,12 @@ contract DeploySepolia is Script {
         }
         credits.seal();
         MockStatement statement = new MockStatement(address(credits));
-        TestnetPartyFactory factory = new TestnetPartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), vm.envUint("TIME_UNIT"));
-        KeyProbe probe = new KeyProbe();
+        vm.stopBroadcast();
+        bytes memory table = _table(ICredits(address(credits)));
+        vm.startBroadcast();
+        CreditTraits traits = TraitsTable.deploy(table); // this collection's own trait table (derived from its art)
+        TestnetPartyFactory factory = new TestnetPartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), traits, vm.envUint("TIME_UNIT"));
+        KeyProbe probe = new KeyProbe(traits);
         StatementMarket market = new StatementMarket(IERC721Min(address(statement)), feeTo);
         vm.stopBroadcast();
 
@@ -65,6 +77,21 @@ contract DeploySepolia is Script {
         console2.log("CreditCards", address(factory.cards()));
         console2.log("KeyProbe", address(probe));
         console2.log("StatementMarket", address(market));
+        console2.log("CreditTraits", address(traits));
+    }
+
+    /// Packed traits of every Credit of `c` (ids 1..supply), from its own art contract (CreditKeysRef.packed).
+    function _table(ICredits c) internal view returns (bytes memory t) {
+        (, bytes memory r) = address(c).staticcall(abi.encodeWithSignature("supply()"));
+        uint256 n = abi.decode(r, (uint256));
+        ICreditArt art = ICreditArt(c.art());
+        t = new bytes(n * 3);
+        for (uint256 id = 1; id <= n; ++id) {
+            uint256 v = CreditKeysRef.packed(c, art, id);
+            t[3 * id - 3] = bytes1(uint8(v >> 16));
+            t[3 * id - 2] = bytes1(uint8(v >> 8));
+            t[3 * id - 1] = bytes1(uint8(v));
+        }
     }
 
     function _seed(uint256 i) internal pure returns (bytes21 s) {

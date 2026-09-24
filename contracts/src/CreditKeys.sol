@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {ICredits, ICreditArt} from "./interfaces/IExternal.sol";
+import {ICreditTraits} from "./interfaces/IExternal.sol";
 
-/// @notice Arrangement presets and their sort keys, computed from on-chain Credits data only.
-///         key() and shuffle() are public, so this library is deployed once and linked (keeps Party under 24 KB).
-///         Every auto arrangement is a strict ascending order of uint256 keys; the low 32 bits of each key are
-///         the Credit id, so keys are unique and ties always break by ascending id.
+/// @notice Arrangement presets and burn-order verification. verifyOrder() and shuffle() are public, so this library
+///         is deployed once and linked (keeps Party under 24 KB).
+///         Every sorted preset is a strict ascending order of uint256 keys; the low 32 bits of each key are the Credit
+///         id, so keys are unique and ties always break by ascending id. Trait keys come from CreditTraits, a sealed
+///         table of every Credit's traits committed once at deployment (the art contract is never called at a burn).
+///         Time: the sealed collection's payment times never decrease with id (verified over all 122,154 Credits,
+///         test/keytable), so payment-time order with id tie-break is exactly ascending id.
 ///         The same orderings are implemented in the site (server.mjs PRESETS) and must stay identical.
 library CreditKeys {
     enum Preset {
         Deposit, // deposit order (verified against the stored order, no keys)
         Number, // id ascending
-        Time, // payment time ascending
+        Time, // payment time ascending, ties by id == ascending id on the sealed collection
         Rarity, // rarity score descending
         Colors, // plate combination, COLOR_ORDER
         Print, // registration, most misregistered first
@@ -28,22 +31,24 @@ library CreditKeys {
     /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
     error Bad(string why);
 
-    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
-    ///         the preset produces. Manual accepts any permutation.
-    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+    /// @notice Reverts unless `order` is exactly the party's deposited ids and, for every preset but Manual, exactly
+    ///         the order that preset produces. `deposited` is the party's stored deposit order and `cardOf` its
+    ///         credit -> card map (nonzero iff deposited). Cheap checks only:
+    ///         - Deposit: order == deposited. Random: order == shuffle(deposited, seed).
+    ///         - Number, Time: ids strictly ascending. Trait presets: CreditTraits keys strictly ascending.
+    ///           Strictly ascending implies distinct; with every id deposited and length == deposited.length, the
+    ///           order is a permutation of the deposits.
+    ///         - Manual: every id deposited and distinct (transient marks), length == deposited.length.
+    function verifyOrder(
+        Preset p,
+        ICreditTraits traits,
+        uint256[] storage deposited,
+        mapping(uint256 => uint256) storage cardOf,
+        uint256[] calldata order,
+        uint256 seed
+    ) public {
         uint256 n = deposited.length;
         if (order.length != n) revert Bad("length");
-        uint256[3] memory seen;
-        for (uint256 i; i < n; ++i) {
-            uint256 pos = type(uint256).max;
-            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
-            if (pos == type(uint256).max) revert Bad("not deposited");
-            uint256 w = pos >> 8;
-            uint256 bit = 1 << (pos & 255);
-            if (seen[w] & bit != 0) revert Bad("repeat");
-            seen[w] |= bit;
-        }
-        if (p == Preset.Manual) return;
         if (p == Preset.Deposit) {
             for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
             return;
@@ -53,32 +58,49 @@ library CreditKeys {
             for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
             return;
         }
-        ICreditArt art = ICreditArt(credits.art());
-        uint256 prev = key(p, credits, art, order[0]);
-        for (uint256 i = 1; i < n; ++i) {
-            uint256 k = key(p, credits, art, order[i]);
-            if (k <= prev) revert Bad("order");
-            prev = k;
+        for (uint256 i; i < n; ++i) if (cardOf[order[i]] == 0) revert Bad("not deposited");
+        if (p == Preset.Manual) {
+            for (uint256 i; i < n; ++i) {
+                uint256 id = order[i];
+                uint256 seen;
+                assembly { seen := tload(id) } // ids < 2^32: never collides with the reentrancy guard's hashed slot
+                if (seen != 0) revert Bad("repeat");
+                assembly { tstore(id, 1) }
+            }
+            for (uint256 i; i < n; ++i) {
+                uint256 id = order[i];
+                assembly { tstore(id, 0) }
+            }
+            return;
         }
+        if (p == Preset.Number || p == Preset.Time) {
+            for (uint256 i = 1; i < n; ++i) if (order[i] <= order[i - 1]) revert Bad("order");
+            return;
+        }
+        uint256[] memory k = traits.keys(uint8(p), order);
+        for (uint256 i = 1; i < n; ++i) if (k[i] <= k[i - 1]) revert Bad("order");
     }
 
-    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
-        require(id < 2 ** ID_BITS, "id");
-        if (p == Preset.Number) return id;
-        uint64 paidAt = credits.timestampOf(id);
-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+    /// @notice Sort key of one Credit from its packed traits (CreditTraits layout): marks (8 bits) | mask (4) |
+    ///         eights (4) | printRank (4) | weightRank (4), most significant first. Number/Time: the id itself.
+    function traitKey(Preset p, uint256 id, uint256 packed) internal pure returns (uint256) {
+        if (id >= 2 ** ID_BITS) revert Bad("id");
+        if (p == Preset.Number || p == Preset.Time) return id;
+        uint256 marks = packed >> 16;
+        uint256 mask = (packed >> 12) & 15;
+        uint256 eights = (packed >> 8) & 15;
+        uint256 pr = (packed >> 4) & 15;
+        uint256 wr = packed & 15;
         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
-        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
-        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
-        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Ink) return (marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - pr) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((wr << 16) | marks) << ID_BITS) | id;
         if (p == Preset.Rarity) {
-            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            uint256 score = colorWeight(mask) + printWeightR(pr) + weightWeightR(wr) + eightsWeight(eights);
             return ((type(uint64).max - score) << ID_BITS) | id;
         }
-        revert("preset");
+        revert Bad("preset");
     }
 
     // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
@@ -142,21 +164,29 @@ library CreditKeys {
     }
 
     function printWeight(string memory reg) internal pure returns (uint256) {
-        uint256 r = printRank(reg);
+        return printWeightR(printRank(reg));
+    }
+
+    function printWeightR(uint256 r) internal pure returns (uint256) {
         if (r == 0) return 195465472;
         if (r == 1) return 4661729380;
         if (r == 2) return 4640364522;
         if (r == 3) return 5366472805;
         if (r == 4) return 6072587748;
-        return 6964650926;
+        if (r == 5) return 6964650926;
+        revert Bad("print");
     }
 
     function weightWeight(string memory w) internal pure returns (uint256) {
-        uint256 r = weightRank(w);
+        return weightWeightR(weightRank(w));
+    }
+
+    function weightWeightR(uint256 r) internal pure returns (uint256) {
         if (r == 0) return 2887813475;
         if (r == 1) return 1831411512;
         if (r == 2) return 801626426;
-        return 6615253228;
+        if (r == 3) return 6615253228;
+        revert Bad("weight");
     }
 
     function eightsWeight(uint256 e) internal pure returns (uint256) {
@@ -171,6 +201,10 @@ library CreditKeys {
 
     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
     function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        return _shuffle(ids, seed);
+    }
+
+    function _shuffle(uint256[] memory ids, uint256 seed) private pure returns (uint256[] memory out) {
         out = new uint256[](ids.length);
         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
         for (uint256 i = out.length; i > 1; --i) {

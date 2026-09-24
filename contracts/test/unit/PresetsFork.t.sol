@@ -41,8 +41,7 @@ contract PresetsForkTest is Base {
         }
         vm.prank(WHALE);
         party.assemble(want, noFloor());
-        uint256[] memory burned = party.burnOrder();
-        for (uint256 i; i < 80; ++i) assertEq(burned[i], want[i]);
+        assertEq(party.burnOrderHash(), keccak256(abi.encodePacked(want)));
     }
 
     function _copy(uint256[] memory a) internal pure returns (uint256[] memory b) {

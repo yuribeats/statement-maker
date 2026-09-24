@@ -93,7 +93,7 @@ contract FloorTest is UnitBase {
 
     function test_otherFactoryDomain() public {
         PartyFactory f2 = new PartyFactory(
-            ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner
+            ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner, traits
         );
         Party.Floor memory f = floorAt(5 ether, 0, uint64(block.timestamp), signerKey, f2);
         assertTrue(f2.isValidFloor(5 ether, 0, f.issuedAt, f.sig));

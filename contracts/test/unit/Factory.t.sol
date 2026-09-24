@@ -26,27 +26,27 @@ contract FactoryTest is UnitBase {
 
     function test_ctor_zeroCredits() public {
         vm.expectRevert(bytes("zero"));
-        new PartyFactory(ICredits(address(0)), S, feeTo, signer, collectionOwner);
+        new PartyFactory(ICredits(address(0)), S, feeTo, signer, collectionOwner, traits);
     }
 
     function test_ctor_zeroStatement() public {
         vm.expectRevert(bytes("zero"));
-        new PartyFactory(C, IStatement(address(0)), feeTo, signer, collectionOwner);
+        new PartyFactory(C, IStatement(address(0)), feeTo, signer, collectionOwner, traits);
     }
 
     function test_ctor_zeroFee() public {
         vm.expectRevert(bytes("zero"));
-        new PartyFactory(C, S, address(0), signer, collectionOwner);
+        new PartyFactory(C, S, address(0), signer, collectionOwner, traits);
     }
 
     function test_ctor_zeroSigner() public {
         vm.expectRevert(bytes("zero"));
-        new PartyFactory(C, S, feeTo, address(0), collectionOwner);
+        new PartyFactory(C, S, feeTo, address(0), collectionOwner, traits);
     }
 
     function test_ctor_zeroCollectionOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0)));
-        new PartyFactory(C, S, feeTo, signer, address(0));
+        new PartyFactory(C, S, feeTo, signer, address(0), traits);
     }
 
     function test_ctor_wiring() public view {
