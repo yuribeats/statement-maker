@@ -882,7 +882,7 @@ async function pageUser(addr) {
 // Signed in, the server's record is what counts (it rejects every party action without it); the browser flag only
 // carries an agreement made before connecting, and is copied to the wallet's record at sign-in.
 // Launch and full launch have separate rules (and versions); the flag is kept per version.
-const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? '2026-09-24.L4' : '2026-09-24.4');
+const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? '2026-09-24.L5' : '2026-09-24.4');
 const localRules = () => { try { return localStorage.getItem(rulesKey()) === '1'; } catch { return false; } };
 const rulesAgreed = () => (me ? !!access.rules : localRules());
 async function syncRules() {
@@ -897,7 +897,7 @@ const agreeRow = () => `<div class="agree"><label class="check"><input type="che
 function pageRulesLaunch() {
   const dl = stats?.launchDeadline ? new Date(stats.launchDeadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
   const rows = [
-   ['01 Four parties', 'Four minutes of the Credits mint each produced exactly 80 Credits: 13:49, 15:05, 15:28 and 16:22 UTC on September 21, 2026. Each minute is one party. Only its 80 Credits can be deposited.'],
+   ['01 Four parties', 'Four minutes of the Credits mint each produced exactly 80 Credits: 13:49, 15:05, 15:28 and 16:22 UTC on September 21, 2026. Each minute is one party. Only its 80 Credits can be deposited per party.'],
    ['02 Deposit', 'Holders deposit any number of their Credits from that minute. Each deposited Credit returns one Credit Card.'],
    ['03 The card', 'Whoever holds a Credit Card can redeem it for its Credit until the party reaches 80, and receives 1/80 of the sale. Cards can be transferred.'],
    ['04 Order', 'The 80 are arranged in mint order, earliest first. The order cannot be changed.'],
@@ -959,7 +959,7 @@ function bindRules() {
     if (me) try { await api('rules', { accept: on }); access.rules = on; $('#rules-err').textContent = ''; } catch (x) { $('#rules-err').textContent = x.message; e.target.checked = !!access.rules; }
     $('#rules-go').disabled = !rulesAgreed(); applyNav();
   };
-  $('#rules-go').onclick = () => { if (!rulesAgreed()) return; const to = afterRules && afterRules !== '#/rules' ? afterRules : '#/'; afterRules = null; location.hash = to; };
+  $('#rules-go').onclick = () => { if (!rulesAgreed()) return; const to = afterRules && afterRules !== '#/rules' && afterRules !== '#/' ? afterRules : home(); afterRules = null; location.hash = to; };
 }
 
 // ---------- terms ----------
@@ -1045,7 +1045,8 @@ function openTermsModal(address, mode = 'sim') {
       } else {
         who = (await api('auth/dev', { address, accept: $('#agree').checked })).address;
       }
-      close(); setMe(who);
+      close(); await setMe(who);
+      if (!location.hash.replace(/^#\/?/, '')) location.hash = home(); // signed in from the landing: continue into the site
     } catch (e) { $('#t-err').textContent = e.message; }
   };
   $('#agree').focus?.();
@@ -1226,6 +1227,7 @@ new MutationObserver(() => addDefs()).observe(app, { childList: true, subtree: t
 // While stats.partiesUnlocked is false the site shows The Four instead of the parties list, a Minute page per party,
 // and hides starting parties and the Credits lookup. The full-launch pages above stay as they are and return by themselves.
 const launchPhase = () => !stats?.partiesUnlocked;
+const home = () => (launchPhase() ? '#/four' : '#/parties');
 // Nav: launch or full-launch links, party links only after the Rules agreement, Profile only when signed in.
 function applyNav() {
   const l = launchPhase(), ok = !me || rulesAgreed(); // view only (no wallet) may read every page
@@ -1291,7 +1293,7 @@ function lookupBox(el, L) {
 async function pageMinute(key) {
   const L = await launchData();
   const m = L.minutes.find(x => minuteKey(x) === key);
-  if (!m || !m.party) return render(app, `<div class="intro"><div><h1>No such minute</h1><p class="muted"><a href="#/">The Four →</a></p></div></div>`);
+  if (!m || !m.party) return render(app, `<div class="intro"><div><h1>No such minute</h1><p class="muted"><a href="#/four">The Four →</a></p></div></div>`);
   const open = m.status === 'OPEN', remaining = SLOTS - m.filled;
   const free = me && open ? m.cells.filter(c => !c.in && c.owner === me) : [];
   const freeIds = new Set(free.map(c => c.id));
@@ -1372,7 +1374,7 @@ async function pageMinute(key) {
 function pageLater() {
   render(app, `
   <div class="intro"><div><h1>Not open</h1><p class="muted">Only the four parties are open now.</p></div></div>
-  <div class="actions"><a class="cta" href="#/" style="margin:0">The Four →</a></div>`);
+  <div class="actions"><a class="cta" href="#/four" style="margin:0">The Four →</a></div>`);
 }
 
 // ---------- deploy check: a tab left open across a deploy reloads itself instead of running stale code ----------
@@ -1390,14 +1392,15 @@ async function route() {
   // A bare URL opens "#/". Not signed in, "#/" is the landing: the name and Connect wallet, nothing else. After
   // connecting (and accepting the terms) it continues to the Rules, then The Four (or the parties list after launch).
   if (!location.hash) { location.replace('#/'); return; }
-  const bare = !page && !me && !viewOnly();
+  // The bare URL is always the landing: the name and Connect wallet (Enter when already signed in).
+  const bare = !page;
   document.body.classList.toggle('bare', bare);
-  if (bare) { clearInterval(auctionTick); return render(app, `<div class="landing"><h1>Statement Maker</h1><button type="button" class="cta" data-switch-wallet>Connect wallet</button><button type="button" class="view-only" id="view-only">View only</button></div>`), $('#view-only').onclick = () => { try { sessionStorage.setItem(VIEW_KEY, '1'); } catch {} route(); }; }
+  if (bare) { clearInterval(auctionTick); return render(app, `<div class="landing"><h1>Statement Maker</h1>${me ? `<a class="cta" href="${home()}">Enter</a>` : '<button type="button" class="cta" data-switch-wallet>Connect wallet</button><button type="button" class="view-only" id="view-only">View only</button>'}</div>`), $('#view-only') && ($('#view-only').onclick = () => { try { sessionStorage.setItem(VIEW_KEY, '1'); } catch {} location.hash = home(); }); }
   applyPhase();
   const launch = launchPhase();
   // Launch phase: a Minute party's generic page opens as its Minute page.
   if (launch && page === 'party' && /^minute-\d{4}$/.test(arg || '')) { location.replace('#/minute/' + arg.slice(7)); return; }
-  const navKey = launch && (!page || page === 'minute') ? 'four' : page === 'party' ? 'parties' : (page || 'parties');
+  const navKey = launch && (page === 'four' || page === 'minute') ? 'four' : page === 'party' ? 'parties' : page;
   document.querySelectorAll('[data-nav]').forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === navKey));
   const uiKey = page === 'party' || page === 'minute' ? page + '/' + arg : null;
   if (!uiKey || uiKey !== lastParty) partyUI = freshUI();
@@ -1407,12 +1410,14 @@ async function route() {
     // list, other party pages and the Credits lookup open after the first Statement.
     // Party pages (The Four, Minute and party pages, Start a party, Credits) need the Rules agreement first.
     // View-only visitors (no wallet) read them without it; every action needs a wallet, then the agreement.
-    if (me && (['minute', 'party', 'new', 'wallet'].includes(page) || !page) && !rulesAgreed()) return toRules();
+    if (me && ['minute', 'party', 'new', 'wallet', 'four', 'parties'].includes(page) && !rulesAgreed()) return toRules();
     if (page === 'minute') return await pageMinute(arg);
     if (launch && (page === 'new' || page === 'wallet' || page === 'party' || page === 'u')) return pageLater();
-    if (launch && !page) return await pageFour();
+    if (page === 'four' && !launch) { location.replace('#/parties'); return; }
+    if (page === 'parties' && launch) { location.replace('#/four'); return; }
+    if (page === 'four') return await pageFour();
     // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements and Terms only.
-    const gated = !page || page === 'new' || page === 'wallet' || page === 'party';
+    const gated = page === 'parties' || page === 'new' || page === 'wallet' || page === 'party';
     if (gated && me && !rulesAgreed()) return toRules();
     if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page, arg);
     if (page === 'party') await pageParty(arg);
