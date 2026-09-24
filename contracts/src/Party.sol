@@ -47,10 +47,10 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint256 public constant DEADLOCK_BLOCKS = 3;
     uint256 public constant DEADLOCK_TIME = 30 days;
     uint256 public constant EXECUTE_WINDOW = 7 days;
-    uint256 public constant BUY_DELAY = 24 hours;
+    uint256 public constant BUY_DELAY = 26 hours; // longer than the 24-hour cancel window, so a cancel can land before buying opens
+    uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
     uint256 public constant FLOOR_MAX_AGE = 1 hours;
     uint256 public constant ROYALTY_CAP_BPS = 1000;
-    uint256 public constant MAX_PROPOSALS = 256;
     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
 
     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
@@ -72,6 +72,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         uint256 seed; // for Random
         PriceSpec defaultPrice;
         FloorMode floorMode;
+        uint256 minAskWei; // lowest ask any floor-relative price can resolve to (required > 0 if the default is floor-relative)
     }
 
     struct Proposal {
@@ -95,6 +96,9 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint64 public createdAt;
     uint64 public deadline;
     uint64 public fullAt;
+    uint64 public assembledAt;
+    uint64 public lastFloorAt; // floor readings may never go back in time
+    bool internal _opened; // the host's opening deposit has been made
     /// @notice Seconds per "hour" for every rule window (buy delay, votes, lapse, deadlock, deadline). 3600 on mainnet;
     ///         a testnet factory may set it lower so a full party can be rehearsed in minutes. Floor-signature age is
     ///         always real time.
@@ -128,8 +132,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
     uint64 public lastPriceExecutedAt;
     uint256 public blockedPriceProposals;
     mapping(uint256 id => bool) public blockedCounted;
-    mapping(address => uint256) public openBy;
-    mapping(uint256 id => bool) internal _openCounted;
+    mapping(address => uint256[]) internal _openIds; // each proposer's open proposals (at most MAX_OPEN_PER_PROPOSER)
 
     event Deposited(address indexed by, uint256 indexed creditId, uint256 indexed cardId);
     event Redeemed(address indexed to, uint256 indexed creditId, uint256 indexed cardId);
@@ -141,6 +144,9 @@ contract Party is Initializable, ReentrancyGuardTransient {
     event Sold(address indexed buyer, uint256 price, uint256 royalty, uint256 fee, uint256 perCard);
     event Claimed(address indexed to, uint256 indexed cardId, uint256 amount);
     event HostTransferred(address indexed from, address indexed to);
+    event BlockedCounted(uint256 indexed id, uint256 total);
+    event PendingPriceSet(uint256 indexed id, PriceMode mode, int256 value);
+    event Withdrawn(address indexed to, uint256 amount);
 
     error Bad(string why);
 
@@ -159,6 +165,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (p.durationDays == 0 || p.durationDays > 60) revert Bad("duration");
         if (!_windowOk(p.voteHours)) revert Bad("voteHours");
         _checkPrice(p.defaultPrice);
+        if (p.defaultPrice.mode != PriceMode.Fixed && p.minAskWei == 0) revert Bad("minAsk");
         if (bytes(p.name).length == 0 || bytes(p.name).length > 60) revert Bad("name");
         if (bytes(p.description).length > 1000) revert Bad("description");
         host = host_;
@@ -191,8 +198,21 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
     // ------------------------------------------------------------------ deposits
 
+    /// @notice The host's opening deposit, made by the factory in the same transaction that creates the party.
+    ///         The host must have approved this (predicted) party address on Credits beforehand.
+    function openDeposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
+        if (msg.sender != address(factory) || _opened || from != host) revert Bad("opening");
+        _opened = true;
+        _deposit(from, ids, proofs);
+    }
+
     /// @notice Pull `ids` from the caller (needs setApprovalForAll on Credits for this party) and mint one card each.
     function deposit(uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
+        if (!_opened) revert Bad("not opened");
+        _deposit(msg.sender, ids, proofs);
+    }
+
+    function _deposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) internal {
         if (status() != Status.OPEN) revert Bad("not open");
         uint256 remaining = SLOTS - _order.length;
         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
@@ -205,16 +225,20 @@ contract Party is Initializable, ReentrancyGuardTransient {
                 bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(id))));
                 if (!MerkleProof.verifyCalldata(proofs[i], _params.eligibleRoot, leaf)) revert Bad("not eligible");
             }
-            credits.transferFrom(msg.sender, address(this), id); // reverts unless the caller owns it and approved us
+            credits.transferFrom(from, address(this), id); // reverts unless `from` owns it and approved us
             if (credits.ownerOf(id) != address(this)) revert Bad("not received");
-            uint256 card = cards.mint(msg.sender);
+            uint256 card = cards.mint(from);
             cardOfCredit[id] = card;
             creditOfCard[card] = id;
             _order.push(id);
             ++cardsOutstanding;
-            emit Deposited(msg.sender, id, card);
+            emit Deposited(from, id, card);
         }
-        if (_order.length == SLOTS) fullAt = uint64(block.timestamp);
+        if (_order.length == SLOTS) {
+            fullAt = uint64(block.timestamp);
+            uint256 grace = block.timestamp + _t(FILL_GRACE);
+            if (deadline < grace) deadline = uint64(grace);
+        }
     }
 
     /// @notice The card's holder takes its Credit back (card burned). Allowed while OPEN, and after EXPIRED.
@@ -266,8 +290,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         } else if (cards.heldNow(address(this), msg.sender) == 0) {
             revert Bad("card holders only");
         }
-        _checkPermutation(order);
-        if (p != CreditKeys.Preset.Manual) _checkPreset(p, order);
+        CreditKeys.verifyOrder(p, credits, _order, order, _params.seed);
 
         // Price that goes live: the one voted while FULL, else the host default. Resolve before external calls.
         PriceSpec memory spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
@@ -275,6 +298,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
         // Effects
         assembled = true;
+        assembledAt = uint64(block.timestamp);
         _burnOrder = order;
         ask = price;
         askSpec = spec;
@@ -298,44 +322,6 @@ contract Party is Initializable, ReentrancyGuardTransient {
         emit AskSet(price, hasPendingPrice);
     }
 
-    function _checkPermutation(uint256[] calldata order) internal view {
-        if (order.length != SLOTS) revert Bad("length");
-        uint256[3] memory seen; // 80 bits needed; indexes are deposit positions
-        for (uint256 i; i < SLOTS; ++i) {
-            uint256 card = cardOfCredit[order[i]];
-            if (card == 0) revert Bad("not deposited");
-            uint256 pos = _positionOf(order[i]);
-            uint256 w = pos >> 8;
-            uint256 bit = 1 << (pos & 255);
-            if (seen[w] & bit != 0) revert Bad("repeat");
-            seen[w] |= bit;
-        }
-    }
-
-    function _positionOf(uint256 id) internal view returns (uint256) {
-        for (uint256 i; i < SLOTS; ++i) if (_order[i] == id) return i;
-        revert Bad("missing");
-    }
-
-    function _checkPreset(CreditKeys.Preset p, uint256[] calldata order) internal view {
-        if (p == CreditKeys.Preset.Deposit) {
-            for (uint256 i; i < SLOTS; ++i) if (order[i] != _order[i]) revert Bad("order");
-            return;
-        }
-        if (p == CreditKeys.Preset.Random) {
-            uint256[] memory want = CreditKeys.shuffle(_order, _params.seed);
-            for (uint256 i; i < SLOTS; ++i) if (order[i] != want[i]) revert Bad("order");
-            return;
-        }
-        ICreditArt art = ICreditArt(credits.art());
-        uint256 prev = p.key(credits, art, order[0]);
-        for (uint256 i = 1; i < SLOTS; ++i) {
-            uint256 k = p.key(credits, art, order[i]);
-            if (k <= prev) revert Bad("order");
-            prev = k;
-        }
-    }
-
     /// @notice The Statement contract may mint with a safe-transfer callback, but only during assemble().
     function onERC721Received(address, address, uint256, bytes calldata) external view returns (bytes4) {
         if (!_assembling || msg.sender != address(factory.statement())) revert Bad("unexpected token");
@@ -349,11 +335,10 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
         if (cancel && ask == 0) revert Bad("not listed");
         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
-        if (_proposals.length >= MAX_PROPOSALS) revert Bad("too many");
         _refreshOpen(msg.sender);
-        if (openBy[msg.sender] >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
+        if (_openIds[msg.sender].length >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
         if (!cancel) _checkPrice(price);
-        uint16 h = hours_ == 0 ? _params.voteHours : hours_;
+        uint16 h = cancel ? 24 : (hours_ == 0 ? _params.voteHours : hours_); // cancels always run 24h, inside the 26h buy delay
         if (!_windowOk(h)) revert Bad("window");
         id = _proposals.length;
         bool dl = _deadlocked();
@@ -362,8 +347,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
             endsAt: uint64(block.timestamp + _t(uint256(h) * 1 hours)), epoch: priceEpoch, deadlock: dl,
             executed: false, yes: 0, no: 0
         }));
-        ++openBy[msg.sender];
-        _openCounted[id] = true;
+        _openIds[msg.sender].push(id);
         emit Proposed(id, msg.sender, cancel, price.mode, price.value, _proposals[id].endsAt, dl);
         _vote(id, msg.sender, true);
     }
@@ -409,8 +393,14 @@ contract Party is Initializable, ReentrancyGuardTransient {
         uint256 price;
         uint256 floorWei;
         if (!p.cancel) {
-            floorWei = _floor(floor);
-            price = _resolveWith(p.price, floorWei);
+            if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
+                // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+                price = uint256(p.price.value);
+                floorWei = type(uint256).max;
+            } else {
+                floorWei = _floor(floor);
+                price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+            }
         }
         uint256 need = needFor(id, price, floorWei);
         if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
@@ -418,12 +408,14 @@ contract Party is Initializable, ReentrancyGuardTransient {
         p.executed = true;
         ++priceEpoch;
         lastPriceExecutedAt = uint64(block.timestamp);
+        blockedPriceProposals = 0; // deadlock mode ends once any price decision executes
         if (p.cancel) {
             ask = 0;
             askLiveAt = 0;
         } else if (s == Status.FULL) {
             pendingPrice = p.price;
             hasPendingPrice = true;
+            emit PendingPriceSet(id, p.price.mode, p.price.value);
         } else {
             ask = price;
             askSpec = p.price;
@@ -436,27 +428,29 @@ contract Party is Initializable, ReentrancyGuardTransient {
     /// @notice Records a closed price proposal that was blocked by NO, toward the deadlock rule. Anyone may call.
     function countBlocked(uint256 id) external {
         Proposal storage p = _proposals[id];
-        if (blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no == 0 || p.deadlock) revert Bad("not blocked");
+        // Counts only a current-epoch price proposal that had enough YES to pass and was stopped by NO alone,
+        // so a small holder voting NO on their own proposals cannot push the party into deadlock mode.
+        if (blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no == 0 || p.deadlock || p.yes < PASS || p.epoch != priceEpoch) revert Bad("not blocked");
         blockedCounted[id] = true;
         ++blockedPriceProposals;
+        emit BlockedCounted(id, blockedPriceProposals);
     }
 
     function _deadlocked() internal view returns (bool) {
         if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
-        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (fullAt != 0 ? fullAt : type(uint64).max);
+        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
         return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
     }
 
     function _refreshOpen(address who) internal {
-        // decrement the proposer's open count for proposals that have closed (bounded by MAX_PROPOSALS)
-        uint256 n = _proposals.length;
-        for (uint256 i; i < n && openBy[who] > 0; ++i) {
-            if (_openCounted[i] && _proposals[i].proposer == who && block.timestamp >= _proposals[i].endsAt) {
-                _openCounted[i] = false;
-                --openBy[who];
-            }
+        // drop the proposer's proposals that have closed (the list never exceeds MAX_OPEN_PER_PROPOSER)
+        uint256[] storage ids = _openIds[who];
+        for (uint256 k = ids.length; k > 0; --k) {
+            if (block.timestamp >= _proposals[ids[k - 1]].endsAt) { ids[k - 1] = ids[ids.length - 1]; ids.pop(); }
         }
     }
+
+    function openProposalsOf(address who) external view returns (uint256[] memory) { return _openIds[who]; }
 
     /// @notice A floor-relative ask may only rise, with a fresh signed floor reading. Anyone may call.
     function raiseAsk(Floor calldata floor) external {
@@ -476,12 +470,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         uint256 price = ask;
         if (price > maxPrice || msg.value < price) revert Bad("price");
 
-        uint256 royalty;
-        address royaltyTo;
-        try IERC2981Like(address(factory.statement())).royaltyInfo{gas: 50_000}(statementId, price) returns (address r, uint256 amt) {
-            uint256 cap = price * ROYALTY_CAP_BPS / 10_000;
-            if (r != address(0)) { royaltyTo = r; royalty = amt > cap ? cap : amt; }
-        } catch {}
+        (address royaltyTo, uint256 royalty) = _royalty(price);
         uint256 fee = price * factory.FEE_BPS() / 10_000;
         uint256 pot = price - royalty - fee;
         uint256 share = pot / SLOTS;
@@ -518,13 +507,31 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (!ok) revert Bad("send");
     }
 
-    /// @notice Pull payment for the fee recipient, royalty receiver, and rounding dust.
+    /// @notice Anyone may push the shares of `cardIds` to their current holders (e.g. for holders who never return).
+    ///         A holder that cannot receive ETH is credited in `owed` instead.
+    function claimFor(uint256[] calldata cardIds) external nonReentrant {
+        if (!sold) revert Bad("not sold");
+        for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }
+    }
+
+    /// @notice Pull payment for the fee recipient, royalty receiver, rounding dust, and holders that could not receive ETH.
     function withdraw() external nonReentrant {
         uint256 amt = owed[msg.sender];
         if (amt == 0) revert Bad("nothing");
         owed[msg.sender] = 0;
         (bool ok,) = msg.sender.call{value: amt}("");
         if (!ok) revert Bad("send");
+        emit Withdrawn(msg.sender, amt);
     }
 
     function transferHost(address to) external {
@@ -541,16 +548,18 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (p.mode == PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
     }
 
-    function _floor(Floor calldata f) internal view returns (uint256) {
+    function _floor(Floor calldata f) internal returns (uint256) {
         if (f.issuedAt > block.timestamp || block.timestamp - f.issuedAt > FLOOR_MAX_AGE) revert Bad("stale floor");
+        if (f.issuedAt < lastFloorAt) revert Bad("older floor");
+        lastFloorAt = f.issuedAt;
         if (!factory.isValidFloor(f.floorWei, uint8(_params.floorMode), f.issuedAt, f.sig)) revert Bad("floor sig");
         if (f.floorWei == 0) revert Bad("floor");
         return f.floorWei;
     }
 
-    function _resolve(PriceSpec memory p, Floor calldata f) internal view returns (uint256) {
+    function _resolve(PriceSpec memory p, Floor calldata f) internal returns (uint256) {
         if (p.mode == PriceMode.Fixed) return uint256(p.value);
-        return _resolveWith(p, _floor(f));
+        return _clampMin(_resolveWith(p, _floor(f)));
     }
 
     function _resolveWith(PriceSpec memory p, uint256 floorWei) internal pure returns (uint256 v) {
@@ -561,6 +570,11 @@ contract Party is Initializable, ReentrancyGuardTransient {
         return uint256(r);
     }
 
+    /// @dev Floor-relative prices never resolve below the host's minimum ask (limits a bad or compromised floor reading).
+    function _clampMin(uint256 v) internal view returns (uint256) {
+        return v < _params.minAskWei ? _params.minAskWei : v;
+    }
+
     /// @dev Scales a rule duration expressed in real seconds by the factory's time unit (identity when timeUnit = 1 hour).
     function _t(uint256 secs) internal view returns (uint256) {
         return secs * timeUnit / 1 hours;
@@ -568,6 +582,16 @@ contract Party is Initializable, ReentrancyGuardTransient {
 
     function _windowOk(uint16 h) internal pure returns (bool) {
         return h == 24 || h == 48 || h == 72 || h == 168;
+    }
+
+    /// @dev Raw staticcall: a reverting, gas-hungry or malformed royaltyInfo never blocks a sale.
+    function _royalty(uint256 price) internal view returns (address to, uint256 amt) {
+        (bool ok, bytes memory r) = address(factory.statement()).staticcall{gas: 50_000}(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", statementId, price));
+        if (!ok || r.length < 64) return (address(0), 0);
+        (uint256 a, uint256 v) = abi.decode(r, (uint256, uint256));
+        if (a == 0 || a >> 160 != 0) return (address(0), 0);
+        uint256 cap = price * ROYALTY_CAP_BPS / 10_000;
+        return (address(uint160(a)), v > cap ? cap : v);
     }
 
     receive() external payable {

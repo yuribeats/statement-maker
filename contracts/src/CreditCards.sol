@@ -26,6 +26,8 @@ contract CreditCards is ERC721 {
     mapping(uint256 cardId => address) public partyOf;
     mapping(address party => mapping(address account => Checkpoints.Trace208)) private _held;
 
+    event PartyRegistered(address indexed party);
+
     error NotFactory();
     error NotParty();
     error FutureLookup();
@@ -37,6 +39,7 @@ contract CreditCards is ERC721 {
     function registerParty(address party) external {
         if (msg.sender != factory) revert NotFactory();
         isParty[party] = true;
+        emit PartyRegistered(party);
     }
 
     function mint(address to) external returns (uint256 id) {

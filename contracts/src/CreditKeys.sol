@@ -25,6 +25,43 @@ library CreditKeys {
 
     uint256 internal constant ID_BITS = 32;
 
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
     function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
         require(id < 2 ** ID_BITS, "id");
         if (p == Preset.Number) return id;

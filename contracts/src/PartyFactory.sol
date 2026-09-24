@@ -23,6 +23,7 @@ contract PartyFactory is EIP712 {
     bytes32 public constant FLOOR_TYPEHASH = keccak256("Floor(uint256 floorWei,uint8 mode,uint64 issuedAt)");
 
     address[] public parties;
+    mapping(address host => uint256) public nonces;
     event PartyCreated(address indexed party, address indexed host, uint256 index);
 
     constructor(ICredits credits_, IStatement statement_, address feeRecipient_, address floorSigner_) EIP712("Statement Maker", "1") {
@@ -35,10 +36,13 @@ contract PartyFactory is EIP712 {
         implementation = new Party();
     }
 
-    function createParty(Party.Params calldata p) external returns (Party party) {
-        party = Party(payable(Clones.clone(address(implementation))));
+    /// @notice Opens a party and makes the host's opening deposit in one transaction: at least the party's minimum,
+    ///         every Credit meeting its criteria. Approve `predictParty(msg.sender)` on Credits first.
+    function createParty(Party.Params calldata p, uint256[] calldata ids, bytes32[][] calldata proofs) external returns (Party party) {
+        party = Party(payable(Clones.cloneDeterministic(address(implementation), _salt(msg.sender, nonces[msg.sender]++))));
         cards.registerParty(address(party));
         party.initialize(msg.sender, p);
+        party.openDeposit(msg.sender, ids, proofs);
         parties.push(address(party));
         emit PartyCreated(address(party), msg.sender, parties.length - 1);
     }
@@ -46,6 +50,15 @@ contract PartyFactory is EIP712 {
     /// @notice Seconds per "hour" for party rule windows. Always 1 hour here; TestnetPartyFactory overrides it.
     function timeUnit() public view virtual returns (uint256) {
         return 1 hours;
+    }
+
+    /// @notice The address `host`'s next party will have, so it can be approved on Credits before creation.
+    function predictParty(address host) external view returns (address) {
+        return Clones.predictDeterministicAddress(address(implementation), _salt(host, nonces[host]), address(this));
+    }
+
+    function _salt(address host, uint256 n) internal pure returns (bytes32) {
+        return keccak256(abi.encode(host, n));
     }
 
     function partiesCount() external view returns (uint256) {

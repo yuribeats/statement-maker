@@ -19,7 +19,7 @@ const api = async (path, body) => {
 let stats = null;
 let me = ''; // set from the server session (GET /api/auth/me), never from local state
 let access = { canParty: false, storeOnly: '' };
-const STORE_ONLY_TEXT = 'Statements made by a party can only be sold on Statement Maker, at the party\u2019s own price. They cannot be listed, offered or auctioned on OpenSea or any other marketplace.';
+const STORE_ONLY_TEXT = 'A party sells its Statement only on Statement Maker, at the party\u2019s own price. The party cannot list, offer or auction it on OpenSea or any other marketplace. After the sale, the buyer owns it and may resell anywhere.';
 const storeBanner = () => `<div class="store-only"><strong>Sold only on Statement Maker.</strong> ${STORE_ONLY_TEXT} Credit Cards can be traded anywhere; the Statement cannot.</div>`;
 
 // ---------- wallet: real sign-in with a browser wallet; simulated wallets only in dev builds ----------
@@ -515,7 +515,7 @@ function pageRules() {
    <div><span>04 Full</span><strong>At 80, redemption closes.</strong></div>
    <div><span>05 Arrange</span><strong>The host is the only arranger. The arrangement is a party setting: an auto-order, or Manual, where the host orders the 80 by hand. There is no vote on arrangement.</strong></div>
    <div><span>06 Assemble</span><strong>Arranging and burning are one step. With an auto-order, any card holder can burn; with Manual, the host burns with their order. The Statement is held by the party and the default price goes live.</strong></div>
-   <div class="rule-strong"><span>07 Sold only here</span><strong>A Statement made on Statement Maker is sold only on Statement Maker, at its party’s own price. The party contract has no other way to release it: it cannot be listed, offered or auctioned on OpenSea or any other marketplace. No offers, no auctions. Buying opens 24 hours after a price goes live. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
+   <div class="rule-strong"><span>07 Sold only here</span><strong>A party sells its Statement only on Statement Maker, at the party’s own price. The party contract has no other way to release it: the party cannot list, offer or auction it on OpenSea or any other marketplace. No offers, no auctions. After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. Buying opens 24 hours after a price goes live. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
    <div><span>08 Split</span><strong>1% to Statement Maker, the rest split across the 80 Credit Cards.</strong></div>
    <div><span>09 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
    <div><span>10 Time</span><strong>Votes run 24 hours to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
