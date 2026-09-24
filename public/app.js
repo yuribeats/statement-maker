@@ -25,15 +25,22 @@ async function fillActing() {
   const sel = $('#acting');
   const top = await api('holders');
   const seen = new Set();
-  const opts = [{ address: '', count: 0 }, ...(me ? [{ address: me, count: '·' }] : []), ...top].filter(o => !seen.has(o.address) && seen.add(o.address));
-  render(sel, opts.map(o => `<option value="${esc(o.address)}" ${o.address === me ? 'selected' : ''}>${o.address ? short(o.address) + ' · ' + esc(o.count) : 'Nobody'}</option>`).join('') + '<option value="__paste">Paste address…</option>');
+  // Simulated connect: pick a real holder wallet. Real build uses a wallet + Sign-In with Ethereum.
+  const opts = [...(me ? [{ address: me, count: '·' }] : []), ...top].filter(o => !seen.has(o.address) && seen.add(o.address));
+  render(sel, (me ? '' : '<option value="" selected>Connect wallet</option>') + '<optgroup label="Simulated wallets">' + opts.map(o => `<option value="${esc(o.address)}" ${o.address === me ? 'selected' : ''}>${short(o.address) + ' · ' + esc(o.count)}</option>`).join('') + '<option value="__paste">Paste address…</option></optgroup>' + (me ? '<option value="__off">Disconnect</option>' : ''));
 }
 $('#acting').addEventListener('change', e => {
   let v = e.target.value;
   if (v === '__paste') { v = (prompt('Wallet address') || '').trim().toLowerCase(); if (!/^0x[0-9a-f]{40}$/.test(v)) v = me; }
-  me = v; try { localStorage.setItem('sm-acting', me); } catch {}
-  fillActing(); route();
+  if (v === '__off') v = '';
+  if (!v) { setMe(''); return; }
+  api('terms/' + v).then(t => {
+    if (t.accepted) setMe(v);
+    else { pendingConnect = { address: v, back: location.hash || '#/' }; location.hash = '#/terms/connect'; fillActing(); }
+  });
 });
+let pendingConnect = null;
+function setMe(v) { me = v; try { localStorage.setItem('sm-acting', me); } catch {} fillActing(); route(); }
 
 // ---------- ordering presets ----------
 const COLOR_ORDER = ['C', 'M', 'Y', 'K', 'CM', 'CY', 'MY', 'CK', 'MK', 'YK', 'CMY', 'CMK', 'CYK', 'MYK', 'CMYK'];
@@ -380,6 +387,48 @@ function pageRules() {
   </div></div>`);
 }
 
+// ---------- terms ----------
+const TERMS_VERSION = '2026-09-23';
+const TERMS = [
+ ['What Statement Maker is', 'Statement Maker is a tool that lets holders of Credits pool them in groups called parties. When a party collects 80 Credits, the party can burn them to create one Statement and then sell it. Statement Maker provides the website and the smart contracts. It does not hold your Credits or your money; the party contracts do.'],
+ ['Not affiliated with Jack Butcher', 'Statement Maker is independent. It is not made, endorsed, or operated by Jack Butcher, jack.art, the Credits project, or X. Credits and Statements are Jack Butcher’s work. We only coordinate holders who choose to use the burn function his contracts provide.'],
+ ['How a party works', 'A host opens a party and sets its rules: minimum deposit, eligible Credits, target price, and default voting window. Holders deposit Credits. You can withdraw your Credits at any time until the party reaches 80. At 80, deposits lock and each depositor receives one Credit Card per Credit. The host arranges the 8 × 10 order unless members elect someone else, and members vote to approve it. Any member can then assemble the Statement.'],
+ ['Burning is permanent', 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party never fills, or never assembles before its deadline, every Credit goes back to its depositor.'],
+ ['Credit Cards', 'A Credit Card is an ERC-20 token. One Credit Card stands for one deposited Credit’s share of that party: its vote and its share of any sale. Credit Cards can be transferred or traded by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.'],
+ ['Voting', 'Every Credit Card is one vote. A proposal passes when more than 40 Credit Cards vote yes and none vote no within its voting window, which lasts 24 hours to 7 days. Any member must then execute it within 7 days or it lapses. A single no vote blocks a proposal, so a party can stay deadlocked and its Statement can go unsold indefinitely.'],
+ ['Selling', 'A party sells its Statement only on Statement Maker, only at the price its members approved, to the first buyer who pays it. There are no offers, no auctions, and no marketplace listings. Members may approve any price, including below the floor. A floor-based price can rise automatically but never falls without a new vote.'],
+ ['Fees, royalties, gas', 'Each sale pays the artist royalty set by the Statement contract first, then a 1% Statement Maker fee, and the rest goes to Credit Card holders pro rata. Every action on-chain (depositing, voting, executing, assembling, claiming) costs gas, paid by whoever calls it. Statement Maker does not refund gas.'],
+ ['Risks', 'Smart contracts can have bugs, and ours have not been audited yet. The Statement contract has not been published; it may work differently from what this site assumes, or may not accept parties at all. Prices can fall. Transactions cannot be reversed. If you lose access to your wallet, nobody can recover your Credits, Credit Cards, or proceeds. Laws about tokens like Credit Cards may change or differ where you live.'],
+ ['No advice', 'Nothing on this site is financial, investment, legal, or tax advice. You decide what to deposit, how to vote, and whether to sell.'],
+ ['Your responsibilities', 'You control your own wallet and keys. You confirm you are legally allowed to use this service where you live, are not subject to sanctions, and will handle your own taxes. You will not use Statement Maker to manipulate votes, prices, or other members.'],
+ ['Prototype', 'This version is a local prototype. Wallets are simulated and nothing happens on-chain.'],
+ ['Liability and changes', 'Statement Maker is provided as is, without warranties. To the extent the law allows, Statement Maker is not liable for losses from using it. These terms may change; you will be asked to accept any new version before your next action.'],
+];
+function pageTerms(connecting) {
+  const pc = connecting ? pendingConnect : null;
+  render(app, `
+  <div class="intro"><div><h1>Terms and conditions</h1><p class="muted">Version ${TERMS_VERSION} · <span class="demo">Draft, needs legal review before launch</span></p></div>${pc ? `<p class="muted">Connecting ${short(pc.address)}</p>` : ''}</div>
+  <div class="works"><div class="rows terms">${TERMS.map(([h, t], i) => `<div><span>${String(i + 1).padStart(2, '0')} ${esc(h)}</span><strong>${esc(t)}</strong></div>`).join('')}</div>
+  <div>${pc ? `
+   <div class="frame" style="padding:28px;position:sticky;top:30px">
+    <h2 style="margin-bottom:14px">Before you connect</h2>
+    <label class="check"><input type="checkbox" id="agree"> <span>I have read these terms. I understand that deposits lock at 80, that assembly burns my Credits permanently, that a single no vote can block a sale, and that Credit Cards may be worth nothing. I accept these terms.</span></label>
+    <button class="cta" id="accept" disabled>Accept and connect</button> <button type="button" class="muted" id="decline" style="margin-left:18px">Cancel</button>
+    <div class="error" id="t-err"></div>
+   </div>` : connecting ? `<p class="muted">Choose a wallet under “Connect wallet” to continue.</p>` : `<p class="muted">You are asked to accept these terms when you connect a wallet.</p>`}</div></div>`);
+  if (!pc) return;
+  $('#agree').onchange = e => { $('#accept').disabled = !e.target.checked; };
+  $('#decline').onclick = () => { const back = pc.back; pendingConnect = null; location.hash = back; };
+  $('#accept').onclick = async () => {
+    try {
+      await api('terms', { address: pc.address, version: TERMS_VERSION, accept: $('#agree').checked });
+      const back = pc.back.startsWith('#/terms') ? '#/' : pc.back; pendingConnect = null;
+      me = pc.address; try { localStorage.setItem('sm-acting', me); } catch {}
+      await fillActing(); location.hash = back; route();
+    } catch (e) { $('#t-err').textContent = e.message; }
+  };
+}
+
 // ---------- statements ----------
 // The real Statement image comes from Jack's Statement contract, which is not public yet.
 // Until then this renders the 80 Credits in their approved order, as jack.art previews a Statement.
@@ -449,10 +498,11 @@ async function route() {
     else if (page === 'new') await pageNew();
     else if (page === 'wallet') await pageWallet(arg);
     else if (page === 'rules') pageRules();
+    else if (page === 'terms') pageTerms(arg === 'connect');
     else if (page === 'statements') await pageStatements();
     else if (page === 'statement') await pageStatement(arg);
     else await pageParties();
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
 window.addEventListener('hashchange', route);
-Promise.all([fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})]).then(route);
+(me ? api('terms/' + me).then(t => { if (!t.accepted) me = ''; }) : Promise.resolve()).then(() => Promise.all([fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);

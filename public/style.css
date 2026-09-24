@@ -126,3 +126,11 @@ form.new{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
 
 .hint{color:var(--faint);margin-top:4px;font-size:10px}
 .actions .cta{margin-top:0;padding:6px 14px}
+.terms strong{text-transform:none;font-size:12px;text-align:left;max-width:560px}
+.terms>div{align-items:flex-start}
+.check{display:flex;gap:12px;align-items:flex-start;text-transform:none;font-size:12px;cursor:pointer}
+.check input{margin-top:3px}
+.cta:disabled{opacity:.3;cursor:not-allowed}
+.cta:disabled:hover{background:none;color:var(--ink)}
+.terms>div{display:grid;grid-template-columns:190px 1fr;gap:20px}
+@media(max-width:700px){.terms>div{grid-template-columns:1fr;gap:4px}}

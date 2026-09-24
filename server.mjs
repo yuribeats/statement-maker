@@ -9,6 +9,7 @@ const DATA = path.join(ROOT, 'data');
 const PORT = Number(process.env.PORT || 8088);
 const SLOTS = 80;
 const ZERO = '0x0000000000000000000000000000000000000000';
+const TERMS_VERSION = '2026-09-23';
 const VOTE_WINDOW = 48 * 36e5;
 const WINDOWS = [24, 48, 72, 168]; // allowed voting windows, hours
 const EXEC_WINDOW = 7 * 864e5; // a passed proposal lapses if nobody executes it within 7 days
@@ -168,6 +169,7 @@ if (!state.parties.length) {
 // ---- http ----
 const json = (res, code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
 const body = req => new Promise(r => { let s = ''; req.on('data', d => (s += d)); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r({}); } }); });
+const termsOk = a => state.terms?.[a]?.version === TERMS_VERSION;
 const find = id => state.parties.find(p => p.id === id);
 const addr = a => String(a || '').toLowerCase();
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -179,7 +181,7 @@ http.createServer(async (req, res) => {
     if (seg[0] !== 'api') {
       const f = path.join(ROOT, 'public', u.pathname === '/' ? 'index.html' : path.normalize(u.pathname));
       if (!f.startsWith(path.join(ROOT, 'public')) || !fs.existsSync(f)) return json(res, 404, { error: 'not found' });
-      res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
+      res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache' });
       return res.end(fs.readFileSync(f));
     }
     const [, a, b, c] = seg;
@@ -198,6 +200,15 @@ http.createServer(async (req, res) => {
         ranges: { id: [1, byId.size], rank: [1, byId.size], marks: MARKS, minDeposit: [1, SLOTS], days: [1, 60] },
         floor: floor.credit, freq: Object.fromEntries(TRAITS.map(k => [k, Object.fromEntries(freq[k])])),
       });
+    }
+    if (a === 'terms' && req.method === 'GET') return json(res, 200, { version: TERMS_VERSION, accepted: state.terms?.[addr(b)]?.version === TERMS_VERSION });
+    if (a === 'terms' && req.method === 'POST') {
+      const x = await body(req);
+      const who = addr(x.address);
+      if (!/^0x[0-9a-f]{40}$/.test(who)) return json(res, 400, { error: 'bad address' });
+      if (x.version !== TERMS_VERSION || x.accept !== true) return json(res, 400, { error: 'terms must be accepted in full' });
+      (state.terms ||= {})[who] = { version: TERMS_VERSION, at: now() };
+      save(); return json(res, 200, { accepted: true });
     }
     if (a === 'gas') return json(res, 200, { ...gas, units: GAS });
     if (a === 'dev' && b === 'advance' && req.method === 'POST') {
@@ -222,6 +233,7 @@ http.createServer(async (req, res) => {
     if (a === 'parties' && !b && req.method === 'POST') {
       const x = await body(req);
       const host = addr(x.address);
+      if (!termsOk(host)) return json(res, 403, { error: 'accept the terms first' });
       if (!holders.has(host)) return json(res, 400, { error: 'host must hold at least one Credit' });
       const id = (x.name || 'party').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 32) + '-' + Date.now().toString(36).slice(-4);
       const p = { id, name: String(x.name || 'Untitled').slice(0, 60), hosts: [host], createdAt: Date.now(), deadline: Date.now() + (Number(x.days) || 14) * 864e5, params: { voteHours: WINDOWS.includes(Number(x.voteHours)) ? Number(x.voteHours) : 48, minDeposit: Math.max(1, Math.min(80, Number(x.minDeposit) || 1)), target: x.target || { mode: 'fixed', value: 2.5 }, filters: x.filters || {} }, deposits: [], order: null, arranger: null, proposals: [], chat: [] };
@@ -234,6 +246,7 @@ http.createServer(async (req, res) => {
     if (p && req.method === 'POST') {
       const x = await body(req);
       const who = addr(x.address);
+      if (!termsOk(who)) return json(res, 403, { error: 'accept the terms first' });
       const st = status(p);
       if (c === 'deposit') {
         if (st !== 'OPEN') return json(res, 400, { error: 'party is ' + st });
