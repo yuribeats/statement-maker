@@ -1122,25 +1122,28 @@ async function statementPNG(p) {
   const a = Object.assign(document.createElement('a'), { href: cv.toDataURL('image/png'), download: `statement-${p.assembled.number}.png` }); a.click();
 }
 // Every listing looks the same whatever its source; only a small label differs.
-const SOURCE = { party: 'Party sale', holder: 'Holder listing', opensea: 'Listing' };
+const SOURCE = { party: 'Party sale', holder: 'Holder listing', opensea: 'Listing', auction: 'Auction' };
+// A running auction, in one line: the high bid (or the opening bid before any bid) and its clock.
+const auctionLine = a => `${a.high || a.bid ? 'high bid' : 'opening bid'} · ${a.ended ? 'ended, ready to settle' : a.endsAt != null ? 'ends in ' + hrs(a.endsAt - Date.now()) : 'no timer until the first bid'}`;
+const minuteHref = id => '#/minute/' + String(id).replace(/^minute-/, '');
 function listingCard(it, byId) {
   const p = byId[it.id];
   const pic = p ? sheet(p) : `<div class="frame statement os-frame"><span>Statement ${esc(it.number)}</span></div>`;
   const opens = it.opensAt && it.source !== 'opensea' ? (it.source === 'party' ? it.opensAt - Date.now() : 0) : 0;
-  const href = it.source === 'opensea' ? esc(it.url) : `#/statement/${esc(it.id)}`;
+  const href = it.source === 'opensea' ? esc(it.url) : it.source === 'auction' && it.minute ? esc(minuteHref(it.id)) : `#/statement/${esc(it.id)}`;
   return `
    <a class="party-card" href="${href}" ${it.source === 'opensea' ? 'target="_blank" rel="noopener noreferrer"' : ''}>
     ${pic}
     <div class="caption"><span><strong>Statement ${esc(it.number)}</strong> <span class="muted">${esc(it.name)}</span></span><span class="src">${it.demo ? '<span class="demo">Demo</span> ' : ''}${SOURCE[it.source]}</span></div>
-    <div class="price-line"><strong>${eth(it.priceEth)}</strong><span class="muted">${opens > 0 ? 'Opens in ' + hrs(opens) : 'Buy →'}</span></div>
+    <div class="price-line">${it.source === 'auction' ? `<strong>${ethx(it.priceEth)}</strong><span class="muted">${esc(auctionLine(it))} · Bid →</span>` : `<strong>${eth(it.priceEth)}</strong><span class="muted">${opens > 0 ? 'Opens in ' + hrs(opens) : 'Buy →'}</span>`}</div>
    </a>`;
 }
-const statementCard = p => `
-   <a class="party-card" href="#/statement/${esc(p.id)}">
+const statementCard = p => { const au = p.auction && !p.auction.settled ? p.auction : null; return `
+   <a class="party-card" href="${au && p.house ? esc(minuteHref(p.id)) : '#/statement/' + esc(p.id)}">
     ${sheet(p)}
-    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.demo ? '<span class="demo">Demo</span> ' : ''}${p.sold ? 'Owned' : 'Party'}</span></div>
-    <div class="price-line"><strong>${p.sold ? eth(p.sold.price) : '—'}</strong><span class="muted">${p.sold ? 'last sale' : 'not listed'}</span></div>
-   </a>`;
+    <div class="caption"><span><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">${esc(p.name)}</span></span><span class="src">${p.demo ? '<span class="demo">Demo</span> ' : ''}${p.sold ? 'Owned' : au ? 'Auction' : 'Party'}</span></div>
+    <div class="price-line">${au ? `<strong>${ethx(au.high ? au.high.eth : au.reserveEth)}</strong><span class="muted">${esc(auctionLine(au))}</span>` : `<strong>${p.sold ? eth(p.sold.price) : '—'}</strong><span class="muted">${p.sold ? 'last sale' : 'not listed'}</span>`}</div>
+   </a>`; };
 async function pageStatements() {
   const [list, market] = await Promise.all([api('statements'), api('market')]);
   const byId = Object.fromEntries(list.map(p => [p.id, p]));
@@ -1151,7 +1154,7 @@ async function pageStatements() {
   const mine = me ? list.filter(p => p.owner === me || p.members.some(m => m.address === me)) : [];
   const grid = arr => `<div class="parties" style="margin-bottom:64px">${arr.join('')}</div>`;
   render(app, `
-  <div class="intro"><div><h1>Statements</h1><p class="muted">Everything for sale in one place.</p></div><p class="muted">${list.length} made · ${items.length} for sale${(() => { const live = items.filter(i => !(i.source !== 'opensea' && i.opensAt > Date.now())); return live.length ? ` · <strong>Floor ${eth(Math.min(...live.map(i => i.priceEth)))}</strong>` : ''; })()}</p></div>
+  <div class="intro"><div><h1>Statements</h1><p class="muted">Everything for sale in one place.</p></div><p class="muted">${list.length} made · ${items.length} for sale${(() => { const live = items.filter(i => i.source !== 'auction' && !(i.source !== 'opensea' && i.opensAt > Date.now())); return live.length ? ` · <strong>Floor ${eth(Math.min(...live.map(i => i.priceEth)))}</strong>` : ''; })()}</p></div>
   <div class="caption"><h2>For sale · ${items.length}</h2><div class="modes">${[['price', 'Price ↑'], ['high', 'Price ↓'], ['new', 'Newest']].map(([k, l]) => `<button type="button" data-gsort="${k}" aria-pressed="${sort === k}">${l}</button>`).join('')}</div></div>
   ${items.length ? grid(items.map(i => listingCard(i, byId))) : '<p class="muted" style="margin-bottom:64px">Nothing for sale right now.</p>'}
   ${stats?.dev && market.sources.opensea !== 'ok' ? `<p class="note" style="margin:-48px 0 48px">Dev · OpenSea listings: ${esc(market.sources.opensea)}.</p>` : ''}
@@ -1180,9 +1183,13 @@ async function pageStatement(id) {
     <div><span>Assembled by</span><strong>${userLink(p.assembled.by)}</strong></div>
     <div><span>Held by</span><strong>${p.sold ? userLink(p.owner) + (p.owner === me ? ' (you)' : '') : 'The party vault · ' + p.members.length + ' Credit Card holders'}</strong></div>
     ${mine ? `<div><span>You</span><strong><span class="dot y"></span>${Number(mine.count)} of 80 Credit Cards · ${(mine.count / 80 * 100).toFixed(2)}%</strong></div>` : ''}
-    <div><span>Price</span><strong>${p.sold ? 'Sold for ' + eth(p.sold.price) : p.listing ? priceLabel(p.listing) + ' · ' + eth(p.listingEth) + ' · ' + vsFloor(p.listingEth, p.floorEth) : 'Not listed'}</strong></div>
+    <div><span>Price</span><strong>${p.sold ? 'Sold for ' + eth(p.sold.price) : p.auction && !p.auction.settled ? `Auction · ${ethx(p.auction.high ? p.auction.high.eth : p.auction.reserveEth)} ${esc(auctionLine(p.auction))}` : p.listing ? priceLabel(p.listing) + ' · ' + eth(p.listingEth) + ' · ' + vsFloor(p.listingEth, p.floorEth) : 'Not listed'}</strong></div>
     <div><span>Floor</span><strong>${eth(p.floorEth)}</strong></div>
    </div>
+   ${!p.sold && p.auction && !p.auction.settled ? `<div class="buy-box">
+     <div class="caption" style="min-height:0"><h2>Auction</h2><strong class="big">${ethx(p.auction.high ? p.auction.high.eth : p.auction.reserveEth)}</strong></div>
+     <p class="muted">${p.auction.high ? `High bid by ${userLink(p.auction.high.bidder)} · ${Number(p.auction.bids.length)} bid${p.auction.bids.length === 1 ? '' : 's'}` : 'Opening bid · no bids yet'} · ${esc(auctionLine(p.auction))}.</p>
+     <a class="cta" href="${p.house ? esc(minuteHref(p.id)) : '#/party/' + esc(p.id)}" style="margin:0">${p.auction.ended ? 'Settle' : 'Bid'} on the ${p.house ? 'Minute' : 'party'} page →</a></div>` : ''}
    ${p.sold && p.resale ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy · holder listing</h2><strong class="big">${eth(p.resale.priceEth)}</strong></div>
      <p class="muted">Listed by ${userLink(p.resale.seller)}. 1% to Statement Maker, the rest to the seller.</p>
