@@ -254,7 +254,7 @@ async function renderFit() {
   </div>`);
   el.querySelectorAll('[data-idea]').forEach(b => b.onclick = () => {
     const i = f.ideas[Number(b.dataset.idea)];
-    draft = { name: i.label === 'Any Credit' ? '' : i.label, minDeposit: 1, days: 14, voteHours: 48, arrangement: { preset: 'Rarity' }, target: { mode: 'floorPct', value: 25 }, filters: { ...i.filters } };
+    draft = { name: i.label === 'Any Credit' ? '' : i.label, minDeposit: 1, days: 14, voteHours: 48, arrangement: { preset: 'Time' }, target: { mode: 'floorPct', value: 25 }, filters: { ...i.filters } };
     location.hash = '#/new';
   });
 }
@@ -273,13 +273,14 @@ function logLine(e) {
     vote: () => `Voted ${e.yes ? 'yes' : 'no'} on #${Number(e.id)} · ${plural(e.weight, 'card')}${e.timeUnknown ? ' <span class="faint">· time not recorded</span>' : ''}`,
     count: () => `Counted #${Number(e.id)} as blocked`,
     execute: () => `Executed #${Number(e.id)}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
-    assemble: () => `Burned the 80 · Statement ${Number(e.number)}${e.arrangement ? ' · ' + esc(e.arrangement === 'Manual' ? 'host’s order' : arrLabel({ preset: e.arrangement })) : ''}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
+    assemble: () => `Burned the 80 · Statement ${Number(e.number)}${e.arrangement ? ' · ' + esc(e.arrangement === 'Manual' ? 'host’s order' : e.fallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: e.arrangement })) : ''}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
     raise: () => `Raised the ask to ${eth(e.askEth)}`,
     buy: () => `Bought Statement ${Number(e.number)} for ${eth(e.price)} · fee ${eth(e.fee)}`,
     claim: () => `Claimed ${plural(e.cards?.length, 'card')} · ${eth((e.eth || 0) * (e.cards?.length || 0))}`,
     params: () => `Changed settings${e.keys?.length ? ': ' + esc(e.keys.join(', ')) : ''}`,
     list: () => `Listed Statement ${Number(e.number)} for ${eth(e.priceEth)}`,
     unlist: () => `Cancelled the listing of Statement ${Number(e.number)}`,
+    host: () => `Handed hosting to ${userLink(e.to)}`,
     resale: () => `Bought Statement ${Number(e.number)} from ${userLink(e.from)} for ${eth(e.price)}`,
     order: () => `Posted the burn order${e.reviewEnds ? ' · review until ' + esc(new Date(e.reviewEnds).toLocaleString()) : ''}`,
     host: () => `Handed hosting to ${userLink(e.to)}`,
@@ -305,6 +306,8 @@ async function pageParty(id) {
   const p = await api('parties/' + encodeURIComponent(id));
   const isHost = p.hosts.includes(me), isMember = p.members.some(m => m.address === me);
   const canHandArrange = p.manual && isHost && p.status === 'FULL';
+  const holder = !!me && p.credits.some(c => c.depositor === me && !c.claimed); // holds an unclaimed card of this party
+  const fallbackOpen = p.manual && p.fallbackAt != null && p.now >= p.fallbackAt;
   const myTokens = p.members.find(m => m.address === me)?.count || 0;
   const myCards = me ? p.credits.filter(c => c.depositor === me).sort((a, b) => a.card - b.card) : [];
   const order = partyUI.mode === 'arrange' && partyUI.order ? partyUI.order : p.credits;
@@ -314,7 +317,7 @@ async function pageParty(id) {
   const eligibleMine = wallet.filter(c => !c.deposited && matchesClient(c, p.params.filters));
 
   render(app, `
-  <div class="intro"><div><h1>${esc(p.name)}</h1>${p.description ? `<p class="desc">${esc(p.description)}</p>` : ''}<p class="muted">${p.status === 'OPEN' ? `${remaining} slots open · closes in ${Math.max(0, Math.ceil((p.deadline - Date.now()) / 864e5))} days` : p.status === 'FULL' ? (p.manual ? 'Full · host arranging by hand' : 'Full · ready to burn') : esc(p.status)}${p.demo ? ' · <span class="demo">Demo data</span>' : ''}</p></div><div style="text-align:right"><a href="#/" class="muted">← All parties</a>${stats?.dev ? `<div><button type="button" id="skip" class="faint" title="Prototype only: move the clock forward">Dev · skip 24h</button></div>` : ''}</div></div>
+  <div class="intro"><div><h1>${esc(p.name)}</h1>${p.description ? `<p class="desc">${esc(p.description)}</p>` : ''}<p class="muted">${p.status === 'OPEN' ? `${remaining} slots open · closes in ${Math.max(0, Math.ceil((p.deadline - Date.now()) / 864e5))} days` : p.status === 'FULL' ? (p.manual ? (fallbackOpen ? 'Full · host did not burn in time: any card holder can burn in Time order' : 'Full · host arranging by hand') : 'Full · any card holder can burn') : esc(p.status)}${p.demo ? ' · <span class="demo">Demo data</span>' : ''}</p></div><div style="text-align:right"><a href="#/" class="muted">← All parties</a>${stats?.dev ? `<div><button type="button" id="skip" class="faint" title="Prototype only: move the clock forward">Dev · skip 24h</button></div>` : ''}</div></div>
   ${storeBanner()}
   <div class="works">
    <section aria-label="Statement">
@@ -352,12 +355,14 @@ async function pageParty(id) {
       <div><span>Buy wait</span><strong>${Number(p.params.buyDelayHours ?? 1)} hour${(p.params.buyDelayHours ?? 1) === 1 ? '' : 's'} default</strong></div>
       <div><span>Minimum deposit</span><strong>${Number(p.params.minDeposit)}</strong></div>
       <div><span>Default price</span><strong>${targetText(p.params.target)}${p.params.target.mode !== 'fixed' ? ' · now ' + eth(p.targetEth) : ''}${p.defaultBelowFloor ? ' · <span class="blocked">below floor</span>' : ''}</strong></div>
-      <div><span>Arrangement</span><strong${p.manual ? ' class="alert-c"' : ''}>${esc(arrLabel(p.params.arrangement))}${p.manual ? ' · host orders by hand' : ''}${p.assembled && p.orderSource ? ' · burned with ' + esc(p.orderSource === 'Manual' ? 'the host’s order' : arrLabel({ preset: p.orderSource })) : ''}</strong></div>
-      <div><span>Defaults</span><strong class="muted">Set by the host and applied automatically. Card holders can vote a different price; arrangement is the host’s alone.</strong></div>
+      <div><span>Arranged by</span><strong${p.manual ? ' class="alert-c"' : ''}>${p.manual ? 'Manual · the host’s metric below' : esc(arrLabel(p.params.arrangement)) + ' — ' + esc(arrDesc(p.params.arrangement))}${p.assembled && p.orderSource ? ' · burned with ' + esc(p.orderSource === 'Manual' ? 'the host’s order' : p.orderFallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: p.orderSource })) : ''}</strong></div>
+      ${p.manual ? `<div class="rule-strong"><span class="alert-c">Host’s metric</span><strong class="alert-c">${esc(arrDesc(p.params.arrangement))}</strong></div>` : ''}
+      <div><span>Defaults</span><strong class="muted">Set by the host and applied automatically. Card holders can vote a different price. The host can change settings only until someone else deposits${p.manual ? ', orders and burns this Manual party,' : ''} and can hand hosting on; without Credit Cards a host cannot vote, chat or burn${p.manual ? ' (except the Manual burn)' : ''}.</strong></div>
       <div><span>Floor · ${p.params.floorMode === 'latest' ? 'latest reading' : '24-hour average'}</span><strong>${eth(p.floorEth)} <span class="faint">${floorNote(p.floor)}</span></strong></div>
       ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}${p.raiseAskEth != null && me ? ` <button type="button" id="raise-ask" style="margin:0" title="A floor-relative ask can only rise, never fall">Raise to ${eth(p.raiseAskEth)}</button>` : ''}</strong></div>` : ''}
       <div><span>Sale split</span><strong>1% Statement Maker · the rest to the 80 Credit Cards</strong></div>
       ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 Credit Cards</strong></div>` : ''}
+      ${isHost ? `<div><span>Hand off hosting</span><strong><span class="actions" style="margin:0;justify-content:flex-end"><input id="host-to" placeholder="0x…" style="width:220px;border:0;border-bottom:1px solid var(--line)"><button type="button" id="host-go">Hand off</button></span></strong></div>` : ''}
      </div>
     </div>
 
@@ -400,7 +405,7 @@ async function pageParty(id) {
        <button class="cta" id="deposit" disabled>Deposit ${partyUI.picks.size || ''}</button> ${cost('deposit')} each
        ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Redeem all my cards</button>` : ''}`}
      <div class="error" id="dep-err"></div>
-     <p class="note">Depositing accepts this party's defaults: ${esc(arrLabel(p.params.arrangement))} arrangement, ${targetText(p.params.target)} price. Each Credit you deposit returns one Credit Card. Until the party fills, the card's holder can redeem it for that Credit.</p>
+     <p class="note">Depositing accepts this party's defaults: arranged by ${esc(p.manual ? 'the host’s metric (' + arrDesc(p.params.arrangement) + ')' : arrLabel(p.params.arrangement) + ', ' + arrDesc(p.params.arrangement))}, ${targetText(p.params.target)} price. Each Credit you deposit returns one Credit Card. Until the party fills, the card's holder can redeem it for that Credit.</p>
     </div>` : ''}
 
     ${p.status === 'EXPIRED' ? `
@@ -417,13 +422,17 @@ async function pageParty(id) {
       <div><span>Deadlock</span><strong>After 3 counted blocks (a price with 41+ yes stopped by a no, recorded by anyone) or 30 days without a price executing, 54 yes passes; no is ignored. Now: ${Number(p.deadlock?.blocked || 0)}/3 counted${p.deadlock?.LIST ? ' · deadlock rule on' : ''}</strong></div>
       <div><span>Window</span><strong>24 hours to 7 days, chosen by the proposer</strong></div>
       <div><span>Execute</span><strong>Any card holder, within 7 days of passing, or it lapses</strong></div></div>` : ''}
-     ${p.status === 'FULL' ? `<div class="prop"><div class="prop-head"><strong>Burn</strong><span class="chip ${p.manual ? 'open' : 'pass'}">${p.manual ? 'Host arranges by hand' : 'Ready'}</span></div>
-      <p class="muted">${p.manual ? 'The host fixes the hand-made order and burns the 80 in one step.' : `Arrangement: ${esc(arrLabel(p.params.arrangement))}. Any card holder can burn the 80 into the Statement in one step; the order is set at that moment.`} The default price then goes live. Preview until the Statement contract is public.</p>
-      ${(p.manual ? canHandArrange && partyUI.mode === 'arrange' : isMember) ? (partyUI.confirmBurn
+     ${p.status === 'FULL' ? (() => {
+       const hostBurn = p.manual && canHandArrange && partyUI.mode === 'arrange', fbBurn = p.manual && !isHost && fallbackOpen && holder;
+       const canBurn = p.manual ? hostBurn || fbBurn : holder;
+       return `<div class="prop"><div class="prop-head"><strong>Burn</strong><span class="chip ${!p.manual || fallbackOpen ? 'pass' : 'open'}">${!p.manual ? 'Any card holder' : fallbackOpen ? 'Any card holder · Time order' : 'Host arranges by hand'}</span></div>
+      <p class="muted">${!p.manual ? `Arranged by ${esc(arrLabel(p.params.arrangement))} (${esc(arrDesc(p.params.arrangement))}). Any card holder can burn the 80 into the Statement in one step; the order is set at that moment.`
+        : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} The default price then goes live. Preview until the Statement contract is public.</p>
+      ${canBurn ? (partyUI.confirmBurn
         ? `<div class="actions"><span class="blocked">Burning is permanent. The 80 Credits become one Statement.</span><button type="button" class="cta" id="assemble">Confirm burn</button><button type="button" id="burn-x">Cancel</button></div>`
-        : `<div class="actions"><button type="button" class="cta" id="burn-ask">${p.manual ? 'Burn with this order' : 'Burn'}</button> ${cost('assemble')}</div>`)
-        : p.manual && canHandArrange ? '<p class="note">Open Arrange to set the order, then burn.</p>' : ''}
-     </div>` : ''}
+        : `<div class="actions"><button type="button" class="cta" id="burn-ask">${hostBurn ? 'Burn with this order' : fbBurn ? 'Burn in Time order' : 'Burn'}</button> ${cost('assemble')}</div>`)
+        : canHandArrange ? '<p class="note">Open Arrange to set the order, then burn.</p>' : !p.manual && !holder ? '<p class="note">Any Credit Card holder can burn.</p>' : ''}
+     </div>`; })() : ''}
      ${p.assembled ? `<div class="prop"><div class="prop-head"><strong>Statement ${Number(p.assembled.number)}</strong><a href="#/statement/${esc(p.id)}">View →</a></div><p class="muted">Assembled by ${userLink(p.assembled.by)}</p></div>` : ''}
      ${[...p.proposals].reverse().map(q => {
        const mine = q.votes?.[me];
@@ -469,7 +478,7 @@ async function pageParty(id) {
     <div class="panel">
      <h2>Chat</h2>
      <div class="chat" id="chat">${p.chat.map(m => `<div class="msg"><span class="muted">${userLink(m.address)} · ${ago(m.at)}</span><p>${esc(m.text)}</p></div>`).join('') || '<p class="muted" style="padding:10px 0">Quiet.</p>'}</div>
-     ${isMember || isHost ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : `<p class="note">Credit Card holders and hosts can post.</p>`}
+     ${holder ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : `<p class="note">Credit Card holders can post.</p>`}
      <div class="error" id="chat-err"></div>
     </div>
 
@@ -496,6 +505,7 @@ async function pageParty(id) {
       if (Number.isInteger(from) && Number.isInteger(to) && from !== to) { const o = [...partyUI.order]; [o[from], o[to]] = [o[to], o[from]]; partyUI.order = o; partyUI.preset = (partyUI.preset || 'Custom').replace(/ · edited$/, '') + ' · edited'; route(); }
     });
   }
+  $('#host-go')?.addEventListener('click', () => act('host', { to: $('#host-to').value.trim() }, 'vote-err'));
   $('#burn-ask')?.addEventListener('click', () => { partyUI.confirmBurn = true; route(); });
   $('#burn-x')?.addEventListener('click', () => { partyUI.confirmBurn = false; route(); });
   $('#submit-order-legacy')?.addEventListener('click', () => act('arrange', { order: partyUI.order.map(c => c.id), preset: partyUI.preset || 'Deposit order', hours: $('#win')?.value }, 'arr-err'));
@@ -528,7 +538,7 @@ async function pageParty(id) {
   app.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => act('claim', { cards: [Number(b.dataset.claim)] }, 'card-err'));
   $('#claim-all')?.addEventListener('click', () => act('claim', {}, 'card-err'));
   $('#buy')?.addEventListener('click', () => act('buy', {}, 'buy-err'));
-  $('#assemble')?.addEventListener('click', async () => { partyUI.confirmBurn = false; await act('assemble', p.manual ? { order: (partyUI.order || p.credits).map(c => c.id) } : {}, 'vote-err'); });
+  $('#assemble')?.addEventListener('click', async () => { partyUI.confirmBurn = false; await act('assemble', p.manual && isHost ? { order: (partyUI.order || p.credits).map(c => c.id) } : {}, 'vote-err'); });
   $('#return')?.addEventListener('click', () => act('return', {}, 'ret-err'));
   $('#nominate-legacy')?.addEventListener('click', () => act('propose', { type: 'NOMINATE_ARRANGER', hours: $('#win')?.value, args: { address: $('#nominee').value } }, 'vote-err'));
   const send = () => { const t = $('#say').value.trim(); if (t) act('chat', { text: t }, 'chat-err'); };
@@ -536,15 +546,19 @@ async function pageParty(id) {
   $('#say')?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
 }
 
-let draft = { name: '', minDeposit: 1, days: 14, voteHours: 48, arrangement: { preset: 'Rarity' }, target: { mode: 'floorPct', value: 25 }, filters: {} };
+let draft = { name: '', minDeposit: 1, days: 14, voteHours: 48, arrangement: { preset: 'Time' }, target: { mode: 'floorPct', value: 25 }, filters: {} };
 const arrLabel = a => !a ? 'Deposit order' : a.preset === 'Random' ? `Random #${a.seed}` : a.preset === 'Deposit' ? 'Deposit order' : a.preset;
+// The metric each arrangement orders by, in one plain line (must match PRESETS in lib/core.mjs). Manual: the host's own words.
+const ARR_DESC = { Time: 'mint order, earliest first', Number: 'token number, lowest first', Rarity: 'rarest first', Colors: 'by ink plates: C, M, Y, K, then combinations', Print: 'most misregistered first', Weight: 'lightest coverage first, sparse to extreme', Eights: 'most eights first', Ink: 'fewest inked squares first', Deposit: 'deposit order, first deposited first' };
+const arrDesc = a => a?.preset === 'Manual' ? (a.metric || 'no metric stated') : a?.preset === 'Random' ? `shuffled with seed ${Number(a.seed)}` : ARR_DESC[a?.preset || 'Deposit'] || '';
+const ARR_HINT = { preset: 'Any card holder burns once the party is full; the order is set at that moment. There is no vote on arrangement.', manual: 'Manual: state the metric you will order the 80 by. Only you can burn, with your order. If you have not burned within 1 day of the party filling, any card holder can burn in Time order.' };
 async function pageNew() {
   stats = stats || await api('stats');
   const chip = (key, vals) => `<div class="chips">${vals.map(v => `<button type="button" data-f="${key}" data-v="${esc(v)}" aria-pressed="${[].concat(draft.filters[key] ?? []).map(String).includes(String(v))}">${esc(key === 'shiftMin' ? v + '+' : v)}</button>`).join('')}</div>`;
   const val = v => v == null ? '' : esc(v);
   const rg = stats.ranges;
   render(app, `
-  <div class="intro"><div><h1>Start a party</h1><p class="muted">You host. Every setting is a default that runs automatically. You are the only arranger; card holders can vote a different price.</p></div></div>
+  <div class="intro"><div><h1>Start a party</h1><p class="muted">You host. Every setting is a default that runs automatically. You can change settings until someone else deposits and hand hosting on; with Manual you also order and burn. Card holders can vote a different price.</p></div></div>
   <form class="new" id="new-form">
    <div>
     <div class="field"><label for="n">Name</label><div><input id="n" value="${val(draft.name)}" placeholder="Two eights or more" maxlength="60">${hint('Up to 60 characters')}</div></div>
@@ -552,7 +566,10 @@ async function pageNew() {
     <div class="field"><label for="md">Minimum deposit</label><div><input id="md" type="number" min="1" max="80" value="${val(draft.minDeposit)}">${hint('Range: 1–80 Credits per depositor')}</div></div>
     <div class="field"><label for="dd">Deadline, days</label><div><input id="dd" type="number" min="1" max="60" value="${val(draft.days)}">${hint('Range: 1–60 days')}</div></div>
     <div class="field"><label for="vh">Vote window</label><div><select id="vh">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (draft.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select>${hint('Range: 24 hours – 7 days · default for this party’s proposals')}</div></div>
-    <div class="field"><label>Default arrangement</label><div><div class="chips">${['Deposit', ...Object.keys(PRESETS), 'Manual'].map(k => `<button type="button" data-arr="${k}" aria-pressed="${(draft.arrangement?.preset || 'Rarity') === k}">${k === 'Deposit' ? 'Deposit order' : k}</button>`).join('')}</div><div class="hint${draft.arrangement?.preset === 'Manual' ? ' alert-c' : ''}" id="arr-hint">${draft.arrangement?.preset === 'Manual' ? 'Manual: you will order the 80 by hand and burn in the same step. Nobody else can burn this party.' : 'Fixed at the burn. You are the only arranger; there is no vote on arrangement.'}</div></div></div>
+    <div class="field"><label>Default arrangement</label><div><div class="chips">${['Time', ...Object.keys(PRESETS).filter(k => k !== 'Time'), 'Deposit', 'Manual'].map(k => `<button type="button" data-arr="${k}" aria-pressed="${(draft.arrangement?.preset || 'Time') === k}">${k === 'Deposit' ? 'Deposit order' : k}</button>`).join('')}</div>
+      <div class="hint" id="arr-desc">${esc(draft.arrangement?.preset === 'Manual' ? '' : arrLabel(draft.arrangement) + ': ' + arrDesc(draft.arrangement))}</div>
+      <div id="arr-metric" ${draft.arrangement?.preset === 'Manual' ? '' : 'hidden'} style="margin-top:6px"><input id="am" maxlength="200" placeholder="The metric you will order by, e.g. darkest to lightest, left to right" value="${esc(draft.arrangement?.metric || '')}"></div>
+      <div class="hint${draft.arrangement?.preset === 'Manual' ? ' alert-c' : ''}" id="arr-hint">${draft.arrangement?.preset === 'Manual' ? ARR_HINT.manual : ARR_HINT.preset}</div></div></div>
     <div class="field"><label>Floor reference</label><div><div class="chips">${[['avg24h', '24-hour average'], ['latest', 'Latest reading']].map(([k, l]) => `<button type="button" data-fm="${k}" aria-pressed="${(draft.floorMode || 'avg24h') === k}">${l}</button>`).join('')}</div>${hint('Floor = the Statement collection floor once Statements trade; until then 80 × the Credits floor. Read from OpenSea every minute. The average resists one cheap listing moving it; the latest follows the market as it is. Used for floor-based prices and the 60/80 below-floor rule.')}</div></div>
     <div class="field"><label for="bw">Buy wait, hours</label><div><input id="bw" type="number" min="0" max="72" value="${val(draft.buyDelayHours ?? 1)}">${hint('Range: 0–72 hours · default 1 · how long after a price goes live before anyone can buy. Every price vote can set its own.')}</div></div>
     <div class="field"><label>Default price</label><div>
@@ -588,6 +605,7 @@ async function pageNew() {
   </form>`);
   $('#new-form').addEventListener('submit', e => e.preventDefault());
   const read = () => {
+    if (draft.arrangement?.preset === 'Manual') draft.arrangement.metric = $('#am').value;
     draft.name = $('#n').value; draft.buyDelayHours = Math.max(0, Math.min(72, Math.round(+$('#bw').value || 0))); draft.description = $('#ds').value; draft.voteHours = +$('#vh').value; draft.minDeposit = +$('#md').value || 1; draft.days = +$('#dd').value || 14; draft.target.value = +$('#tv').value || 0;
     const num = id => +$(id).value || undefined;
     Object.assign(draft.filters, { rankMax: num('#rk'), marksMin: num('#mk0'), marksMax: num('#mk1'), idMin: num('#id0'), idMax: num('#id1') });
@@ -629,7 +647,7 @@ async function pageNew() {
   app.querySelectorAll('[data-f]:not([data-f="shiftMin"])').forEach(b => b.onclick = () => { const k = b.dataset.f, v = k === 'eights' ? +b.dataset.v : b.dataset.v; const a = draft.filters[k] || []; draft.filters[k] = a.includes(v) ? a.filter(x => x !== v) : [...a, v]; b.setAttribute('aria-pressed', draft.filters[k].includes(v)); refresh(); });
   const tvHint = () => { const fl = (draft.floorMode === 'latest' ? stats.floorLatest : stats.floorAvg?.credit) * SLOTS || null; $('#tvh').textContent = draft.target.mode === 'fixed' ? 'Range: above 0 ETH' : (draft.target.mode === 'floorPct' ? 'Range: above −100%' : 'Range: above −' + eth(fl)) + ' · floor now ' + eth(fl); };
   app.querySelectorAll('[data-fm]').forEach(b => b.onclick = () => { draft.floorMode = b.dataset.fm; app.querySelectorAll('[data-fm]').forEach(x => x.setAttribute('aria-pressed', x === b)); tvHint(); });
-  app.querySelectorAll('[data-arr]').forEach(b => b.onclick = () => { draft.arrangement = b.dataset.arr === 'Random' ? { preset: 'Random', seed: 1 + Math.floor(Math.random() * 999999) } : { preset: b.dataset.arr }; app.querySelectorAll('[data-arr]').forEach(x => x.setAttribute('aria-pressed', x === b)); const h = $('#arr-hint'); const man = draft.arrangement.preset === 'Manual'; h.className = 'hint' + (man ? ' alert-c' : ''); h.textContent = man ? 'Manual: you will order the 80 by hand and burn in the same step. Nobody else can burn this party.' : 'Fixed at the burn. You are the only arranger; there is no vote on arrangement.'; });
+  app.querySelectorAll('[data-arr]').forEach(b => b.onclick = () => { draft.arrangement = b.dataset.arr === 'Random' ? { preset: 'Random', seed: 1 + Math.floor(Math.random() * 999999) } : { preset: b.dataset.arr }; app.querySelectorAll('[data-arr]').forEach(x => x.setAttribute('aria-pressed', x === b)); const h = $('#arr-hint'); const man = draft.arrangement.preset === 'Manual'; if (man) draft.arrangement.metric = $('#am').value; h.className = 'hint' + (man ? ' alert-c' : ''); h.textContent = man ? ARR_HINT.manual : ARR_HINT.preset; $('#arr-metric').hidden = !man; $('#arr-desc').textContent = man ? '' : arrLabel(draft.arrangement) + ': ' + arrDesc(draft.arrangement); });
   app.querySelectorAll('[data-tm]').forEach(b => b.onclick = () => { draft.target.mode = b.dataset.tm; app.querySelectorAll('[data-tm]').forEach(x => x.setAttribute('aria-pressed', x === b)); tvHint(); });
   tvHint();
   app.querySelectorAll('input:not([type=checkbox]), textarea').forEach(i => i.oninput = refresh);
@@ -752,13 +770,14 @@ function pageRules() {
    <div><span>02 Deposit</span><strong>Users deposit Credits that match the party’s criteria. Each deposited Credit returns one Credit Card (ERC-721) to the depositor. Depositing accepts the party’s defaults.</strong></div>
    <div><span>03 The card</span><strong>Whoever holds a Credit Card has its vote, can redeem its Credit until the party fills or if it expires, and gets 1/80 of the sale. Credit Cards are ERC-721s: list and trade them on OpenSea or anywhere. The Statement itself sells only here.</strong></div>
    <div><span>04 Full</span><strong>At 80, redemption closes.</strong></div>
-   <div><span>05 Arrange</span><strong>The host is the only arranger. The arrangement is a party setting: an auto-order, or Manual, where the host orders the 80 by hand. There is no vote on arrangement.</strong></div>
-   <div><span>06 Assemble</span><strong>Arranging and burning are one step. With an auto-order, any card holder can burn; with Manual, the host burns with their order. The Statement is held by the party and the default price goes live.</strong></div>
-   <div><span>07 Sold only here</span><strong>A party sells its Statement only on Statement Maker, at the party’s own price. The party contract has no other way to release it: the party cannot list, offer or auction it on OpenSea or any other marketplace. No offers, no auctions. Each price carries its own wait before buying opens, voted with the price (the host sets the default, 1 hour unless changed). After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
-   <div><span>08 Split</span><strong>1% to Statement Maker, and any creator royalty the Statement contract declares (capped at 10%); the rest split across the 80 Credit Cards.</strong></div>
-   <div><span>09 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
-   <div><span>10 Time</span><strong>Votes run 24 hours to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
-   <div><span>11 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
+   <div><span>05 Arrange</span><strong>The arrangement is a party setting, Time (mint order) by default. The host picks a preset, each ordering by one stated metric, or Manual, where the host states at creation the metric they will order the 80 by. There is no vote on arrangement.</strong></div>
+   <div><span>06 Assemble</span><strong>Arranging and burning are one step. With a preset, any card holder can burn once all 80 are deposited. With Manual, the host burns with their order; if the host has not burned within 1 day of the party filling, any card holder can burn in Time order. The Statement is held by the party and the default price goes live.</strong></div>
+   <div><span>07 Host</span><strong>The host can change settings until someone else deposits, order and burn a Manual party, and hand hosting to another address. Nothing else: a host without Credit Cards cannot vote, chat or burn a preset party.</strong></div>
+   <div><span>08 Sold only here</span><strong>A party sells its Statement only on Statement Maker, at the party’s own price. The party contract has no other way to release it: the party cannot list, offer or auction it on OpenSea or any other marketplace. No offers, no auctions. Each price carries its own wait before buying opens, voted with the price (the host sets the default, 1 hour unless changed). After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
+   <div><span>09 Split</span><strong>1% to Statement Maker, and any creator royalty the Statement contract declares (capped at 10%); the rest split across the 80 Credit Cards.</strong></div>
+   <div><span>10 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
+   <div><span>11 Time</span><strong>Votes run 24 hours to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
+   <div><span>12 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
    <div class="agree"><label class="check"><input type="checkbox" id="rules-ok" ${rulesAgreed() ? 'checked' : ''}> <span>I have read the rules and agree to the <a href="#/terms">terms and conditions</a>.</span></label>
     <button class="cta" id="rules-go" ${rulesAgreed() ? '' : 'disabled'}>Continue to parties →</button></div>
   </div>
@@ -778,7 +797,7 @@ const TERMS_VERSION = '2026-09-23.4';
 const TERMS = [
  ['What Statement Maker is', 'Statement Maker is a tool that lets holders of Credits pool them in groups called parties. When a party collects 80 Credits, the party can burn them to create one Statement and then sell it. Statement Maker provides the website and the smart contracts. It does not hold your Credits or your money; the party contracts do.'],
  ['Not affiliated with Jack Butcher', 'Statement Maker is independent. It is not made, endorsed, or operated by Jack Butcher, jack.art, the Credits project, or X. Credits and Statements are Jack Butcher’s work. We only coordinate holders who choose to use the burn function his contracts provide.'],
- ['How a party works', 'A host opens a party and sets its defaults: eligible Credits, minimum deposit, arrangement, price, voting window and deadline. Each deposited Credit returns one Credit Card; whoever holds a card can redeem its Credit until the party reaches 80. The host is the only arranger. Arranging and burning happen in one step: with an auto-order any card holder can burn; with Manual only the host can.'],
+ ['How a party works', 'A host opens a party and sets its defaults: eligible Credits, minimum deposit, arrangement, price, voting window and deadline. Each deposited Credit returns one Credit Card; whoever holds a card can redeem its Credit until the party reaches 80. The host can change settings until someone else deposits and hand hosting to another address. Arranging and burning happen in one step: with a preset (Time, mint order, by default) any card holder can burn once all 80 are deposited; with Manual the host burns with an order by the metric they stated, and if the host has not burned within 1 day of the party filling, any card holder can burn in Time order.'],
  ['Burning is permanent', 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party never fills, or never assembles before its deadline, every Credit goes back to its depositor.'],
  ['Credit Cards', 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has that Credit’s vote, the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of any sale. Credit Cards can be transferred or traded by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.'],
  ['Voting', 'Every Credit Card is one vote. A proposal passes when more than 40 Credit Cards vote yes and none vote no within its voting window, which lasts 24 hours to 7 days. Any member must then execute it within 7 days or it lapses. A single no vote blocks a proposal, so a party can stay deadlocked and its Statement can go unsold indefinitely.'],
@@ -982,12 +1001,12 @@ function simTally(q) {
 async function pageSim() {
   stats = stats || await api('stats');
   if (!sim || sim.step === 'setup') {
-    const f = { theme: 'misreg', arrangement: 'Rarity', pct: 25, ...(sim?.form || {}) };
+    const f = { theme: 'misreg', arrangement: 'Time', pct: 25, ...(sim?.form || {}) };
     render(app, `
     <div class="intro"><div><h1>Try it</h1><p class="muted">Play a party from start to finish: you host, deposit, the party fills, you burn, members vote on a price, a buyer pays, you claim. Real Credits, invented members. Nothing is sent or saved.</p></div></div>
     <form class="new" id="sim-form"><div>
      <div class="field"><label>Party theme</label><div class="chips">${[['misreg', 'Misregistered'], ['cyan', 'Cyan only'], ['eights', 'One eight or more'], ['any', 'Any Credit']].map(([k, l]) => `<button type="button" data-st="${k}" aria-pressed="${f.theme === k}">${l}</button>`).join('')}</div></div>
-     <div class="field"><label>Arrangement</label><div><div class="chips">${['Rarity', 'Colors', 'Print', 'Ink', 'Manual'].map(k => `<button type="button" data-sa="${k}" aria-pressed="${f.arrangement === k}">${k}</button>`).join('')}</div><div class="hint ${f.arrangement === 'Manual' ? 'alert-c' : ''}">${f.arrangement === 'Manual' ? 'Manual: you order the 80 by hand when you burn.' : 'Applied automatically at the burn.'}</div></div></div>
+     <div class="field"><label>Arrangement</label><div><div class="chips">${['Time', 'Rarity', 'Colors', 'Print', 'Ink', 'Manual'].map(k => `<button type="button" data-sa="${k}" aria-pressed="${f.arrangement === k}">${k}</button>`).join('')}</div><div class="hint ${f.arrangement === 'Manual' ? 'alert-c' : ''}">${f.arrangement === 'Manual' ? 'Manual: you order the 80 by hand when you burn.' : 'Applied automatically at the burn.'}</div></div></div>
      <div class="field"><label>Default price</label><div><div style="display:flex;gap:12px;align-items:center"><span class="muted">Floor +</span><input id="sp" type="number" value="${f.pct}" style="width:80px">%</div><div class="hint">Floor now ${eth(stats.floor ? stats.floor * SLOTS : null)} · range above −100%</div></div></div>
      <button class="cta" id="sim-go" type="button">Open the party</button>
     </div><div><div class="rows terms">
@@ -1032,7 +1051,7 @@ async function pageSim() {
       <p>${sim.deposits.length}/80. Others are joining. Until 80, any card holder can redeem a card for its Credit.</p>
       <div class="actions"><button class="cta" id="s-fill">Advance a day</button></div>`
     : sim.step === 'arrange' ? (sim.arrangement === 'Manual' ? `
-      <p class="alert-c">Full. You chose Manual: order the 80 by hand, starting from an auto-order if you like. The order is fixed the moment you burn.</p>` : `
+      <p class="alert-c">Full. Manual: the host orders the 80 by hand by the metric stated at creation, starting from a preset if useful, and burns. If the host does not burn within 1 day of filling, any card holder can burn in Time order.</p>` : `
       <p>Full. Arrangement is ${esc(sim.arrangement)}: it is applied the moment anyone burns. There is no vote on arrangement.</p>`) + (sim.confirm
         ? `<div class="actions"><span class="blocked">Burning is permanent. 80 Credits become one Statement.</span><button class="cta" id="s-burn">Confirm burn</button><button type="button" id="s-burn-x">Cancel</button></div>`
         : `<div class="actions"><button class="cta" id="s-burn-ask">${sim.arrangement === 'Manual' ? 'Burn with this order' : 'Burn'}</button> ${cost('assemble')}</div>`)
@@ -1116,8 +1135,9 @@ const DEFS = {
   'minimum deposit': 'The fewest Credits one person can add at a time. The last slots are exempt so the party can always reach exactly 80.',
   'deadline, days': 'How long the party has to fill and burn. If it misses the deadline, every Credit goes back to whoever holds its card.',
   'vote window': 'How long a price vote stays open by default. Anyone proposing can pick 24 hours, 48 hours, 72 hours or 7 days.',
-  'default arrangement': 'The order of the 80 Credits in the 8 × 10 sheet. An auto-order is checked by the contract at the burn; Manual means the host arranges by hand.',
+  'default arrangement': 'The order of the 80 Credits in the 8 × 10 sheet. Time (mint order) by default. A preset is checked by the contract at the burn; Manual means the host arranges by hand by a metric they state.',
   'arrangement': 'The order of the 80 Credits in the 8 × 10 sheet, set by the host when the party opened.',
+  'arranged by': 'The metric that orders the 80 Credits in the 8 × 10 sheet, set by the host when the party opened.',
   'floor reference': 'Which floor this party uses: the average of the last 24 hours (harder to move with one cheap listing) or the latest reading.',
   'default price': 'What the Statement sells for once it is made, unless card holders vote a different price.',
   'colors': 'Which of the four ink plates (cyan, magenta, yellow, black) show on a Credit. Set by the payment second.',
@@ -1131,7 +1151,7 @@ const DEFS = {
   'token number': 'The Credit number. Lower numbers were paid for earlier.',
   'status': 'Where the party is: open (filling), full (ready to burn), assembled (Statement made), sold, or expired.',
   'filled': 'Credits deposited so far, out of 80.',
-  'hosts': 'Who opened the party. The host sets the defaults and is the only arranger.',
+  'hosts': 'Who runs the party. The host sets the defaults (until someone else deposits), orders and burns Manual parties, and can hand hosting on. Nothing else.',
   'eligible credits': 'Which Credits this party accepts, and how many exist in total.',
   'sale split': 'Where the sale money goes: 1% to Statement Maker, the rest in 80 equal shares, one per Credit Card.',
   'defaults': 'Settings the host chose when opening the party. They apply automatically.',
