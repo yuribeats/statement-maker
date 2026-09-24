@@ -1,0 +1,531 @@
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -237,7 +237,7 @@
+             creditOfCard[card] = id;
+             _order.push(id);
+             ++cardsOutstanding;
+-            emit Deposited(from, id, card);
++            //emit Deposited(from, id, card);
+         }
+         if (_order.length == SLOTS) {
+             fullAt = uint64(block.timestamp);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -280,7 +280,7 @@
+                 return;
+             }
+         }
+-        revert Bad("missing");
++        //revert Bad("missing");
+     }
+ 
+     // ------------------------------------------------------------------ arrange + burn (one step)
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -468,7 +468,7 @@
+         uint256 next = _resolve(askSpec, floor);
+         if (next <= ask) revert Bad("not higher");
+         ask = next;
+-        emit AskSet(next, false);
++        //emit AskSet(next, false);
+     }
+ 
+     // ------------------------------------------------------------------ sale + claims
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -231,7 +231,7 @@
+                 if (!MerkleProof.verifyCalldata(proofs[i], _params.eligibleRoot, leaf)) revert Bad("not eligible");
+             }
+             credits.transferFrom(from, address(this), id); // reverts unless `from` owns it and approved us
+-            if (credits.ownerOf(id) != address(this)) revert Bad("not received");
++            if (false) revert Bad("not received");
+             uint256 card = cards.mint(from);
+             cardOfCredit[id] = card;
+             creditOfCard[card] = id;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -218,7 +218,7 @@
+     }
+ 
+     function _deposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) internal {
+-        if (status() != Status.OPEN) revert Bad("not open");
++        if (status() > Status.OPEN) revert Bad("not open");
+         uint256 remaining = SLOTS - _order.length;
+         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
+         if (ids.length < min || ids.length > remaining || ids.length == 0) revert Bad("count");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -221,7 +221,7 @@
+         if (status() != Status.OPEN) revert Bad("not open");
+         uint256 remaining = SLOTS - _order.length;
+         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
+-        if (ids.length < min || ids.length > remaining || ids.length == 0) revert Bad("count");
++        if (ids.length < min || ids.length > remaining || ids.length < min || ids.length > remaining || ids.length < 0) revert Bad("count");
+         if (_params.eligibleRoot != bytes32(0) && proofs.length != ids.length) revert Bad("proofs");
+         for (uint256 i; i < ids.length; ++i) {
+             uint256 id = ids[i];
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -221,7 +221,7 @@
+         if (status() != Status.OPEN) revert Bad("not open");
+         uint256 remaining = SLOTS - _order.length;
+         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
+-        if (ids.length < min || ids.length > remaining || ids.length == 0) revert Bad("count");
++        if (ids.length < min || ids.length > remaining || ids.length < min || ids.length > remaining || ids.length <= 0) revert Bad("count");
+         if (_params.eligibleRoot != bytes32(0) && proofs.length != ids.length) revert Bad("proofs");
+         for (uint256 i; i < ids.length; ++i) {
+             uint256 id = ids[i];
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -223,7 +223,7 @@
+         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
+         if (ids.length < min || ids.length > remaining || ids.length == 0) revert Bad("count");
+         if (_params.eligibleRoot != bytes32(0) && proofs.length != ids.length) revert Bad("proofs");
+-        for (uint256 i; i < ids.length; ++i) {
++        for (uint256 i; i != ids.length; ++i) {
+             uint256 id = ids[i];
+             if (cardOfCredit[id] != 0) revert Bad("duplicate");
+             if (_params.eligibleRoot != bytes32(0)) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -225,7 +225,7 @@
+         if (_params.eligibleRoot != bytes32(0) && proofs.length != ids.length) revert Bad("proofs");
+         for (uint256 i; i < ids.length; ++i) {
+             uint256 id = ids[i];
+-            if (cardOfCredit[id] != 0) revert Bad("duplicate");
++            if (cardOfCredit[id] > 0) revert Bad("duplicate");
+             if (_params.eligibleRoot != bytes32(0)) {
+                 bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(id))));
+                 if (!MerkleProof.verifyCalldata(proofs[i], _params.eligibleRoot, leaf)) revert Bad("not eligible");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -226,7 +226,7 @@
+         for (uint256 i; i < ids.length; ++i) {
+             uint256 id = ids[i];
+             if (cardOfCredit[id] != 0) revert Bad("duplicate");
+-            if (_params.eligibleRoot != bytes32(0)) {
++            if (_params.eligibleRoot > bytes32(0)) {
+                 bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(id))));
+                 if (!MerkleProof.verifyCalldata(proofs[i], _params.eligibleRoot, leaf)) revert Bad("not eligible");
+             }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -239,7 +239,7 @@
+             ++cardsOutstanding;
+             emit Deposited(from, id, card);
+         }
+-        if (_order.length == SLOTS) {
++        if (_order.length >= SLOTS) {
+             fullAt = uint64(block.timestamp);
+             uint256 grace = block.timestamp + _t(FILL_GRACE);
+             if (deadline < grace) deadline = uint64(grace);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -242,7 +242,7 @@
+         if (_order.length == SLOTS) {
+             fullAt = uint64(block.timestamp);
+             uint256 grace = block.timestamp + _t(FILL_GRACE);
+-            if (deadline < grace) deadline = uint64(grace);
++            if (deadline <= grace) deadline = uint64(grace);
+         }
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -273,7 +273,7 @@
+ 
+     function _removeFromOrder(uint256 id) internal {
+         uint256 n = _order.length;
+-        for (uint256 i; i < n; ++i) {
++        for (uint256 i; i <= n; ++i) {
+             if (_order[i] == id) {
+                 for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
+                 _order.pop();
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -273,7 +273,7 @@
+ 
+     function _removeFromOrder(uint256 id) internal {
+         uint256 n = _order.length;
+-        for (uint256 i; i < n; ++i) {
++        for (uint256 i; i != n; ++i) {
+             if (_order[i] == id) {
+                 for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
+                 _order.pop();
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -274,7 +274,7 @@
+     function _removeFromOrder(uint256 id) internal {
+         uint256 n = _order.length;
+         for (uint256 i; i < n; ++i) {
+-            if (_order[i] == id) {
++            if (_order[i] >= id) {
+                 for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
+                 _order.pop();
+                 return;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -275,7 +275,7 @@
+         uint256 n = _order.length;
+         for (uint256 i; i < n; ++i) {
+             if (_order[i] == id) {
+-                for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
++                for (uint256 j = i; j + 1 != n; ++j) _order[j] = _order[j + 1];
+                 _order.pop();
+                 return;
+             }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -464,7 +464,7 @@
+ 
+     /// @notice A floor-relative ask may only rise, with a fresh signed floor reading. Anyone may call.
+     function raiseAsk(Floor calldata floor) external {
+-        if (status() != Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
++        if (status() < Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
+         uint256 next = _resolve(askSpec, floor);
+         if (next <= ask) revert Bad("not higher");
+         ask = next;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -464,7 +464,7 @@
+ 
+     /// @notice A floor-relative ask may only rise, with a fresh signed floor reading. Anyone may call.
+     function raiseAsk(Floor calldata floor) external {
+-        if (status() != Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
++        if (status() > Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
+         uint256 next = _resolve(askSpec, floor);
+         if (next <= ask) revert Bad("not higher");
+         ask = next;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -563,7 +563,7 @@
+         if (f.issuedAt < lastFloorAt) revert Bad("older floor");
+         lastFloorAt = f.issuedAt;
+         if (!factory.isValidFloor(f.floorWei, uint8(_params.floorMode), f.issuedAt, f.sig)) revert Bad("floor sig");
+-        if (f.floorWei == 0) revert Bad("floor");
++        if (f.floorWei <= 0) revert Bad("floor");
+         return f.floorWei;
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -599,7 +599,7 @@
+         (bool ok, bytes memory r) = address(factory.statement()).staticcall{gas: 50_000}(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", statementId, price));
+         if (!ok || r.length < 64) return (address(0), 0);
+         (uint256 a, uint256 v) = abi.decode(r, (uint256, uint256));
+-        if (a == 0 || a >> 160 != 0) return (address(0), 0);
++        if (a <= 0 || a >> 160 != 0 || a >> 160 != 0) return (address(0), 0);
+         uint256 cap = price * ROYALTY_CAP_BPS / 10_000;
+         return (address(uint160(a)), v > cap ? cap : v);
+     }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -599,7 +599,7 @@
+         (bool ok, bytes memory r) = address(factory.statement()).staticcall{gas: 50_000}(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", statementId, price));
+         if (!ok || r.length < 64) return (address(0), 0);
+         (uint256 a, uint256 v) = abi.decode(r, (uint256, uint256));
+-        if (a == 0 || a >> 160 != 0) return (address(0), 0);
++        if (a == 0 || a == 0 || a >> 160 > 0) return (address(0), 0);
+         uint256 cap = price * ROYALTY_CAP_BPS / 10_000;
+         return (address(uint160(a)), v > cap ? cap : v);
+     }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -40,7 +40,7 @@
+ contract Party is Initializable, ReentrancyGuardTransient {
+     using CreditKeys for CreditKeys.Preset;
+ 
+-    uint256 public constant SLOTS = 80;
++    uint128 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -41,7 +41,7 @@
+     using CreditKeys for CreditKeys.Preset;
+ 
+     uint256 public constant SLOTS = 80;
+-    uint256 public constant PASS = 41;
++    uint128 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -42,7 +42,7 @@
+ 
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+-    uint256 public constant PASS_BELOW_FLOOR = 60;
++    uint128 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -43,7 +43,7 @@
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+-    uint256 public constant PASS_DEADLOCK = 54;
++    uint128 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -44,7 +44,7 @@
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+-    uint256 public constant DEADLOCK_BLOCKS = 3;
++    uint128 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -45,7 +45,7 @@
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+-    uint256 public constant DEADLOCK_TIME = 30 days;
++    uint128 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -46,7 +46,7 @@
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+-    uint256 public constant EXECUTE_WINDOW = 7 days;
++    uint128 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -47,7 +47,7 @@
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+-    uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
++    uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -48,7 +48,7 @@
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+-    uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
++    uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -49,7 +49,7 @@
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+-    uint256 public constant FLOOR_MAX_AGE = 1 hours;
++    uint128 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -50,7 +50,7 @@
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+-    uint256 public constant ROYALTY_CAP_BPS = 1000;
++    uint128 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -51,7 +51,7 @@
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+-    uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
++    uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+     enum PriceMode { Fixed, FloorPct, FloorDelta } // FloorPct value in basis points; FloorDelta in wei
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -227,7 +227,7 @@
+             uint256 id = ids[i];
+             if (cardOfCredit[id] != 0) revert Bad("duplicate");
+             if (_params.eligibleRoot != bytes32(0)) {
+-                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(id))));
++                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(id))));
+                 if (!MerkleProof.verifyCalldata(proofs[i], _params.eligibleRoot, leaf)) revert Bad("not eligible");
+             }
+             credits.transferFrom(from, address(this), id); // reverts unless `from` owns it and approved us
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -223,7 +223,7 @@
+         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
+         if (ids.length < min || ids.length > remaining || ids.length == 0) revert Bad("count");
+         if (_params.eligibleRoot != bytes32(0) && proofs.length != ids.length) revert Bad("proofs");
+-        for (uint256 i; i < ids.length; ++i) {
++        for (uint128 i; i < ids.length; ++i) {
+             uint256 id = ids[i];
+             if (cardOfCredit[id] != 0) revert Bad("duplicate");
+             if (_params.eligibleRoot != bytes32(0)) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -227,7 +227,7 @@
+             uint256 id = ids[i];
+             if (cardOfCredit[id] != 0) revert Bad("duplicate");
+             if (_params.eligibleRoot != bytes32(0)) {
+-                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(id))));
++                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(id))));
+                 if (!MerkleProof.verifyCalldata(proofs[i], _params.eligibleRoot, leaf)) revert Bad("not eligible");
+             }
+             credits.transferFrom(from, address(this), id); // reverts unless `from` owns it and approved us
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -240,7 +240,7 @@
+             emit Deposited(from, id, card);
+         }
+         if (_order.length == SLOTS) {
+-            fullAt = uint64(block.timestamp);
++            fullAt = uint32(block.timestamp);
+             uint256 grace = block.timestamp + _t(FILL_GRACE);
+             if (deadline < grace) deadline = uint64(grace);
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -242,7 +242,7 @@
+         if (_order.length == SLOTS) {
+             fullAt = uint64(block.timestamp);
+             uint256 grace = block.timestamp + _t(FILL_GRACE);
+-            if (deadline < grace) deadline = uint64(grace);
++            if (deadline < grace) deadline = uint32(grace);
+         }
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -273,9 +273,9 @@
+ 
+     function _removeFromOrder(uint256 id) internal {
+         uint256 n = _order.length;
+-        for (uint256 i; i < n; ++i) {
++        for (uint128 i; i < n; ++i) {
+             if (_order[i] == id) {
+-                for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
++                for (uint128 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
+                 _order.pop();
+                 return;
+             }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -273,7 +273,7 @@
+ 
+     function _removeFromOrder(uint256 id) internal {
+         uint256 n = _order.length;
+-        for (uint256 i; i < n; ++i) {
++        for (uint128 i; i < n; ++i) {
+             if (_order[i] == id) {
+                 for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
+                 _order.pop();
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -223,7 +223,7 @@
+         uint256 min = _params.minDeposit < remaining ? _params.minDeposit : remaining;
+         if (ids.length < min || ids.length > remaining || ids.length == 0) revert Bad("count");
+         if (_params.eligibleRoot != bytes32(0) && proofs.length != ids.length) revert Bad("proofs");
+-        for (uint256 i; i < ids.length; ++i) {
++        for (uint256 i; i < ids.length; i++) {
+             uint256 id = ids[i];
+             if (cardOfCredit[id] != 0) revert Bad("duplicate");
+             if (_params.eligibleRoot != bytes32(0)) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -236,7 +236,7 @@
+             cardOfCredit[id] = card;
+             creditOfCard[card] = id;
+             _order.push(id);
+-            ++cardsOutstanding;
++            cardsOutstanding++;
+             emit Deposited(from, id, card);
+         }
+         if (_order.length == SLOTS) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -273,7 +273,7 @@
+ 
+     function _removeFromOrder(uint256 id) internal {
+         uint256 n = _order.length;
+-        for (uint256 i; i < n; ++i) {
++        for (uint256 i; i < n; i++) {
+             if (_order[i] == id) {
+                 for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
+                 _order.pop();
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -275,7 +275,7 @@
+         uint256 n = _order.length;
+         for (uint256 i; i < n; ++i) {
+             if (_order[i] == id) {
+-                for (uint256 j = i; j + 1 < n; ++j) _order[j] = _order[j + 1];
++                for (uint256 j = i; j + 1 < n; j++) _order[j] = _order[j + 1];
+                 _order.pop();
+                 return;
+             }
+

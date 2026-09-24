@@ -1,0 +1,47 @@
+SURVIVED if (p.mode == PriceMode.Fixed) revert();
+KILLED //_assembling = false;
+KILLED if (st.ownerOf(sid) != address(this)) //revert Bad("statement not received");
+KILLED //try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+KILLED //emit Assembled(msg.sender, sid, order);
+KILLED //emit Proposed(id, msg.sender, cancel, price.mode, price.value, _proposals[id].endsAt, dl);
+KILLED for (uint256 i; !(i < SLOTS); ++i) {
+SURVIVED if (status() < Status.EXPIRED) revert Bad("not expired");
+SURVIVED for (uint256 i; i != cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+SURVIVED if (p >= CreditKeys.Preset.Manual) {
+SURVIVED } else if (cards.heldNow(address(this), msg.sender) <= 0) {
+KILLED for (uint256 i; i > SLOTS; ++i) {
+KILLED for (uint256 i; i >= SLOTS; ++i) {
+KILLED for (uint256 i; i == SLOTS; ++i) {
+SURVIVED for (uint256 i; i != SLOTS; ++i) {
+SURVIVED if (cancel && cancel && ask <= 0) revert Bad("not listed");
+SURVIVED if (cards.heldNow(address(this), msg.sender) <= 0) revert Bad("card holders only");
+SURVIVED if (_openIds[msg.sender].length == MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
+SURVIVED for (uint256 k = ids.length; k != 0; --k) {
+KILLED if (block.timestamp == _proposals[ids[k - 1]].endsAt) { ids[k - 1] = ids[ids.length - 1]; ids.pop(); }
+SURVIVED uint128 public constant SLOTS = 80;
+SURVIVED uint128 public constant PASS = 41;
+SURVIVED uint128 public constant PASS_BELOW_FLOOR = 60;
+SURVIVED uint128 public constant PASS_DEADLOCK = 54;
+SURVIVED uint128 public constant DEADLOCK_BLOCKS = 3;
+SURVIVED uint128 public constant DEADLOCK_TIME = 30 days;
+SURVIVED uint128 public constant EXECUTE_WINDOW = 7 days;
+SURVIVED uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+SURVIVED uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+SURVIVED uint128 public constant FLOOR_MAX_AGE = 1 hours;
+SURVIVED uint128 public constant ROYALTY_CAP_BPS = 1000;
+SURVIVED uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+SURVIVED for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+SURVIVED for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+SURVIVED PriceSpec storage spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
+KILLED assembledAt = uint32(block.timestamp);
+KILLED askLiveAt = uint32(block.timestamp);
+KILLED buyableAt = uint32(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+SURVIVED buyableAt = uint64(block.timestamp + _t(uint128(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+SURVIVED for (uint128 i; i < SLOTS; ++i) {
+SURVIVED for (uint128 i; i < SLOTS; ++i) {
+KILLED endsAt: uint32(block.timestamp + _t(uint256(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
+SURVIVED endsAt: uint64(block.timestamp + _t(uint128(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
+SURVIVED for (uint256 i; i < cardIds.length; i++) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+SURVIVED priceEpoch++; // proposals made before the burn are superseded
+SURVIVED for (uint256 i; i < SLOTS; i++) {
+SURVIVED for (uint256 k = ids.length; k > 0; k--) {

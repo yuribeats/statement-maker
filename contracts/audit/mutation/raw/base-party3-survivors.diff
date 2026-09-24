@@ -1,0 +1,564 @@
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -573,7 +573,7 @@
+     }
+ 
+     function _resolveWith(PriceSpec memory p, uint256 floorWei) internal pure returns (uint256 v) {
+-        if (p.mode == PriceMode.Fixed) return uint256(p.value);
++        if (p.mode == PriceMode.Fixed) revert();
+         int256 f = int256(floorWei);
+         int256 r = p.mode == PriceMode.FloorPct ? f * (10_000 + p.value) / 10_000 : f + p.value;
+         if (r <= 0) revert Bad("price <= 0");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -316,7 +316,7 @@
+         credits.setApprovalForAll(address(st), true);
+         _assembling = true;
+         uint256 sid = st.make(order);
+-        _assembling = false;
++        //_assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+         for (uint256 i; i < SLOTS; ++i) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -318,7 +318,7 @@
+         uint256 sid = st.make(order);
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+-        if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
++        if (st.ownerOf(sid) != address(this)) //revert Bad("statement not received");
+         for (uint256 i; i < SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -321,7 +321,7 @@
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+         for (uint256 i; i < SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+-            try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
++            //try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+         statementId = sid;
+         emit Assembled(msg.sender, sid, order);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -324,7 +324,7 @@
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+         statementId = sid;
+-        emit Assembled(msg.sender, sid, order);
++        //emit Assembled(msg.sender, sid, order);
+         emit AskSet(price, hasPendingPrice);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -356,7 +356,7 @@
+             executed: false, yes: 0, no: 0
+         }));
+         _openIds[msg.sender].push(id);
+-        emit Proposed(id, msg.sender, cancel, price.mode, price.value, _proposals[id].endsAt, dl);
++        //emit Proposed(id, msg.sender, cancel, price.mode, price.value, _proposals[id].endsAt, dl);
+         _vote(id, msg.sender, true);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint256 i; !(i < SLOTS); ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -253,7 +253,7 @@
+ 
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+     function redeemFor(uint256[] calldata cardIds) external nonReentrant {
+-        if (status() != Status.EXPIRED) revert Bad("not expired");
++        if (status() < Status.EXPIRED) revert Bad("not expired");
+         for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -254,7 +254,7 @@
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+     function redeemFor(uint256[] calldata cardIds) external nonReentrant {
+         if (status() != Status.EXPIRED) revert Bad("not expired");
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
++        for (uint256 i; i != cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+     }
+ 
+     function _redeem(uint256 cardId, address holder) internal {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -290,7 +290,7 @@
+     function assemble(uint256[] calldata order, Floor calldata floor) external nonReentrant {
+         if (status() != Status.FULL) revert Bad("not full");
+         CreditKeys.Preset p = _params.arrangement;
+-        if (p == CreditKeys.Preset.Manual) {
++        if (p >= CreditKeys.Preset.Manual) {
+             if (msg.sender != host) revert Bad("host only");
+         } else if (cards.heldNow(address(this), msg.sender) == 0) {
+             revert Bad("card holders only");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -292,7 +292,7 @@
+         CreditKeys.Preset p = _params.arrangement;
+         if (p == CreditKeys.Preset.Manual) {
+             if (msg.sender != host) revert Bad("host only");
+-        } else if (cards.heldNow(address(this), msg.sender) == 0) {
++        } else if (cards.heldNow(address(this), msg.sender) <= 0) {
+             revert Bad("card holders only");
+         }
+         CreditKeys.verifyOrder(p, credits, _order, order, _params.seed);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint256 i; i > SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint256 i; i >= SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint256 i; i == SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint256 i; i != SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -340,7 +340,7 @@
+     function propose(PriceSpec calldata price, bool cancel, uint16 hours_, uint16 buyDelayHours) external returns (uint256 id) {
+         Status s = status();
+         if (cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+-        if (cancel && ask == 0) revert Bad("not listed");
++        if (cancel && cancel && ask <= 0) revert Bad("not listed");
+         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+         _refreshOpen(msg.sender);
+         if (_openIds[msg.sender].length >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -341,7 +341,7 @@
+         Status s = status();
+         if (cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+         if (cancel && ask == 0) revert Bad("not listed");
+-        if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
++        if (cards.heldNow(address(this), msg.sender) <= 0) revert Bad("card holders only");
+         _refreshOpen(msg.sender);
+         if (_openIds[msg.sender].length >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
+         if (!cancel) _checkPrice(price);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -343,7 +343,7 @@
+         if (cancel && ask == 0) revert Bad("not listed");
+         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+         _refreshOpen(msg.sender);
+-        if (_openIds[msg.sender].length >= MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
++        if (_openIds[msg.sender].length == MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
+         if (!cancel) _checkPrice(price);
+         if (!cancel && buyDelayHours > MAX_BUY_DELAY_HOURS) revert Bad("buyDelay");
+         uint16 h = cancel ? 24 : (hours_ == 0 ? _params.voteHours : hours_); // cancels always run 24h
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -455,7 +455,7 @@
+     function _refreshOpen(address who) internal {
+         // drop the proposer's proposals that have closed (the list never exceeds MAX_OPEN_PER_PROPOSER)
+         uint256[] storage ids = _openIds[who];
+-        for (uint256 k = ids.length; k > 0; --k) {
++        for (uint256 k = ids.length; k != 0; --k) {
+             if (block.timestamp >= _proposals[ids[k - 1]].endsAt) { ids[k - 1] = ids[ids.length - 1]; ids.pop(); }
+         }
+     }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -456,7 +456,7 @@
+         // drop the proposer's proposals that have closed (the list never exceeds MAX_OPEN_PER_PROPOSER)
+         uint256[] storage ids = _openIds[who];
+         for (uint256 k = ids.length; k > 0; --k) {
+-            if (block.timestamp >= _proposals[ids[k - 1]].endsAt) { ids[k - 1] = ids[ids.length - 1]; ids.pop(); }
++            if (block.timestamp == _proposals[ids[k - 1]].endsAt) { ids[k - 1] = ids[ids.length - 1]; ids.pop(); }
+         }
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -40,7 +40,7 @@
+ contract Party is Initializable, ReentrancyGuardTransient {
+     using CreditKeys for CreditKeys.Preset;
+ 
+-    uint256 public constant SLOTS = 80;
++    uint128 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -41,7 +41,7 @@
+     using CreditKeys for CreditKeys.Preset;
+ 
+     uint256 public constant SLOTS = 80;
+-    uint256 public constant PASS = 41;
++    uint128 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -42,7 +42,7 @@
+ 
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+-    uint256 public constant PASS_BELOW_FLOOR = 60;
++    uint128 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -43,7 +43,7 @@
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+-    uint256 public constant PASS_DEADLOCK = 54;
++    uint128 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -44,7 +44,7 @@
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+-    uint256 public constant DEADLOCK_BLOCKS = 3;
++    uint128 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -45,7 +45,7 @@
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+-    uint256 public constant DEADLOCK_TIME = 30 days;
++    uint128 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -46,7 +46,7 @@
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+-    uint256 public constant EXECUTE_WINDOW = 7 days;
++    uint128 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -47,7 +47,7 @@
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+-    uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
++    uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -48,7 +48,7 @@
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+-    uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
++    uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -49,7 +49,7 @@
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+-    uint256 public constant FLOOR_MAX_AGE = 1 hours;
++    uint128 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -50,7 +50,7 @@
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+-    uint256 public constant ROYALTY_CAP_BPS = 1000;
++    uint128 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -51,7 +51,7 @@
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+-    uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
++    uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+     enum PriceMode { Fixed, FloorPct, FloorDelta } // FloorPct value in basis points; FloorDelta in wei
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -254,7 +254,7 @@
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+     function redeemFor(uint256[] calldata cardIds) external nonReentrant {
+         if (status() != Status.EXPIRED) revert Bad("not expired");
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
++        for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+     }
+ 
+     function _redeem(uint256 cardId, address holder) internal {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -254,7 +254,7 @@
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+     function redeemFor(uint256[] calldata cardIds) external nonReentrant {
+         if (status() != Status.EXPIRED) revert Bad("not expired");
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
++        for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+     }
+ 
+     function _redeem(uint256 cardId, address holder) internal {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -298,7 +298,7 @@
+         CreditKeys.verifyOrder(p, credits, _order, order, _params.seed);
+ 
+         // Price that goes live: the one voted while FULL, else the host default. Resolve before external calls.
+-        PriceSpec memory spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
++        PriceSpec storage spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
+         uint256 price = _resolve(spec, floor);
+ 
+         // Effects
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -303,7 +303,7 @@
+ 
+         // Effects
+         assembled = true;
+-        assembledAt = uint64(block.timestamp);
++        assembledAt = uint32(block.timestamp);
+         _burnOrder = order;
+         ask = price;
+         askSpec = spec;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -307,7 +307,7 @@
+         _burnOrder = order;
+         ask = price;
+         askSpec = spec;
+-        askLiveAt = uint64(block.timestamp);
++        askLiveAt = uint32(block.timestamp);
+         buyableAt = uint64(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+         ++priceEpoch; // proposals made before the burn are superseded
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -308,7 +308,7 @@
+         ask = price;
+         askSpec = spec;
+         askLiveAt = uint64(block.timestamp);
+-        buyableAt = uint64(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
++        buyableAt = uint32(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+         ++priceEpoch; // proposals made before the burn are superseded
+ 
+         // Interactions: approve the Statement contract for this call only, then verify the outcome.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -308,7 +308,7 @@
+         ask = price;
+         askSpec = spec;
+         askLiveAt = uint64(block.timestamp);
+-        buyableAt = uint64(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
++        buyableAt = uint64(block.timestamp + _t(uint128(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+         ++priceEpoch; // proposals made before the burn are superseded
+ 
+         // Interactions: approve the Statement contract for this call only, then verify the outcome.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint128 i; i < SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint128 i; i < SLOTS; ++i) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -352,7 +352,7 @@
+         bool dl = _deadlocked();
+         _proposals.push(Proposal({
+             price: price, cancel: cancel, proposer: msg.sender, snapshot: uint48(block.number - 1),
+-            endsAt: uint64(block.timestamp + _t(uint256(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
++            endsAt: uint32(block.timestamp + _t(uint256(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
+             executed: false, yes: 0, no: 0
+         }));
+         _openIds[msg.sender].push(id);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -352,7 +352,7 @@
+         bool dl = _deadlocked();
+         _proposals.push(Proposal({
+             price: price, cancel: cancel, proposer: msg.sender, snapshot: uint48(block.number - 1),
+-            endsAt: uint64(block.timestamp + _t(uint256(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
++            endsAt: uint64(block.timestamp + _t(uint128(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
+             executed: false, yes: 0, no: 0
+         }));
+         _openIds[msg.sender].push(id);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -254,7 +254,7 @@
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+     function redeemFor(uint256[] calldata cardIds) external nonReentrant {
+         if (status() != Status.EXPIRED) revert Bad("not expired");
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
++        for (uint256 i; i < cardIds.length; i++) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+     }
+ 
+     function _redeem(uint256 cardId, address holder) internal {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -309,7 +309,7 @@
+         askSpec = spec;
+         askLiveAt = uint64(block.timestamp);
+         buyableAt = uint64(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+-        ++priceEpoch; // proposals made before the burn are superseded
++        priceEpoch++; // proposals made before the burn are superseded
+ 
+         // Interactions: approve the Statement contract for this call only, then verify the outcome.
+         IStatement st = factory.statement();
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -319,7 +319,7 @@
+         _assembling = false;
+         credits.setApprovalForAll(address(st), false);
+         if (st.ownerOf(sid) != address(this)) revert Bad("statement not received");
+-        for (uint256 i; i < SLOTS; ++i) {
++        for (uint256 i; i < SLOTS; i++) {
+             // every Credit must be gone from this contract (burned by the Statement contract)
+             try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -455,7 +455,7 @@
+     function _refreshOpen(address who) internal {
+         // drop the proposer's proposals that have closed (the list never exceeds MAX_OPEN_PER_PROPOSER)
+         uint256[] storage ids = _openIds[who];
+-        for (uint256 k = ids.length; k > 0; --k) {
++        for (uint256 k = ids.length; k > 0; k--) {
+             if (block.timestamp >= _proposals[ids[k - 1]].endsAt) { ids[k - 1] = ids[ids.length - 1]; ids.pop(); }
+         }
+     }
+

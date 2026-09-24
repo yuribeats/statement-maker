@@ -1,0 +1,120 @@
+{
+ "total": 2347,
+ "per": {
+  "execute(uint256,(uint256,uint64,bytes))": 219,
+  "_deposit(address,uint256[],bytes32[][])": 179,
+  "buy(uint256)": 174,
+  "assemble(uint256[],(uint256,uint64,bytes))": 156,
+  "initialize(address,(string,string,string,bytes32,uint8,uint32,uint16,uint8,uint256,(uint8,int256),uint8,uint256,uint16))": 153,
+  "_vote(uint256,address,bool)": 144,
+  "propose((uint8,int256),bool,uint16,uint16)": 143,
+  "claim(uint256[])": 83,
+  "_royalty(uint256)": 80,
+  "claimFor(uint256[])": 79,
+  "_checkPrice((uint8,int256))": 76,
+  "_removeFromOrder(uint256)": 70,
+  "slitherConstructorConstantVariables()": 68,
+  "_deadlocked()": 61,
+  "_resolveWith((uint8,int256),uint256)": 53,
+  "_floor((uint256,uint64,bytes))": 50,
+  "_redeem(uint256,address)": 48,
+  "_refreshOpen(address)": 46,
+  "cardView(uint256)": 45,
+  "countBlocked(uint256)": 43,
+  "raiseAsk((uint256,uint64,bytes))": 42,
+  "status()": 37,
+  "redeemFor(uint256[])": 36,
+  "withdraw()": 36,
+  "needFor(uint256,uint256,uint256)": 34,
+  "redeem(uint256[])": 28,
+  "_windowOk(uint16)": 25,
+  "_t(uint256)": 16,
+  "openDeposit(address,uint256[],bytes32[][])": 15,
+  "_resolve((uint8,int256),(uint256,uint64,bytes))": 15,
+  "transferHost(address)": 13,
+  "onERC721Received(address,address,uint256,bytes)": 12,
+  "_clampMin(uint256)": 12,
+  "deposit(uint256[],bytes32[][])": 11,
+  "params()": 5,
+  "depositOrder()": 5,
+  "burnOrder()": 5,
+  "count()": 5,
+  "proposalCount()": 5,
+  "proposal(uint256)": 5,
+  "vote(uint256,bool)": 5,
+  "openProposalsOf(address)": 5,
+  "receive()": 3,
+  "constructor()": 2
+ },
+ "bins": [
+  {
+   "n": 471,
+   "sigs": [
+    "execute(uint256,(uint256,uint64,bytes))",
+    "claimFor(uint256[])",
+    "_deadlocked()",
+    "cardView(uint256)",
+    "withdraw()",
+    "openDeposit(address,uint256[],bytes32[][])",
+    "deposit(uint256[],bytes32[][])",
+    "openProposalsOf(address)"
+   ]
+  },
+  {
+   "n": 469,
+   "sigs": [
+    "_deposit(address,uint256[],bytes32[][])",
+    "_royalty(uint256)",
+    "_removeFromOrder(uint256)",
+    "_floor((uint256,uint64,bytes))",
+    "raiseAsk((uint256,uint64,bytes))",
+    "_windowOk(uint16)",
+    "transferHost(address)",
+    "burnOrder()",
+    "vote(uint256,bool)"
+   ]
+  },
+  {
+   "n": 468,
+   "sigs": [
+    "buy(uint256)",
+    "claim(uint256[])",
+    "_checkPrice((uint8,int256))",
+    "_redeem(uint256,address)",
+    "status()",
+    "redeem(uint256[])",
+    "onERC721Received(address,address,uint256,bytes)",
+    "depositOrder()",
+    "proposal(uint256)"
+   ]
+  },
+  {
+   "n": 470,
+   "sigs": [
+    "assemble(uint256[],(uint256,uint64,bytes))",
+    "propose((uint8,int256),bool,uint16,uint16)",
+    "_resolveWith((uint8,int256),uint256)",
+    "_refreshOpen(address)",
+    "redeemFor(uint256[])",
+    "_t(uint256)",
+    "_clampMin(uint256)",
+    "count()",
+    "receive()"
+   ]
+  },
+  {
+   "n": 469,
+   "sigs": [
+    "initialize(address,(string,string,string,bytes32,uint8,uint32,uint16,uint8,uint256,(uint8,int256),uint8,uint256,uint16))",
+    "_vote(uint256,address,bool)",
+    "slitherConstructorConstantVariables()",
+    "countBlocked(uint256)",
+    "needFor(uint256,uint256,uint256)",
+    "_resolve((uint8,int256),(uint256,uint64,bytes))",
+    "params()",
+    "proposalCount()",
+    "constructor()"
+   ]
+  }
+ ]
+}

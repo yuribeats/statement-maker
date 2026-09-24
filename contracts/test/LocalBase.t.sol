@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {Credits} from "./credits/Credits.sol";
+import {ILocalCredits} from "./ILocalCredits.sol";
 import {PartyFactory} from "../src/PartyFactory.sol";
 import {Party} from "../src/Party.sol";
 import {CreditCards} from "../src/CreditCards.sol";
@@ -13,7 +14,7 @@ import {ICredits, ICreditArt, IStatement} from "../src/interfaces/IExternal.sol"
 /// @notice Local harness: deploys Jack's verified Credits source (test/credits, MIT) and distributes synthetic
 ///         Credits, so fuzzing runs fast without an RPC. Same bytecode logic as mainnet; only seeds differ.
 abstract contract LocalBase is Test {
-    Credits credits;
+    ILocalCredits credits;
     PartyFactory factory;
     MockStatement statement;
     CreditCards cards;
@@ -24,12 +25,59 @@ abstract contract LocalBase is Test {
 
     function setUp() public virtual {
         vm.warp(1_790_000_000);
-        credits = new Credits(address(this));
+        // audit/mutation/setup-shard.sh rewrites this line to vm.deployCode (and drops the import) in its throwaway
+        // copies, so mutation runs can build the tests with legacy codegen; the art sources need via-IR.
+        credits = ILocalCredits(address(new Credits(address(this))));
         _distribute(8, 60); // 8 holders × 60 Credits = 480
         credits.seal();
         statement = new MockStatement(address(credits));
         factory = new PartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, vm.addr(signerKey), collectionOwner);
         cards = factory.cards();
+        _etchMutants(factory);
+    }
+
+    // ------------------------------------------------------------------ mutation-testing hook
+    // contracts/audit/mutation/run.sh compiles one slither-mutate mutant of Party.sol or CreditKeys.sol with solc and
+    // passes its runtime code in MUTANT_PARTY / MUTANT_KEYS (hex files under ./data). The hook swaps it in over the
+    // Party implementation or the linked CreditKeys library, so a mutant costs one solc run instead of a full
+    // recompile of every test. Inert when neither variable is set.
+
+    address constant MUTANT_LIB_SENTINEL = 0xC0FfEE0000000000000000000000000000c0fFEe;
+
+    function _etchMutants(PartyFactory f) internal {
+        string memory pp = vm.envOr("MUTANT_PARTY", string(""));
+        string memory kp = vm.envOr("MUTANT_KEYS", string(""));
+        if (bytes(pp).length == 0 && bytes(kp).length == 0) return;
+        address impl = address(f.implementation());
+        bytes memory code = impl.code;
+        uint256 off = vm.envUint("MUTANT_LIB_OFFSET"); // where the library address sits in the unmutated Party
+        address lib;
+        assembly {
+            lib := shr(96, mload(add(add(code, 32), off)))
+        }
+        if (bytes(pp).length > 0) {
+            bytes memory m = vm.parseBytes(vm.readFile(pp));
+            _relink(m, lib); // the mutant was linked against a sentinel address
+            vm.etch(impl, m);
+        }
+        if (bytes(kp).length > 0) {
+            bytes memory k = vm.parseBytes(vm.readFile(kp));
+            for (uint256 i; i < 20; ++i) k[1 + i] = bytes20(lib)[i]; // library call guard: PUSH20 <own address>
+            vm.etch(lib, k);
+        }
+    }
+
+    function _relink(bytes memory code, address lib) private pure {
+        bytes20 s = bytes20(MUTANT_LIB_SENTINEL);
+        bytes20 l = bytes20(lib);
+        for (uint256 i; i + 21 <= code.length; ++i) {
+            if (code[i] != 0x73) continue;
+            bytes20 w;
+            assembly {
+                w := mload(add(add(code, 33), i))
+            }
+            if (w == s) for (uint256 j; j < 20; ++j) code[i + 1 + j] = l[j];
+        }
     }
 
     function _distribute(uint256 nHolders, uint256 each) internal {
@@ -78,6 +126,7 @@ abstract contract LocalBase is Test {
         internal
         returns (Party party)
     {
+        if (address(f) != address(factory)) _etchMutants(f);
         address predicted = f.predictParty(host);
         vm.startPrank(host);
         credits.setApprovalForAll(predicted, true);

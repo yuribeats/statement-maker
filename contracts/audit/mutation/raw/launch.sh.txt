@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Launch sharded slither-mutate: party shards 0-4, keys shards 0-1. Usage: launch.sh <tag>
+set -uo pipefail
+S=/private/tmp/claude-501/-Users-yurirybak/313491ff-0232-4817-82eb-b41bb9ef1408/scratchpad/mut
+MAIN=/Users/yurirybak/Desktop/Projects/statement-maker-2026-09-23/contracts
+SRC=/private/tmp/claude-501/-Users-yurirybak/313491ff-0232-4817-82eb-b41bb9ef1408/scratchpad/wt2/contracts
+TAG=$1
+SM=$HOME/.local/bin/slither-mutate
+export PATH=$HOME/.local/share/uv/tools/slither-analyzer/bin:$PATH SOLC_VERSION=0.8.28
+REMAPS="@openzeppelin/=lib/openzeppelin-contracts/ forge-std/=lib/forge-std/src/"
+run_shard() { # kind idx sigs
+  local kind=$1 i=$2 sigs=$3 file
+  [ "$kind" = party ] && file=src/Party.sol || file=src/CreditKeys.sol
+  local D=$S/$TAG-$kind$i
+  bash $MAIN/audit/mutation/setup-shard.sh $SRC $D > $D.setup.log 2>&1 || { echo "setup failed $D"; return; }
+  cd $D/m && $SM $file --test-cmd "bash $S/run-one.sh $D/m $D/p $kind" --timeout 300 --output-dir $D/campaign -v \
+    --target-functions "$sigs" --solc-remaps "$REMAPS" --compile-force-framework solc --solc-args "--optimize --evm-version cancun" \
+    > $D.log 2>&1
+  echo "done $kind$i $(date +%T)" >> $S/$TAG-done.txt
+}
+for i in 0 1 2 3 4; do
+  sigs=$(jq -r ".bins[$i].sigs | join(\",\")" $S/party-bins.json)
+  run_shard party $i "$sigs" &
+  sleep 5
+done
+for i in 0 1; do
+  sigs=$(jq -r ".bins[$i].sigs | join(\",\")" $S/keys-bins.json)
+  run_shard keys $i "$sigs" &
+  sleep 5
+done
+wait
+echo ALL DONE $(date +%T) >> $S/$TAG-done.txt

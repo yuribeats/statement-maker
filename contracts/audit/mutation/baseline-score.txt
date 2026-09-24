@@ -1,0 +1,28 @@
+Party.sol: 1332 caught / 1495 compiled mutants = 89.1% (163 survived, 584 did not compile)
+  AOR   caught  131  survived    1  no-compile    8
+  ASOR  caught   71  survived    9  no-compile    0
+  BOR   caught    4  survived    0  no-compile    0
+  CR    caught  159  survived   17  no-compile  242
+  FHR   caught    0  survived    0  no-compile   21
+  LOR   caught   36  survived    0  no-compile    0
+  MIA   caught  266  survived    8  no-compile   13
+  MVIE  caught   38  survived    1  no-compile    5
+  MWA   caught    8  survived    1  no-compile    0
+  ROR   caught  336  survived   64  no-compile  105
+  RR    caught  151  survived    2  no-compile  109
+  SBR   caught  100  survived   44  no-compile   65
+  UOR   caught   32  survived   16  no-compile   16
+CreditKeys.sol: 410 caught / 603 compiled mutants = 68.0% (193 survived, 199 did not compile)
+  AOR   caught    9  survived   19  no-compile    0
+  ASOR  caught    8  survived    2  no-compile    0
+  BOR   caught   49  survived   19  no-compile    0
+  CR    caught   34  survived   44  no-compile  114
+  LIR   caught    2  survived    0  no-compile    0
+  MIA   caught   72  survived   21  no-compile    0
+  MVIE  caught   12  survived    6  no-compile    0
+  MVIV  caught    1  survived    0  no-compile    0
+  MWA   caught    7  survived    0  no-compile    0
+  ROR   caught  130  survived   60  no-compile    0
+  RR    caught   78  survived    4  no-compile   37
+  SBR   caught    2  survived   15  no-compile   25
+  UOR   caught    6  survived    3  no-compile   23

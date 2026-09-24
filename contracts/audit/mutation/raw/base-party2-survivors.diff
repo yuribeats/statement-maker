@@ -1,0 +1,528 @@
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -268,7 +268,7 @@
+         --cardsOutstanding;
+         cards.burn(cardId);
+         credits.transferFrom(address(this), holder, id); // plain transfer: no receiver callback
+-        emit Redeemed(holder, id, cardId);
++        //emit Redeemed(holder, id, cardId);
+     }
+ 
+     function _removeFromOrder(uint256 id) internal {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -497,7 +497,7 @@
+             (bool ok,) = msg.sender.call{value: msg.value - price}("");
+             if (!ok) revert Bad("refund");
+         }
+-        emit Sold(msg.sender, price, royalty, fee, share);
++        //emit Sold(msg.sender, price, royalty, fee, share);
+     }
+ 
+     /// @notice The holder of each card claims 1/80 of the net sale; the card is burned.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -507,7 +507,7 @@
+         for (uint256 i; i < cardIds.length; ++i) {
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this) || cards.ownerOf(c) != msg.sender) revert Bad("not holder");
+-            delete creditOfCard[c];
++            //delete creditOfCard[c];
+             --cardsOutstanding;
+             cards.burn(c);
+             total += perCard;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -511,7 +511,7 @@
+             --cardsOutstanding;
+             cards.burn(c);
+             total += perCard;
+-            emit Claimed(msg.sender, c, perCard);
++            //emit Claimed(msg.sender, c, perCard);
+         }
+         (bool ok,) = msg.sender.call{value: total}("");
+         if (!ok) revert Bad("send");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -494,7 +494,7 @@
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+         if (msg.value > price) {
+-            (bool ok,) = msg.sender.call{value: msg.value - price}("");
++            (bool ok,) = msg.sender.call{value: msg.value % price}("");
+             if (!ok) revert Bad("refund");
+         }
+         emit Sold(msg.sender, price, royalty, fee, share);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -489,7 +489,7 @@
+         sold = true;
+         perCard = share;
+         ask = 0;
+-        if (royalty > 0) owed[royaltyTo] += royalty;
++        if (royalty > 0) owed[royaltyTo] = royalty;
+         owed[factory.feeRecipient()] += fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -489,7 +489,7 @@
+         sold = true;
+         perCard = share;
+         ask = 0;
+-        if (royalty > 0) owed[royaltyTo] += royalty;
++        if (royalty > 0) owed[royaltyTo] |= royalty;
+         owed[factory.feeRecipient()] += fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -489,7 +489,7 @@
+         sold = true;
+         perCard = share;
+         ask = 0;
+-        if (royalty > 0) owed[royaltyTo] += royalty;
++        if (royalty > 0) owed[royaltyTo] ^= royalty;
+         owed[factory.feeRecipient()] += fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -490,7 +490,7 @@
+         perCard = share;
+         ask = 0;
+         if (royalty > 0) owed[royaltyTo] += royalty;
+-        owed[factory.feeRecipient()] += fee + dust;
++        owed[factory.feeRecipient()] = fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+         if (msg.value > price) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -490,7 +490,7 @@
+         perCard = share;
+         ask = 0;
+         if (royalty > 0) owed[royaltyTo] += royalty;
+-        owed[factory.feeRecipient()] += fee + dust;
++        owed[factory.feeRecipient()] |= fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+         if (msg.value > price) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -490,7 +490,7 @@
+         perCard = share;
+         ask = 0;
+         if (royalty > 0) owed[royaltyTo] += royalty;
+-        owed[factory.feeRecipient()] += fee + dust;
++        owed[factory.feeRecipient()] ^= fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+         if (msg.value > price) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -489,7 +489,7 @@
+         sold = true;
+         perCard = share;
+         ask = 0;
+-        if (royalty > 0) owed[royaltyTo] += royalty;
++        if (true) owed[royaltyTo] += royalty;
+         owed[factory.feeRecipient()] += fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -248,7 +248,7 @@
+ 
+     /// @notice The card's holder takes its Credit back (card burned). Allowed while OPEN, and after EXPIRED.
+     function redeem(uint256[] calldata cardIds) external nonReentrant {
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
++        for (uint256 i; i != cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
+     }
+ 
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -475,7 +475,7 @@
+ 
+     /// @notice Buy the Statement at the current ask. `maxPrice` protects against an ask change in the same block.
+     function buy(uint256 maxPrice) external payable nonReentrant {
+-        if (status() != Status.ASSEMBLED || ask == 0) revert Bad("not for sale");
++        if (status() < Status.ASSEMBLED || ask == 0 || ask == 0) revert Bad("not for sale");
+         if (block.timestamp < buyableAt) revert Bad("not open yet");
+         uint256 price = ask;
+         if (price > maxPrice || msg.value < price) revert Bad("price");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -475,7 +475,7 @@
+ 
+     /// @notice Buy the Statement at the current ask. `maxPrice` protects against an ask change in the same block.
+     function buy(uint256 maxPrice) external payable nonReentrant {
+-        if (status() != Status.ASSEMBLED || ask == 0) revert Bad("not for sale");
++        if (status() > Status.ASSEMBLED || ask == 0 || ask == 0) revert Bad("not for sale");
+         if (block.timestamp < buyableAt) revert Bad("not open yet");
+         uint256 price = ask;
+         if (price > maxPrice || msg.value < price) revert Bad("price");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -475,7 +475,7 @@
+ 
+     /// @notice Buy the Statement at the current ask. `maxPrice` protects against an ask change in the same block.
+     function buy(uint256 maxPrice) external payable nonReentrant {
+-        if (status() != Status.ASSEMBLED || ask == 0) revert Bad("not for sale");
++        if (status() != Status.ASSEMBLED || status() != Status.ASSEMBLED || ask <= 0) revert Bad("not for sale");
+         if (block.timestamp < buyableAt) revert Bad("not open yet");
+         uint256 price = ask;
+         if (price > maxPrice || msg.value < price) revert Bad("price");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -476,7 +476,7 @@
+     /// @notice Buy the Statement at the current ask. `maxPrice` protects against an ask change in the same block.
+     function buy(uint256 maxPrice) external payable nonReentrant {
+         if (status() != Status.ASSEMBLED || ask == 0) revert Bad("not for sale");
+-        if (block.timestamp < buyableAt) revert Bad("not open yet");
++        if (block.timestamp != buyableAt) revert Bad("not open yet");
+         uint256 price = ask;
+         if (price > maxPrice || msg.value < price) revert Bad("price");
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -489,7 +489,7 @@
+         sold = true;
+         perCard = share;
+         ask = 0;
+-        if (royalty > 0) owed[royaltyTo] += royalty;
++        if (royalty >= 0) owed[royaltyTo] += royalty;
+         owed[factory.feeRecipient()] += fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -489,7 +489,7 @@
+         sold = true;
+         perCard = share;
+         ask = 0;
+-        if (royalty > 0) owed[royaltyTo] += royalty;
++        if (royalty != 0) owed[royaltyTo] += royalty;
+         owed[factory.feeRecipient()] += fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -493,7 +493,7 @@
+         owed[factory.feeRecipient()] += fee + dust;
+ 
+         factory.statement().transferFrom(address(this), msg.sender, statementId);
+-        if (msg.value > price) {
++        if (msg.value != price) {
+             (bool ok,) = msg.sender.call{value: msg.value - price}("");
+             if (!ok) revert Bad("refund");
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -504,7 +504,7 @@
+     function claim(uint256[] calldata cardIds) external nonReentrant {
+         if (!sold) revert Bad("not sold");
+         uint256 total;
+-        for (uint256 i; i < cardIds.length; ++i) {
++        for (uint256 i; i != cardIds.length; ++i) {
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this) || cards.ownerOf(c) != msg.sender) revert Bad("not holder");
+             delete creditOfCard[c];
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -553,7 +553,7 @@
+     // ------------------------------------------------------------------ prices and floor
+ 
+     function _checkPrice(PriceSpec memory p) internal pure {
+-        if (p.mode == PriceMode.Fixed && (p.value <= 0 || p.value > 1e24)) revert Bad("price");
++        if (p.mode <= PriceMode.Fixed && (p.value <= 0 || p.value > 1e24) && (p.value <= 0 || p.value > 1e24)) revert Bad("price");
+         if (p.mode == PriceMode.FloorPct && (p.value <= -10_000 || p.value > 1_000_000)) revert Bad("price");
+         if (p.mode == PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
+     }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -554,7 +554,7 @@
+ 
+     function _checkPrice(PriceSpec memory p) internal pure {
+         if (p.mode == PriceMode.Fixed && (p.value <= 0 || p.value > 1e24)) revert Bad("price");
+-        if (p.mode == PriceMode.FloorPct && (p.value <= -10_000 || p.value > 1_000_000)) revert Bad("price");
++        if (p.mode == PriceMode.FloorPct && (p.mode == PriceMode.FloorPct && (p.value == -10_000 || p.value > 1_000_000) || p.value > 1_000_000)) revert Bad("price");
+         if (p.mode == PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -555,7 +555,7 @@
+     function _checkPrice(PriceSpec memory p) internal pure {
+         if (p.mode == PriceMode.Fixed && (p.value <= 0 || p.value > 1e24)) revert Bad("price");
+         if (p.mode == PriceMode.FloorPct && (p.value <= -10_000 || p.value > 1_000_000)) revert Bad("price");
+-        if (p.mode == PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
++        if (p.mode <= PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24) && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
+     }
+ 
+     function _floor(Floor calldata f) internal returns (uint256) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -555,7 +555,7 @@
+     function _checkPrice(PriceSpec memory p) internal pure {
+         if (p.mode == PriceMode.Fixed && (p.value <= 0 || p.value > 1e24)) revert Bad("price");
+         if (p.mode == PriceMode.FloorPct && (p.value <= -10_000 || p.value > 1_000_000)) revert Bad("price");
+-        if (p.mode == PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
++        if (p.mode >= PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24) && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
+     }
+ 
+     function _floor(Floor calldata f) internal returns (uint256) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -40,7 +40,7 @@
+ contract Party is Initializable, ReentrancyGuardTransient {
+     using CreditKeys for CreditKeys.Preset;
+ 
+-    uint256 public constant SLOTS = 80;
++    uint128 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -41,7 +41,7 @@
+     using CreditKeys for CreditKeys.Preset;
+ 
+     uint256 public constant SLOTS = 80;
+-    uint256 public constant PASS = 41;
++    uint128 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -42,7 +42,7 @@
+ 
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+-    uint256 public constant PASS_BELOW_FLOOR = 60;
++    uint128 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -43,7 +43,7 @@
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+-    uint256 public constant PASS_DEADLOCK = 54;
++    uint128 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -44,7 +44,7 @@
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+-    uint256 public constant DEADLOCK_BLOCKS = 3;
++    uint128 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -45,7 +45,7 @@
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+-    uint256 public constant DEADLOCK_TIME = 30 days;
++    uint128 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -46,7 +46,7 @@
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+-    uint256 public constant EXECUTE_WINDOW = 7 days;
++    uint128 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -47,7 +47,7 @@
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+-    uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
++    uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -48,7 +48,7 @@
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+-    uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
++    uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -49,7 +49,7 @@
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+-    uint256 public constant FLOOR_MAX_AGE = 1 hours;
++    uint128 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -50,7 +50,7 @@
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+-    uint256 public constant ROYALTY_CAP_BPS = 1000;
++    uint128 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -51,7 +51,7 @@
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+-    uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
++    uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+     enum PriceMode { Fixed, FloorPct, FloorDelta } // FloorPct value in basis points; FloorDelta in wei
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -248,7 +248,7 @@
+ 
+     /// @notice The card's holder takes its Credit back (card burned). Allowed while OPEN, and after EXPIRED.
+     function redeem(uint256[] calldata cardIds) external nonReentrant {
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
++        for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
+     }
+ 
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -248,7 +248,7 @@
+ 
+     /// @notice The card's holder takes its Credit back (card burned). Allowed while OPEN, and after EXPIRED.
+     function redeem(uint256[] calldata cardIds) external nonReentrant {
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
++        for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
+     }
+ 
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -504,7 +504,7 @@
+     function claim(uint256[] calldata cardIds) external nonReentrant {
+         if (!sold) revert Bad("not sold");
+         uint256 total;
+-        for (uint256 i; i < cardIds.length; ++i) {
++        for (uint128 i; i < cardIds.length; ++i) {
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this) || cards.ownerOf(c) != msg.sender) revert Bad("not holder");
+             delete creditOfCard[c];
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -248,7 +248,7 @@
+ 
+     /// @notice The card's holder takes its Credit back (card burned). Allowed while OPEN, and after EXPIRED.
+     function redeem(uint256[] calldata cardIds) external nonReentrant {
+-        for (uint256 i; i < cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
++        for (uint256 i; i < cardIds.length; i++) _redeem(cardIds[i], msg.sender);
+     }
+ 
+     /// @notice After expiry anyone may push a card's Credit to the card's current holder.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -265,7 +265,7 @@
+         delete creditOfCard[cardId];
+         delete cardOfCredit[id];
+         _removeFromOrder(id);
+-        --cardsOutstanding;
++        cardsOutstanding--;
+         cards.burn(cardId);
+         credits.transferFrom(address(this), holder, id); // plain transfer: no receiver callback
+         emit Redeemed(holder, id, cardId);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -504,7 +504,7 @@
+     function claim(uint256[] calldata cardIds) external nonReentrant {
+         if (!sold) revert Bad("not sold");
+         uint256 total;
+-        for (uint256 i; i < cardIds.length; ++i) {
++        for (uint256 i; i < cardIds.length; i++) {
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this) || cards.ownerOf(c) != msg.sender) revert Bad("not holder");
+             delete creditOfCard[c];
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -508,7 +508,7 @@
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this) || cards.ownerOf(c) != msg.sender) revert Bad("not holder");
+             delete creditOfCard[c];
+-            --cardsOutstanding;
++            cardsOutstanding--;
+             cards.burn(c);
+             total += perCard;
+             emit Claimed(msg.sender, c, perCard);
+

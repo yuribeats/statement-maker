@@ -1,0 +1,39 @@
+{
+ "total": 1164,
+ "per": {
+  "verifyOrder(uint8,address,uint256[],uint256[],uint256)": 286,
+  "key(uint8,address,address,uint256)": 188,
+  "colorRank(uint256)": 158,
+  "colorWeight(uint256)": 158,
+  "printRank(string)": 72,
+  "eightsWeight(uint256)": 69,
+  "shuffle(uint256[],uint256)": 69,
+  "printWeight(string)": 63,
+  "weightRank(string)": 50,
+  "weightWeight(string)": 43,
+  "slitherConstructorConstantVariables()": 8
+ },
+ "bins": [
+  {
+   "n": 571,
+   "sigs": [
+    "verifyOrder(uint8,address,uint256[],uint256[],uint256)",
+    "colorWeight(uint256)",
+    "shuffle(uint256[],uint256)",
+    "weightRank(string)",
+    "slitherConstructorConstantVariables()"
+   ]
+  },
+  {
+   "n": 593,
+   "sigs": [
+    "key(uint8,address,address,uint256)",
+    "colorRank(uint256)",
+    "printRank(string)",
+    "eightsWeight(uint256)",
+    "printWeight(string)",
+    "weightWeight(string)"
+   ]
+  }
+ ]
+}

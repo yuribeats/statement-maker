@@ -1,0 +1,1488 @@
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -106,7 +106,7 @@
+         if (h == keccak256("Registered")) return 0;
+         if (h == keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+-        if (h == keccak256("Skew")) return 3;
++        if (h == keccak256("Skew")) revert();
+         if (h == keccak256("Drift")) return 4;
+         if (h == keccak256("Loose")) return 5;
+         revert("print");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -146,7 +146,7 @@
+         if (r == 0) return 195465472;
+         if (r == 1) return 4661729380;
+         if (r == 2) return 4640364522;
+-        if (r == 3) return 5366472805;
++        if (r == 3) revert();
+         if (r == 4) return 6072587748;
+         return 6964650926;
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -164,7 +164,7 @@
+         if (e == 1) return 2125356957;
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+-        if (e == 4) return 12197901863;
++        if (e == 4) revert();
+         if (e == 5) return 16898341581;
+         revert("eights"); // no Credit in the sealed supply has more than 5
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -165,7 +165,7 @@
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+-        if (e == 5) return 16898341581;
++        if (e == 5) revert();
+         revert("eights"); // no Credit in the sealed supply has more than 5
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -63,7 +63,7 @@
+     }
+ 
+     function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+-        require(id < 2 ** ID_BITS, "id");
++        //require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -78,7 +78,7 @@
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+             return ((type(uint64).max - score) << ID_BITS) | id;
+         }
+-        revert("preset");
++        //revert("preset");
+     }
+ 
+     // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -83,7 +83,7 @@
+ 
+     // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+     function colorRank(uint256 mask) internal pure returns (uint256) {
+-        if (mask == 1) return 0;
++        if (mask == 1) //return 0;
+         if (mask == 2) return 1;
+         if (mask == 4) return 2;
+         if (mask == 8) return 3;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -84,7 +84,7 @@
+     // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+     function colorRank(uint256 mask) internal pure returns (uint256) {
+         if (mask == 1) return 0;
+-        if (mask == 2) return 1;
++        if (mask == 2) //return 1;
+         if (mask == 4) return 2;
+         if (mask == 8) return 3;
+         if (mask == 3) return 4;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -85,7 +85,7 @@
+     function colorRank(uint256 mask) internal pure returns (uint256) {
+         if (mask == 1) return 0;
+         if (mask == 2) return 1;
+-        if (mask == 4) return 2;
++        if (mask == 4) //return 2;
+         if (mask == 8) return 3;
+         if (mask == 3) return 4;
+         if (mask == 5) return 5;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -86,7 +86,7 @@
+         if (mask == 1) return 0;
+         if (mask == 2) return 1;
+         if (mask == 4) return 2;
+-        if (mask == 8) return 3;
++        if (mask == 8) //return 3;
+         if (mask == 3) return 4;
+         if (mask == 5) return 5;
+         if (mask == 6) return 6;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -87,7 +87,7 @@
+         if (mask == 2) return 1;
+         if (mask == 4) return 2;
+         if (mask == 8) return 3;
+-        if (mask == 3) return 4;
++        if (mask == 3) //return 4;
+         if (mask == 5) return 5;
+         if (mask == 6) return 6;
+         if (mask == 9) return 7;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -88,7 +88,7 @@
+         if (mask == 4) return 2;
+         if (mask == 8) return 3;
+         if (mask == 3) return 4;
+-        if (mask == 5) return 5;
++        if (mask == 5) //return 5;
+         if (mask == 6) return 6;
+         if (mask == 9) return 7;
+         if (mask == 10) return 8;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -89,7 +89,7 @@
+         if (mask == 8) return 3;
+         if (mask == 3) return 4;
+         if (mask == 5) return 5;
+-        if (mask == 6) return 6;
++        if (mask == 6) //return 6;
+         if (mask == 9) return 7;
+         if (mask == 10) return 8;
+         if (mask == 12) return 9;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -90,7 +90,7 @@
+         if (mask == 3) return 4;
+         if (mask == 5) return 5;
+         if (mask == 6) return 6;
+-        if (mask == 9) return 7;
++        if (mask == 9) //return 7;
+         if (mask == 10) return 8;
+         if (mask == 12) return 9;
+         if (mask == 7) return 10;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -91,7 +91,7 @@
+         if (mask == 5) return 5;
+         if (mask == 6) return 6;
+         if (mask == 9) return 7;
+-        if (mask == 10) return 8;
++        if (mask == 10) //return 8;
+         if (mask == 12) return 9;
+         if (mask == 7) return 10;
+         if (mask == 11) return 11;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -92,7 +92,7 @@
+         if (mask == 6) return 6;
+         if (mask == 9) return 7;
+         if (mask == 10) return 8;
+-        if (mask == 12) return 9;
++        if (mask == 12) //return 9;
+         if (mask == 7) return 10;
+         if (mask == 11) return 11;
+         if (mask == 13) return 12;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -93,7 +93,7 @@
+         if (mask == 9) return 7;
+         if (mask == 10) return 8;
+         if (mask == 12) return 9;
+-        if (mask == 7) return 10;
++        if (mask == 7) //return 10;
+         if (mask == 11) return 11;
+         if (mask == 13) return 12;
+         if (mask == 14) return 13;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -94,7 +94,7 @@
+         if (mask == 10) return 8;
+         if (mask == 12) return 9;
+         if (mask == 7) return 10;
+-        if (mask == 11) return 11;
++        if (mask == 11) //return 11;
+         if (mask == 13) return 12;
+         if (mask == 14) return 13;
+         return 14; // 15 = CMYK
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -95,7 +95,7 @@
+         if (mask == 12) return 9;
+         if (mask == 7) return 10;
+         if (mask == 11) return 11;
+-        if (mask == 13) return 12;
++        if (mask == 13) //return 12;
+         if (mask == 14) return 13;
+         return 14; // 15 = CMYK
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -96,7 +96,7 @@
+         if (mask == 7) return 10;
+         if (mask == 11) return 11;
+         if (mask == 13) return 12;
+-        if (mask == 14) return 13;
++        if (mask == 14) //return 13;
+         return 14; // 15 = CMYK
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -97,7 +97,7 @@
+         if (mask == 11) return 11;
+         if (mask == 13) return 12;
+         if (mask == 14) return 13;
+-        return 14; // 15 = CMYK
++        //return 14; // 15 = CMYK
+     }
+ 
+     // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -109,7 +109,7 @@
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+         if (h == keccak256("Loose")) return 5;
+-        revert("print");
++        //revert("print");
+     }
+ 
+     // WEIGHT_ORDER = sparse, lean, even, extreme
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -143,7 +143,7 @@
+ 
+     function printWeight(string memory reg) internal pure returns (uint256) {
+         uint256 r = printRank(reg);
+-        if (r == 0) return 195465472;
++        if (r == 0) //return 195465472;
+         if (r == 1) return 4661729380;
+         if (r == 2) return 4640364522;
+         if (r == 3) return 5366472805;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -144,7 +144,7 @@
+     function printWeight(string memory reg) internal pure returns (uint256) {
+         uint256 r = printRank(reg);
+         if (r == 0) return 195465472;
+-        if (r == 1) return 4661729380;
++        if (r == 1) //return 4661729380;
+         if (r == 2) return 4640364522;
+         if (r == 3) return 5366472805;
+         if (r == 4) return 6072587748;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -145,7 +145,7 @@
+         uint256 r = printRank(reg);
+         if (r == 0) return 195465472;
+         if (r == 1) return 4661729380;
+-        if (r == 2) return 4640364522;
++        if (r == 2) //return 4640364522;
+         if (r == 3) return 5366472805;
+         if (r == 4) return 6072587748;
+         return 6964650926;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -147,7 +147,7 @@
+         if (r == 1) return 4661729380;
+         if (r == 2) return 4640364522;
+         if (r == 3) return 5366472805;
+-        if (r == 4) return 6072587748;
++        if (r == 4) //return 6072587748;
+         return 6964650926;
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -148,7 +148,7 @@
+         if (r == 2) return 4640364522;
+         if (r == 3) return 5366472805;
+         if (r == 4) return 6072587748;
+-        return 6964650926;
++        //return 6964650926;
+     }
+ 
+     function weightWeight(string memory w) internal pure returns (uint256) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -153,7 +153,7 @@
+ 
+     function weightWeight(string memory w) internal pure returns (uint256) {
+         uint256 r = weightRank(w);
+-        if (r == 0) return 2887813475;
++        if (r == 0) //return 2887813475;
+         if (r == 1) return 1831411512;
+         if (r == 2) return 801626426;
+         return 6615253228;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -154,7 +154,7 @@
+     function weightWeight(string memory w) internal pure returns (uint256) {
+         uint256 r = weightRank(w);
+         if (r == 0) return 2887813475;
+-        if (r == 1) return 1831411512;
++        if (r == 1) //return 1831411512;
+         if (r == 2) return 801626426;
+         return 6615253228;
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -155,7 +155,7 @@
+         uint256 r = weightRank(w);
+         if (r == 0) return 2887813475;
+         if (r == 1) return 1831411512;
+-        if (r == 2) return 801626426;
++        if (r == 2) //return 801626426;
+         return 6615253228;
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -156,7 +156,7 @@
+         if (r == 0) return 2887813475;
+         if (r == 1) return 1831411512;
+         if (r == 2) return 801626426;
+-        return 6615253228;
++        //return 6615253228;
+     }
+ 
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -166,7 +166,7 @@
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+         if (e == 5) return 16898341581;
+-        revert("eights"); // no Credit in the sealed supply has more than 5
++        //revert("eights"); // no Credit in the sealed supply has more than 5
+     }
+ 
+     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask = uint256(paidAt) + 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask = uint256(paidAt) / 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask = uint256(paidAt) * 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask = uint256(paidAt) - 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask = uint256(paidAt) % 15 / 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask = uint256(paidAt) % 15 * 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask = uint256(paidAt) % 15 % 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (p == Preset.Eights) return ((type(uint32).max + r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (p == Preset.Eights) return ((type(uint32).max * r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p == Preset.Print) return ((5 + printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p == Preset.Print) return ((5 * printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -76,7 +76,7 @@
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+-            return ((type(uint64).max - score) << ID_BITS) | id;
++            return ((type(uint64).max + score) << ID_BITS) | id;
+         }
+         revert("preset");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -76,7 +76,7 @@
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+-            return ((type(uint64).max - score) << ID_BITS) | id;
++            return ((type(uint64).max / score) << ID_BITS) | id;
+         }
+         revert("preset");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -76,7 +76,7 @@
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+-            return ((type(uint64).max - score) << ID_BITS) | id;
++            return ((type(uint64).max * score) << ID_BITS) | id;
+         }
+         revert("preset");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -76,7 +76,7 @@
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+-            return ((type(uint64).max - score) << ID_BITS) | id;
++            return ((type(uint64).max % score) << ID_BITS) | id;
+         }
+         revert("preset");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -66,7 +66,7 @@
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
++        if (p == Preset.Time) return (uint256(paidAt) >> ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -66,7 +66,7 @@
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
++        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) << id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -66,7 +66,7 @@
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
++        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) ^ id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -68,7 +68,7 @@
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+-        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
++        if (p == Preset.Colors) return (colorRank(mask) & ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -68,7 +68,7 @@
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+-        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
++        if (p == Preset.Colors) return (colorRank(mask) >> ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -68,7 +68,7 @@
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+-        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
++        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) ^ id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -70,7 +70,7 @@
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+-        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
++        if (p == Preset.Ink) return (r.marks >> ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -70,7 +70,7 @@
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+-        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
++        if (p == Preset.Ink) return (r.marks << ID_BITS) << id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -70,7 +70,7 @@
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+-        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
++        if (p == Preset.Ink) return (r.marks << ID_BITS) ^ id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (p == Preset.Eights) return ((type(uint32).max - r.eights) >> ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) ^ id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p == Preset.Print) return ((5 - printRank(r.register)) & ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p == Preset.Print) return ((5 - printRank(r.register)) >> ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) << id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) ^ id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -76,7 +76,7 @@
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+-            return ((type(uint64).max - score) << ID_BITS) | id;
++            return ((type(uint64).max - score) << ID_BITS) << id;
+         }
+         revert("preset");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -76,7 +76,7 @@
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+-            return ((type(uint64).max - score) << ID_BITS) | id;
++            return ((type(uint64).max - score) << ID_BITS) ^ id;
+         }
+         revert("preset");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -64,7 +64,7 @@
+ 
+     function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+         require(id < 2 ** ID_BITS, "id");
+-        if (p == Preset.Number) return id;
++        if (true) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -66,7 +66,7 @@
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
++        if (true) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -68,7 +68,7 @@
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+-        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
++        if (true) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -70,7 +70,7 @@
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+-        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
++        if (true) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (true) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (true) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -73,7 +73,7 @@
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+-        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
++        if (true) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+             return ((type(uint64).max - score) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -74,7 +74,7 @@
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+-        if (p == Preset.Rarity) {
++        if (true) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+             return ((type(uint64).max - score) << ID_BITS) | id;
+         }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -103,7 +103,7 @@
+     // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+     function printRank(string memory reg) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(reg));
+-        if (h == keccak256("Registered")) return 0;
++        if (true) return 0;
+         if (h == keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -104,7 +104,7 @@
+     function printRank(string memory reg) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(reg));
+         if (h == keccak256("Registered")) return 0;
+-        if (h == keccak256("Nudge")) return 1;
++        if (true) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -105,7 +105,7 @@
+         bytes32 h = keccak256(bytes(reg));
+         if (h == keccak256("Registered")) return 0;
+         if (h == keccak256("Nudge")) return 1;
+-        if (h == keccak256("Slip")) return 2;
++        if (true) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+         if (h == keccak256("Loose")) return 5;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -107,7 +107,7 @@
+         if (h == keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+-        if (h == keccak256("Drift")) return 4;
++        if (true) return 4;
+         if (h == keccak256("Loose")) return 5;
+         revert("print");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -108,7 +108,7 @@
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+-        if (h == keccak256("Loose")) return 5;
++        if (true) return 5;
+         revert("print");
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -160,7 +160,7 @@
+     }
+ 
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+-        if (e == 0) return 448838239;
++        if (true) return 448838239;
+         if (e == 1) return 2125356957;
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -161,7 +161,7 @@
+ 
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+         if (e == 0) return 448838239;
+-        if (e == 1) return 2125356957;
++        if (true) return 2125356957;
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -162,7 +162,7 @@
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+         if (e == 0) return 448838239;
+         if (e == 1) return 2125356957;
+-        if (e == 2) return 4849173708;
++        if (true) return 4849173708;
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+         if (e == 5) return 16898341581;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -163,7 +163,7 @@
+         if (e == 0) return 448838239;
+         if (e == 1) return 2125356957;
+         if (e == 2) return 4849173708;
+-        if (e == 3) return 8261716960;
++        if (true) return 8261716960;
+         if (e == 4) return 12197901863;
+         if (e == 5) return 16898341581;
+         revert("eights"); // no Credit in the sealed supply has more than 5
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -65,7 +65,7 @@
+     function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+-        uint64 paidAt = credits.timestampOf(id);
++        uint64 paidAt ;
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint256 mask ; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -75,7 +75,7 @@
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+-            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
++            uint256 score ;
+             return ((type(uint64).max - score) << ID_BITS) | id;
+         }
+         revert("preset");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -142,7 +142,7 @@
+     }
+ 
+     function printWeight(string memory reg) internal pure returns (uint256) {
+-        uint256 r = printRank(reg);
++        uint256 r ;
+         if (r == 0) return 195465472;
+         if (r == 1) return 4661729380;
+         if (r == 2) return 4640364522;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -152,7 +152,7 @@
+     }
+ 
+     function weightWeight(string memory w) internal pure returns (uint256) {
+-        uint256 r = weightRank(w);
++        uint256 r ;
+         if (r == 0) return 2887813475;
+         if (r == 1) return 1831411512;
+         if (r == 2) return 801626426;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -64,7 +64,7 @@
+ 
+     function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+         require(id < 2 ** ID_BITS, "id");
+-        if (p == Preset.Number) return id;
++        if (p <= Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -64,7 +64,7 @@
+ 
+     function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+         require(id < 2 ** ID_BITS, "id");
+-        if (p == Preset.Number) return id;
++        if (p >= Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -66,7 +66,7 @@
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
++        if (p <= Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -66,7 +66,7 @@
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
++        if (p >= Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -68,7 +68,7 @@
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+-        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
++        if (p <= Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -68,7 +68,7 @@
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+-        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
++        if (p >= Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -70,7 +70,7 @@
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+-        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
++        if (p <= Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -70,7 +70,7 @@
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+-        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
++        if (p >= Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (p <= Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (p >= Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p <= Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -72,7 +72,7 @@
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+-        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
++        if (p >= Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -73,7 +73,7 @@
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+-        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
++        if (p <= Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+             return ((type(uint64).max - score) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -73,7 +73,7 @@
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+-        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
++        if (p >= Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+             return ((type(uint64).max - score) << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -74,7 +74,7 @@
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+-        if (p == Preset.Rarity) {
++        if (p <= Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+             return ((type(uint64).max - score) << ID_BITS) | id;
+         }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -74,7 +74,7 @@
+         if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+-        if (p == Preset.Rarity) {
++        if (p >= Preset.Rarity) {
+             uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+             return ((type(uint64).max - score) << ID_BITS) | id;
+         }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -103,7 +103,7 @@
+     // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+     function printRank(string memory reg) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(reg));
+-        if (h == keccak256("Registered")) return 0;
++        if (h <= keccak256("Registered")) return 0;
+         if (h == keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -103,7 +103,7 @@
+     // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+     function printRank(string memory reg) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(reg));
+-        if (h == keccak256("Registered")) return 0;
++        if (h >= keccak256("Registered")) return 0;
+         if (h == keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -104,7 +104,7 @@
+     function printRank(string memory reg) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(reg));
+         if (h == keccak256("Registered")) return 0;
+-        if (h == keccak256("Nudge")) return 1;
++        if (h <= keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -104,7 +104,7 @@
+     function printRank(string memory reg) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(reg));
+         if (h == keccak256("Registered")) return 0;
+-        if (h == keccak256("Nudge")) return 1;
++        if (h >= keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -105,7 +105,7 @@
+         bytes32 h = keccak256(bytes(reg));
+         if (h == keccak256("Registered")) return 0;
+         if (h == keccak256("Nudge")) return 1;
+-        if (h == keccak256("Slip")) return 2;
++        if (h <= keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+         if (h == keccak256("Loose")) return 5;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -105,7 +105,7 @@
+         bytes32 h = keccak256(bytes(reg));
+         if (h == keccak256("Registered")) return 0;
+         if (h == keccak256("Nudge")) return 1;
+-        if (h == keccak256("Slip")) return 2;
++        if (h >= keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+         if (h == keccak256("Loose")) return 5;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -107,7 +107,7 @@
+         if (h == keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+-        if (h == keccak256("Drift")) return 4;
++        if (h <= keccak256("Drift")) return 4;
+         if (h == keccak256("Loose")) return 5;
+         revert("print");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -107,7 +107,7 @@
+         if (h == keccak256("Nudge")) return 1;
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+-        if (h == keccak256("Drift")) return 4;
++        if (h >= keccak256("Drift")) return 4;
+         if (h == keccak256("Loose")) return 5;
+         revert("print");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -108,7 +108,7 @@
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+-        if (h == keccak256("Loose")) return 5;
++        if (h <= keccak256("Loose")) return 5;
+         revert("print");
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -108,7 +108,7 @@
+         if (h == keccak256("Slip")) return 2;
+         if (h == keccak256("Skew")) return 3;
+         if (h == keccak256("Drift")) return 4;
+-        if (h == keccak256("Loose")) return 5;
++        if (h >= keccak256("Loose")) return 5;
+         revert("print");
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -160,7 +160,7 @@
+     }
+ 
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+-        if (e == 0) return 448838239;
++        if (e <= 0) return 448838239;
+         if (e == 1) return 2125356957;
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -160,7 +160,7 @@
+     }
+ 
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+-        if (e == 0) return 448838239;
++        if (e >= 0) return 448838239;
+         if (e == 1) return 2125356957;
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -161,7 +161,7 @@
+ 
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+         if (e == 0) return 448838239;
+-        if (e == 1) return 2125356957;
++        if (e <= 1) return 2125356957;
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -161,7 +161,7 @@
+ 
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+         if (e == 0) return 448838239;
+-        if (e == 1) return 2125356957;
++        if (e >= 1) return 2125356957;
+         if (e == 2) return 4849173708;
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -162,7 +162,7 @@
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+         if (e == 0) return 448838239;
+         if (e == 1) return 2125356957;
+-        if (e == 2) return 4849173708;
++        if (e <= 2) return 4849173708;
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+         if (e == 5) return 16898341581;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -162,7 +162,7 @@
+     function eightsWeight(uint256 e) internal pure returns (uint256) {
+         if (e == 0) return 448838239;
+         if (e == 1) return 2125356957;
+-        if (e == 2) return 4849173708;
++        if (e >= 2) return 4849173708;
+         if (e == 3) return 8261716960;
+         if (e == 4) return 12197901863;
+         if (e == 5) return 16898341581;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -163,7 +163,7 @@
+         if (e == 0) return 448838239;
+         if (e == 1) return 2125356957;
+         if (e == 2) return 4849173708;
+-        if (e == 3) return 8261716960;
++        if (e <= 3) return 8261716960;
+         if (e == 4) return 12197901863;
+         if (e == 5) return 16898341581;
+         revert("eights"); // no Credit in the sealed supply has more than 5
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -163,7 +163,7 @@
+         if (e == 0) return 448838239;
+         if (e == 1) return 2125356957;
+         if (e == 2) return 4849173708;
+-        if (e == 3) return 8261716960;
++        if (e >= 3) return 8261716960;
+         if (e == 4) return 12197901863;
+         if (e == 5) return 16898341581;
+         revert("eights"); // no Credit in the sealed supply has more than 5
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -23,7 +23,7 @@
+         Manual // host supplies the order; no key check
+     }
+ 
+-    uint256 internal constant ID_BITS = 32;
++    uint128 internal constant ID_BITS = 32;
+ 
+     /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+     error Bad(string why);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -66,7 +66,7 @@
+         require(id < 2 ** ID_BITS, "id");
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+-        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
++        if (p == Preset.Time) return (uint128(paidAt) << ID_BITS) | id;
+         uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -67,7 +67,7 @@
+         if (p == Preset.Number) return id;
+         uint64 paidAt = credits.timestampOf(id);
+         if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+-        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
++        uint128 mask = uint128(paidAt) % 15 + 1; // CreditDrawing.platesAt
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -71,7 +71,7 @@
+         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+         ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+         if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+-        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
++        if (p == Preset.Eights) return ((type(uint16).max - r.eights) << ID_BITS) | id;
+         if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+         if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+         if (p == Preset.Rarity) {
+

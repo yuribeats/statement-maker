@@ -1,0 +1,356 @@
+file	line	after	mutated
+CreditKeys.sol	26	SURVIVED	uint128 internal constant ID_BITS = 32;
+CreditKeys.sol	37	SURVIVED	for (uint128 i; i < n; ++i) {
+CreditKeys.sol	37	SURVIVED	for (uint256 i; i != n; ++i) {
+CreditKeys.sol	37	SURVIVED	for (uint256 i; i < n; i++) {
+CreditKeys.sol	39	SURVIVED	for (uint128 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+CreditKeys.sol	39	SURVIVED	for (uint256 j; j != n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+CreditKeys.sol	39	SURVIVED	for (uint256 j; j < n; j++) if (deposited[j] == order[i]) { pos = j; break; }
+CreditKeys.sol	40	SURVIVED	if (pos >= type(uint256).max) revert Bad("not deposited");
+CreditKeys.sol	41	SURVIVED	uint256 w ;
+CreditKeys.sol	42	SURVIVED	uint256 bit = 1 << (pos ^ 255);
+CreditKeys.sol	43	SURVIVED	if (seen[w] & bit > 0) revert Bad("repeat");
+CreditKeys.sol	44	SURVIVED	seen[w] += bit;
+CreditKeys.sol	44	SURVIVED	seen[w] ^= bit;
+CreditKeys.sol	46	SURVIVED	if (p >= Preset.Manual) return;
+CreditKeys.sol	47	SURVIVED	if (p <= Preset.Deposit) {
+CreditKeys.sol	48	SURVIVED	for (uint128 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+CreditKeys.sol	48	SURVIVED	for (uint256 i; i != n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+CreditKeys.sol	48	SURVIVED	for (uint256 i; i < n; ++i) if (order[i] < deposited[i]) revert Bad("order");
+CreditKeys.sol	48	SURVIVED	for (uint256 i; i < n; ++i) if (order[i] > deposited[i]) revert Bad("order");
+CreditKeys.sol	51	SURVIVED	if (p >= Preset.Random) {
+CreditKeys.sol	53	SURVIVED	for (uint128 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+CreditKeys.sol	53	SURVIVED	for (uint256 i; i != n; ++i) if (order[i] != want[i]) revert Bad("order");
+CreditKeys.sol	53	SURVIVED	for (uint256 i; i < n; ++i) if (order[i] < want[i]) revert Bad("order");
+CreditKeys.sol	53	SURVIVED	for (uint256 i; i < n; ++i) if (order[i] > want[i]) revert Bad("order");
+CreditKeys.sol	58	SURVIVED	for (uint128 i = 1; i < n; ++i) {
+CreditKeys.sol	58	SURVIVED	for (uint256 i = 1; i != n; ++i) {
+CreditKeys.sol	60	SURVIVED	if (k < prev) revert Bad("order");
+CreditKeys.sol	66	KILLED	//require(id < 2 ** ID_BITS, "id");
+CreditKeys.sol	67	KILLED	if (p <= Preset.Number) return id;
+CreditKeys.sol	67	KILLED	if (p >= Preset.Number) return id;
+CreditKeys.sol	67	KILLED	if (true) return id;
+CreditKeys.sol	68	KILLED	uint64 paidAt ;
+CreditKeys.sol	69	KILLED	if (p <= Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+CreditKeys.sol	69	SURVIVED	if (p == Preset.Time) return (uint128(paidAt) << ID_BITS) | id;
+CreditKeys.sol	69	KILLED	if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) << id;
+CreditKeys.sol	69	SURVIVED	if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) ^ id;
+CreditKeys.sol	69	KILLED	if (p == Preset.Time) return (uint256(paidAt) >> ID_BITS) | id;
+CreditKeys.sol	69	KILLED	if (p >= Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+CreditKeys.sol	69	KILLED	if (true) return (uint256(paidAt) << ID_BITS) | id;
+CreditKeys.sol	70	SURVIVED	uint128 mask = uint128(paidAt) % 15 + 1; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask ; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask = uint256(paidAt) % 15 % 1; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask = uint256(paidAt) % 15 * 1; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask = uint256(paidAt) % 15 / 1; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask = uint256(paidAt) * 15 + 1; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask = uint256(paidAt) + 15 + 1; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask = uint256(paidAt) - 15 + 1; // CreditDrawing.platesAt
+CreditKeys.sol	70	KILLED	uint256 mask = uint256(paidAt) / 15 + 1; // CreditDrawing.platesAt
+CreditKeys.sol	71	KILLED	if (p <= Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+CreditKeys.sol	71	KILLED	if (p == Preset.Colors) return (colorRank(mask) & ID_BITS) | id;
+CreditKeys.sol	71	SURVIVED	if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) ^ id;
+CreditKeys.sol	71	KILLED	if (p == Preset.Colors) return (colorRank(mask) >> ID_BITS) | id;
+CreditKeys.sol	71	KILLED	if (p >= Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+CreditKeys.sol	71	KILLED	if (true) return (colorRank(mask) << ID_BITS) | id;
+CreditKeys.sol	73	KILLED	if (p <= Preset.Ink) return (r.marks << ID_BITS) | id;
+CreditKeys.sol	73	KILLED	if (p == Preset.Ink) return (r.marks << ID_BITS) << id;
+CreditKeys.sol	73	SURVIVED	if (p == Preset.Ink) return (r.marks << ID_BITS) ^ id;
+CreditKeys.sol	73	KILLED	if (p == Preset.Ink) return (r.marks >> ID_BITS) | id;
+CreditKeys.sol	73	KILLED	if (p >= Preset.Ink) return (r.marks << ID_BITS) | id;
+CreditKeys.sol	73	KILLED	if (true) return (r.marks << ID_BITS) | id;
+CreditKeys.sol	74	KILLED	if (p <= Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+CreditKeys.sol	74	KILLED	if (p == Preset.Eights) return ((type(uint16).max - r.eights) << ID_BITS) | id;
+CreditKeys.sol	74	KILLED	if (p == Preset.Eights) return ((type(uint32).max * r.eights) << ID_BITS) | id;
+CreditKeys.sol	74	KILLED	if (p == Preset.Eights) return ((type(uint32).max + r.eights) << ID_BITS) | id;
+CreditKeys.sol	74	SURVIVED	if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) ^ id;
+CreditKeys.sol	74	KILLED	if (p == Preset.Eights) return ((type(uint32).max - r.eights) >> ID_BITS) | id;
+CreditKeys.sol	74	KILLED	if (p >= Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+CreditKeys.sol	74	KILLED	if (true) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+CreditKeys.sol	75	KILLED	if (p <= Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+CreditKeys.sol	75	KILLED	if (p == Preset.Print) return ((5 * printRank(r.register)) << ID_BITS) | id;
+CreditKeys.sol	75	KILLED	if (p == Preset.Print) return ((5 + printRank(r.register)) << ID_BITS) | id;
+CreditKeys.sol	75	KILLED	if (p == Preset.Print) return ((5 - printRank(r.register)) & ID_BITS) | id;
+CreditKeys.sol	75	KILLED	if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) << id;
+CreditKeys.sol	75	SURVIVED	if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) ^ id;
+CreditKeys.sol	75	KILLED	if (p == Preset.Print) return ((5 - printRank(r.register)) >> ID_BITS) | id;
+CreditKeys.sol	75	KILLED	if (p >= Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+CreditKeys.sol	75	KILLED	if (true) return ((5 - printRank(r.register)) << ID_BITS) | id;
+CreditKeys.sol	76	KILLED	if (p <= Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+CreditKeys.sol	76	KILLED	if (p >= Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+CreditKeys.sol	76	KILLED	if (true) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+CreditKeys.sol	77	KILLED	if (p <= Preset.Rarity) {
+CreditKeys.sol	77	KILLED	if (p >= Preset.Rarity) {
+CreditKeys.sol	77	KILLED	if (true) {
+CreditKeys.sol	78	KILLED	uint256 score ;
+CreditKeys.sol	79	KILLED	return ((type(uint64).max % score) << ID_BITS) | id;
+CreditKeys.sol	79	KILLED	return ((type(uint64).max * score) << ID_BITS) | id;
+CreditKeys.sol	79	KILLED	return ((type(uint64).max + score) << ID_BITS) | id;
+CreditKeys.sol	79	KILLED	return ((type(uint64).max - score) << ID_BITS) << id;
+CreditKeys.sol	79	SURVIVED	return ((type(uint64).max - score) << ID_BITS) ^ id;
+CreditKeys.sol	79	KILLED	return ((type(uint64).max / score) << ID_BITS) | id;
+CreditKeys.sol	81	KILLED	//revert("preset");
+CreditKeys.sol	86	KILLED	if (mask == 1) //return 0;
+CreditKeys.sol	87	KILLED	if (mask == 2) //return 1;
+CreditKeys.sol	88	KILLED	if (mask == 4) //return 2;
+CreditKeys.sol	89	KILLED	if (mask == 8) //return 3;
+CreditKeys.sol	90	KILLED	if (mask == 3) //return 4;
+CreditKeys.sol	91	KILLED	if (mask == 5) //return 5;
+CreditKeys.sol	92	KILLED	if (mask == 6) //return 6;
+CreditKeys.sol	93	KILLED	if (mask == 9) //return 7;
+CreditKeys.sol	94	KILLED	if (mask == 10) //return 8;
+CreditKeys.sol	95	KILLED	if (mask == 12) //return 9;
+CreditKeys.sol	96	KILLED	if (mask == 7) //return 10;
+CreditKeys.sol	97	KILLED	if (mask == 11) //return 11;
+CreditKeys.sol	98	KILLED	if (mask == 13) //return 12;
+CreditKeys.sol	99	KILLED	if (mask == 14) //return 13;
+CreditKeys.sol	100	KILLED	//return 14; // 15 = CMYK
+CreditKeys.sol	106	KILLED	if (h <= keccak256("Registered")) return 0;
+CreditKeys.sol	106	KILLED	if (h >= keccak256("Registered")) return 0;
+CreditKeys.sol	106	KILLED	if (true) return 0;
+CreditKeys.sol	107	KILLED	if (h <= keccak256("Nudge")) return 1;
+CreditKeys.sol	107	KILLED	if (h >= keccak256("Nudge")) return 1;
+CreditKeys.sol	107	KILLED	if (true) return 1;
+CreditKeys.sol	108	SURVIVED	if (h <= keccak256("Slip")) return 2;
+CreditKeys.sol	108	KILLED	if (h >= keccak256("Slip")) return 2;
+CreditKeys.sol	108	KILLED	if (true) return 2;
+CreditKeys.sol	109	KILLED	if (h == keccak256("Skew")) revert();
+CreditKeys.sol	110	SURVIVED	if (h <= keccak256("Drift")) return 4;
+CreditKeys.sol	110	KILLED	if (h >= keccak256("Drift")) return 4;
+CreditKeys.sol	110	KILLED	if (true) return 4;
+CreditKeys.sol	111	SURVIVED	if (h <= keccak256("Loose")) return 5;
+CreditKeys.sol	111	SURVIVED	if (h >= keccak256("Loose")) return 5;
+CreditKeys.sol	111	SURVIVED	if (true) return 5;
+CreditKeys.sol	112	SURVIVED	//revert("print");
+CreditKeys.sol	118	SURVIVED	if (h <= keccak256("sparse")) return 0;
+CreditKeys.sol	118	KILLED	if (h >= keccak256("sparse")) return 0;
+CreditKeys.sol	118	KILLED	if (true) return 0;
+CreditKeys.sol	119	SURVIVED	if (h <= keccak256("lean")) return 1;
+CreditKeys.sol	119	KILLED	if (h >= keccak256("lean")) return 1;
+CreditKeys.sol	119	KILLED	if (true) return 1;
+CreditKeys.sol	120	SURVIVED	if (h <= keccak256("even")) return 2;
+CreditKeys.sol	120	KILLED	if (h >= keccak256("even")) return 2;
+CreditKeys.sol	120	KILLED	if (true) return 2;
+CreditKeys.sol	121	SURVIVED	if (h <= keccak256("extreme")) return 3;
+CreditKeys.sol	121	SURVIVED	if (h >= keccak256("extreme")) return 3;
+CreditKeys.sol	121	SURVIVED	if (true) return 3;
+CreditKeys.sol	122	SURVIVED	//revert("weight");
+CreditKeys.sol	127	KILLED	if (mask == 1) //return 3908947081;
+CreditKeys.sol	128	KILLED	if (mask == 2) //return 3913745110;
+CreditKeys.sol	129	KILLED	if (mask == 3) //return 3903634585;
+CreditKeys.sol	130	KILLED	if (mask == 4) //return 3908060305;
+CreditKeys.sol	131	KILLED	if (mask == 5) //return 3919631122;
+CreditKeys.sol	132	KILLED	if (mask == 6) //return 3887463858;
+CreditKeys.sol	133	KILLED	if (mask == 7) //return 3915169818;
+CreditKeys.sol	134	KILLED	if (mask == 8) //return 3939426425;
+CreditKeys.sol	135	KILLED	if (mask == 9) //return 3889562832;
+CreditKeys.sol	136	KILLED	if (mask == 10) //return 3910011931;
+CreditKeys.sol	137	KILLED	if (mask == 11) //return 3901515053;
+CreditKeys.sol	138	KILLED	if (mask == 12) //return 3926259272;
+CreditKeys.sol	139	KILLED	if (mask == 13) //return 3895350809;
+CreditKeys.sol	140	KILLED	if (mask == 14) //return 3877188084;
+CreditKeys.sol	141	KILLED	//return 3908592305; // 15
+CreditKeys.sol	145	KILLED	uint256 r ;
+CreditKeys.sol	146	KILLED	if (r == 0) //return 195465472;
+CreditKeys.sol	147	KILLED	if (r == 1) //return 4661729380;
+CreditKeys.sol	148	KILLED	if (r == 2) //return 4640364522;
+CreditKeys.sol	149	KILLED	if (r == 3) revert();
+CreditKeys.sol	150	KILLED	if (r == 4) //return 6072587748;
+CreditKeys.sol	151	KILLED	//return 6964650926;
+CreditKeys.sol	155	KILLED	uint256 r ;
+CreditKeys.sol	156	KILLED	if (r == 0) //return 2887813475;
+CreditKeys.sol	157	KILLED	if (r == 1) //return 1831411512;
+CreditKeys.sol	158	KILLED	if (r == 2) //return 801626426;
+CreditKeys.sol	159	KILLED	//return 6615253228;
+CreditKeys.sol	163	SURVIVED	if (e <= 0) return 448838239;
+CreditKeys.sol	163	KILLED	if (e >= 0) return 448838239;
+CreditKeys.sol	163	KILLED	if (true) return 448838239;
+CreditKeys.sol	164	SURVIVED	if (e <= 1) return 2125356957;
+CreditKeys.sol	164	KILLED	if (e >= 1) return 2125356957;
+CreditKeys.sol	164	KILLED	if (true) return 2125356957;
+CreditKeys.sol	165	SURVIVED	if (e <= 2) return 4849173708;
+CreditKeys.sol	165	KILLED	if (e >= 2) return 4849173708;
+CreditKeys.sol	165	KILLED	if (true) return 4849173708;
+CreditKeys.sol	166	SURVIVED	if (e <= 3) return 8261716960;
+CreditKeys.sol	166	SURVIVED	if (e >= 3) return 8261716960;
+CreditKeys.sol	166	SURVIVED	if (true) return 8261716960;
+CreditKeys.sol	167	SURVIVED	if (e == 4) revert();
+CreditKeys.sol	168	SURVIVED	if (e == 5) revert();
+CreditKeys.sol	169	SURVIVED	//revert("eights"); // no Credit in the sealed supply has more than 5
+CreditKeys.sol	175	SURVIVED	for (uint128 i; i < ids.length; ++i) out[i] = ids[i];
+CreditKeys.sol	175	SURVIVED	for (uint256 i; i != ids.length; ++i) out[i] = ids[i];
+CreditKeys.sol	175	SURVIVED	for (uint256 i; i < ids.length; i++) out[i] = ids[i];
+CreditKeys.sol	176	KILLED	for (uint256 i = out.length; i != 1; --i) {
+CreditKeys.sol	176	SURVIVED	for (uint256 i = out.length; i >= 1; --i) {
+CreditKeys.sol	177	SURVIVED	uint256 j = uint256(keccak256(abi.encode(seed, i - 1))) % i;
+CreditKeys.sol	177	KILLED	uint256 j = uint256(keccak256(abi.encodePacked(seed, i % 1))) % i;
+CreditKeys.sol	177	KILLED	uint256 j = uint256(keccak256(abi.encodePacked(seed, i * 1))) % i;
+CreditKeys.sol	177	KILLED	uint256 j = uint256(keccak256(abi.encodePacked(seed, i + 1))) % i;
+CreditKeys.sol	177	KILLED	uint256 j = uint256(keccak256(abi.encodePacked(seed, i / 1))) % i;
+Party.sol	43	SURVIVED	uint128 public constant SLOTS = 80;
+Party.sol	44	SURVIVED	uint128 public constant PASS = 41;
+Party.sol	45	SURVIVED	uint128 public constant PASS_BELOW_FLOOR = 60;
+Party.sol	46	SURVIVED	uint128 public constant PASS_DEADLOCK = 54;
+Party.sol	47	SURVIVED	uint128 public constant DEADLOCK_BLOCKS = 3;
+Party.sol	48	SURVIVED	uint128 public constant DEADLOCK_TIME = 30 days;
+Party.sol	49	SURVIVED	uint128 public constant EXECUTE_WINDOW = 7 days;
+Party.sol	50	SURVIVED	uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+Party.sol	51	SURVIVED	uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+Party.sol	52	SURVIVED	uint128 public constant FLOOR_MAX_AGE = 1 hours;
+Party.sol	53	SURVIVED	uint128 public constant ROYALTY_CAP_BPS = 1000;
+Party.sol	54	SURVIVED	uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+Party.sol	158	SURVIVED	revert();
+Party.sol	166	KILLED	if (timeUnit == 0 || timeUnit > 1 hours) //revert Bad("timeUnit");
+Party.sol	167	KILLED	if (false) revert Bad("host");
+Party.sol	168	SURVIVED	if (p.minDeposit <= 0 || p.minDeposit > SLOTS || p.minDeposit > SLOTS) revert Bad("minDeposit");
+Party.sol	169	SURVIVED	if (p.durationDays <= 0 || p.durationDays > 60 || p.durationDays > 60) revert Bad("duration");
+Party.sol	172	SURVIVED	if (p.defaultPrice.mode != PriceMode.Fixed && p.defaultPrice.mode != PriceMode.Fixed && p.minAskWei <= 0) revert Bad("minAsk");
+Party.sol	172	SURVIVED	if (p.defaultPrice.mode > PriceMode.Fixed && p.minAskWei == 0 && p.minAskWei == 0) revert Bad("minAsk");
+Party.sol	174	SURVIVED	if (bytes(p.name).length <= 0 || bytes(p.name).length > 60 || bytes(p.name).length > 60) revert Bad("name");
+Party.sol	178	KILLED	createdAt = uint32(block.timestamp);
+Party.sol	179	KILLED	deadline = uint32(block.timestamp + _t(uint256(p.durationDays) * 1 days));
+Party.sol	179	SURVIVED	deadline = uint64(block.timestamp + _t(uint128(p.durationDays) * 1 days));
+Party.sol	200	SURVIVED	st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : false ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+Party.sol	200	SURVIVED	st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : false ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+Party.sol	221	SURVIVED	if (status() > Status.OPEN) revert Bad("not open");
+Party.sol	224	SURVIVED	if (ids.length < min || ids.length > remaining || ids.length < min || ids.length > remaining || ids.length < 0) revert Bad("count");
+Party.sol	224	SURVIVED	if (ids.length < min || ids.length > remaining || ids.length < min || ids.length > remaining || ids.length <= 0) revert Bad("count");
+Party.sol	226	SURVIVED	for (uint128 i; i < ids.length; ++i) {
+Party.sol	226	SURVIVED	for (uint256 i; i != ids.length; ++i) {
+Party.sol	226	SURVIVED	for (uint256 i; i < ids.length; i++) {
+Party.sol	228	SURVIVED	if (cardOfCredit[id] > 0) revert Bad("duplicate");
+Party.sol	229	SURVIVED	if (_params.eligibleRoot > bytes32(0)) {
+Party.sol	230	SURVIVED	bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(id))));
+Party.sol	234	SURVIVED	if (false) revert Bad("not received");
+Party.sol	239	SURVIVED	cardsOutstanding++;
+Party.sol	240	KILLED	//emit Deposited(from, id, card);
+Party.sol	242	SURVIVED	if (_order.length >= SLOTS) {
+Party.sol	243	KILLED	fullAt = uint32(block.timestamp);
+Party.sol	245	KILLED	if (deadline < grace) deadline = uint32(grace);
+Party.sol	245	SURVIVED	if (deadline <= grace) deadline = uint64(grace);
+Party.sol	251	SURVIVED	for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
+Party.sol	251	SURVIVED	for (uint256 i; i != cardIds.length; ++i) _redeem(cardIds[i], msg.sender);
+Party.sol	251	SURVIVED	for (uint256 i; i < cardIds.length; i++) _redeem(cardIds[i], msg.sender);
+Party.sol	256	SURVIVED	if (status() < Status.EXPIRED) revert Bad("not expired");
+Party.sol	257	SURVIVED	for (uint128 i; i < cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+Party.sol	257	SURVIVED	for (uint256 i; i != cardIds.length; ++i) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+Party.sol	257	SURVIVED	for (uint256 i; i < cardIds.length; i++) _redeem(cardIds[i], cards.ownerOf(cardIds[i]));
+Party.sol	268	SURVIVED	cardsOutstanding--;
+Party.sol	271	KILLED	//emit Redeemed(holder, id, cardId);
+Party.sol	276	SURVIVED	for (uint128 i; i < n; ++i) {
+Party.sol	276	SURVIVED	for (uint256 i; i != n; ++i) {
+Party.sol	276	SURVIVED	for (uint256 i; i < n; i++) {
+Party.sol	276	SURVIVED	for (uint256 i; i <= n; ++i) {
+Party.sol	277	KILLED	if (_order[i] >= id) {
+Party.sol	278	SURVIVED	for (uint256 j = i; j + 1 != n; ++j) _order[j] = _order[j + 1];
+Party.sol	278	SURVIVED	for (uint256 j = i; j + 1 < n; j++) _order[j] = _order[j + 1];
+Party.sol	283	SURVIVED	//revert Bad("missing");
+Party.sol	293	SURVIVED	if (p >= CreditKeys.Preset.Manual) {
+Party.sol	295	SURVIVED	} else if (cards.heldNow(address(this), msg.sender) <= 0) {
+Party.sol	301	SURVIVED	PriceSpec storage spec = hasPendingPrice ? pendingPrice : _params.defaultPrice;
+Party.sol	306	KILLED	assembledAt = uint32(block.timestamp);
+Party.sol	310	KILLED	askLiveAt = uint32(block.timestamp);
+Party.sol	311	KILLED	buyableAt = uint32(block.timestamp + _t(uint256(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+Party.sol	311	SURVIVED	buyableAt = uint64(block.timestamp + _t(uint128(hasPendingPrice ? _pendingBuyDelay : _params.buyDelayHours) * 1 hours));
+Party.sol	312	SURVIVED	priceEpoch++; // proposals made before the burn are superseded
+Party.sol	319	KILLED	//_assembling = false;
+Party.sol	321	KILLED	if (st.ownerOf(sid) != address(this)) //revert Bad("statement not received");
+Party.sol	322	SURVIVED	for (uint128 i; i < SLOTS; ++i) {
+Party.sol	322	KILLED	for (uint256 i; !(i < SLOTS); ++i) {
+Party.sol	322	SURVIVED	for (uint256 i; i != SLOTS; ++i) {
+Party.sol	322	SURVIVED	for (uint256 i; i < SLOTS; i++) {
+Party.sol	322	KILLED	for (uint256 i; i == SLOTS; ++i) {
+Party.sol	322	KILLED	for (uint256 i; i > SLOTS; ++i) {
+Party.sol	322	KILLED	for (uint256 i; i >= SLOTS; ++i) {
+Party.sol	324	KILLED	//try credits.ownerOf(order[i]) returns (address o) { if (o == address(this)) revert Bad("not burned"); } catch {}
+Party.sol	327	KILLED	//emit Assembled(msg.sender, sid, order);
+Party.sol	343	SURVIVED	if (cancel && cancel && ask <= 0) revert Bad("not listed");
+Party.sol	344	SURVIVED	if (cards.heldNow(address(this), msg.sender) <= 0) revert Bad("card holders only");
+Party.sol	346	SURVIVED	if (_openIds[msg.sender].length == MAX_OPEN_PER_PROPOSER) revert Bad("open limit");
+Party.sol	355	KILLED	endsAt: uint32(block.timestamp + _t(uint256(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
+Party.sol	355	SURVIVED	endsAt: uint64(block.timestamp + _t(uint128(h) * 1 hours)), buyDelayHours: cancel ? 0 : buyDelayHours, epoch: priceEpoch, deadlock: dl,
+Party.sol	359	KILLED	//emit Proposed(id, msg.sender, cancel, price.mode, price.value, _proposals[id].endsAt, dl);
+Party.sol	369	KILLED	if (block.timestamp == p.endsAt) revert Bad("closed");
+Party.sol	370	SURVIVED	uint128 w ;
+Party.sol	371	SURVIVED	if (true) {
+Party.sol	371	SURVIVED	if (w <= 0) {
+Party.sol	371	SURVIVED	if (w >= 0) {
+Party.sol	372	SURVIVED	w = uint64(cards.heldAt(address(this), voter, p.snapshot));
+Party.sol	373	SURVIVED	if (w <= 0) revert Bad("no weight at snapshot");
+Party.sol	377	SURVIVED	if (prev == 1) p.yes -= w; else if (prev >= 2) p.no -= w;
+Party.sol	380	KILLED	//emit Voted(id, voter, support, w);
+Party.sol	385	SURVIVED	Proposal memory p = _proposals[id];
+Party.sol	387	SURVIVED	if (p.deadlock && p.deadlock && need <= PASS_DEADLOCK) need = PASS_DEADLOCK;
+Party.sol	396	SURVIVED	if (block.timestamp > uint128(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+Party.sol	397	SURVIVED	if (p.epoch < priceEpoch) revert Bad("superseded");
+Party.sol	398	SURVIVED	if (cards.heldNow(address(this), msg.sender) <= 0) revert Bad("card holders only");
+Party.sol	399	SURVIVED	if (false ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+Party.sol	403	KILLED	if (true) {
+Party.sol	407	SURVIVED	floorWei = type(uint128).max;
+Party.sol	410	KILLED	price = false ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+Party.sol	414	SURVIVED	if (p.yes < need || (p.yes < need || (p.no != 0 && !p.deadlock) && !p.deadlock)) revert Bad("did not pass");
+Party.sol	417	SURVIVED	priceEpoch++;
+Party.sol	418	KILLED	lastPriceExecutedAt = uint32(block.timestamp);
+Party.sol	423	SURVIVED	} else if (s <= Status.FULL) {
+Party.sol	431	KILLED	askLiveAt = uint32(block.timestamp);
+Party.sol	432	KILLED	buyableAt = uint32(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+Party.sol	432	SURVIVED	buyableAt = uint64(block.timestamp + _t(uint128(p.buyDelayHours) * 1 hours));
+Party.sol	433	KILLED	//emit AskSet(price, true);
+Party.sol	435	KILLED	//emit Executed(id, msg.sender);
+Party.sol	440	SURVIVED	Proposal memory p = _proposals[id];
+Party.sol	443	SURVIVED	if (blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no <= 0 || p.deadlock || p.yes < PASS || p.epoch != priceEpoch || p.deadlock || p.yes < PASS || p.epoch != priceEpoch) revert Bad("not blocked");
+Party.sol	443	SURVIVED	if (blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no == 0 || p.deadlock || p.yes < PASS || blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no == 0 || p.deadlock || p.yes < PASS || p.epoch < priceEpoch) revert Bad("not blocked");
+Party.sol	445	SURVIVED	blockedPriceProposals++;
+Party.sol	450	KILLED	if (blockedPriceProposals == DEADLOCK_BLOCKS) return true;
+Party.sol	451	SURVIVED	uint128 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+Party.sol	451	SURVIVED	uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint32).max));
+Party.sol	451	SURVIVED	uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (true ? fullAt : type(uint64).max));
+Party.sol	451	SURVIVED	uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (true ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+Party.sol	452	SURVIVED	return since != type(uint32).max && block.timestamp > since + _t(DEADLOCK_TIME);
+Party.sol	458	SURVIVED	for (uint256 k = ids.length; k != 0; --k) {
+Party.sol	458	SURVIVED	for (uint256 k = ids.length; k > 0; k--) {
+Party.sol	459	KILLED	if (block.timestamp == _proposals[ids[k - 1]].endsAt) { ids[k - 1] = ids[ids.length - 1]; ids.pop(); }
+Party.sol	467	SURVIVED	if (status() < Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
+Party.sol	467	SURVIVED	if (status() > Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
+Party.sol	471	KILLED	//emit AskSet(next, false);
+Party.sol	478	SURVIVED	if (status() != Status.ASSEMBLED || status() != Status.ASSEMBLED || ask <= 0) revert Bad("not for sale");
+Party.sol	478	SURVIVED	if (status() < Status.ASSEMBLED || ask == 0 || ask == 0) revert Bad("not for sale");
+Party.sol	478	SURVIVED	if (status() > Status.ASSEMBLED || ask == 0 || ask == 0) revert Bad("not for sale");
+Party.sol	479	KILLED	if (block.timestamp != buyableAt) revert Bad("not open yet");
+Party.sol	492	SURVIVED	if (royalty != 0) owed[royaltyTo] += royalty;
+Party.sol	492	SURVIVED	if (royalty > 0) owed[royaltyTo] = royalty;
+Party.sol	492	SURVIVED	if (royalty > 0) owed[royaltyTo] ^= royalty;
+Party.sol	492	SURVIVED	if (royalty > 0) owed[royaltyTo] |= royalty;
+Party.sol	492	SURVIVED	if (royalty >= 0) owed[royaltyTo] += royalty;
+Party.sol	492	SURVIVED	if (true) owed[royaltyTo] += royalty;
+Party.sol	493	KILLED	owed[factory.feeRecipient()] = fee + dust;
+Party.sol	493	KILLED	owed[factory.feeRecipient()] ^= fee + dust;
+Party.sol	493	KILLED	owed[factory.feeRecipient()] |= fee + dust;
+Party.sol	496	SURVIVED	if (msg.value != price) {
+Party.sol	497	KILLED	(bool ok,) = msg.sender.call{value: msg.value % price}("");
+Party.sol	500	KILLED	//emit Sold(msg.sender, price, royalty, fee, share);
+Party.sol	507	SURVIVED	for (uint128 i; i < cardIds.length; ++i) {
+Party.sol	507	SURVIVED	for (uint256 i; i != cardIds.length; ++i) {
+Party.sol	507	SURVIVED	for (uint256 i; i < cardIds.length; i++) {
+Party.sol	510	KILLED	//delete creditOfCard[c];
+Party.sol	511	SURVIVED	cardsOutstanding--;
+Party.sol	514	KILLED	//emit Claimed(msg.sender, c, perCard);
+Party.sol	524	SURVIVED	for (uint128 i; i < cardIds.length; ++i) {
+Party.sol	524	SURVIVED	for (uint256 i; i != cardIds.length; ++i) {
+Party.sol	524	SURVIVED	for (uint256 i; i < cardIds.length; i++) {
+Party.sol	528	KILLED	//delete creditOfCard[c];
+Party.sol	529	SURVIVED	cardsOutstanding--;
+Party.sol	533	KILLED	if (!ok) owed[holder] = perCard;
+Party.sol	533	KILLED	if (!ok) owed[holder] ^= perCard;
+Party.sol	533	KILLED	if (!ok) owed[holder] |= perCard;
+Party.sol	533	KILLED	if (true) owed[holder] += perCard;
+Party.sol	540	SURVIVED	if (amt <= 0) revert Bad("nothing");
+Party.sol	556	SURVIVED	if (p.mode <= PriceMode.Fixed && (p.value <= 0 || p.value > 1e24) && (p.value <= 0 || p.value > 1e24)) revert Bad("price");
+Party.sol	557	KILLED	if (p.mode == PriceMode.FloorPct && (p.mode == PriceMode.FloorPct && (p.value == -10_000 || p.value > 1_000_000) || p.value > 1_000_000)) revert Bad("price");
+Party.sol	558	SURVIVED	if (p.mode <= PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24) && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
+Party.sol	558	SURVIVED	if (p.mode >= PriceMode.FloorDelta && (p.value < -1e24 || p.value > 1e24) && (p.value < -1e24 || p.value > 1e24)) revert Bad("price");
+Party.sol	566	SURVIVED	if (f.floorWei <= 0) revert Bad("floor");
+Party.sol	571	SURVIVED	if (p.mode <= PriceMode.Fixed) return uint256(p.value);
+Party.sol	576	SURVIVED	if (p.mode == PriceMode.Fixed) revert();
+Party.sol	602	SURVIVED	if (a <= 0 || a >> 160 != 0 || a >> 160 != 0) return (address(0), 0);
+Party.sol	602	SURVIVED	if (a == 0 || a == 0 || a >> 160 > 0) return (address(0), 0);

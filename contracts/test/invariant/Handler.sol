@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import {Test} from "forge-std/Test.sol";
-import {Credits} from "../credits/Credits.sol";
+import {ILocalCredits} from "../ILocalCredits.sol";
 import {PartyFactory} from "../../src/PartyFactory.sol";
 import {Party} from "../../src/Party.sol";
 import {CreditCards} from "../../src/CreditCards.sol";
@@ -38,7 +38,7 @@ contract Handler is Test {
 
     uint256 constant MAX_PARTIES = 4;
 
-    Credits public credits;
+    ILocalCredits public credits;
     PartyFactory public factory;
     MockStatement public statement;
     CreditCards public cards;
@@ -84,7 +84,7 @@ contract Handler is Test {
     }
 
     constructor(
-        Credits credits_,
+        ILocalCredits credits_,
         PartyFactory factory_,
         MockStatement statement_,
         KeyProbe probe_,

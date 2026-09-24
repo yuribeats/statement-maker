@@ -1,0 +1,6 @@
+CreditKeys.sol: before 410/603 = 68.0%; newly killed 126; after 536/603 = 88.9% (62 distinct survivors re-tested still alive)
+Party.sol: before 1332/1495 = 89.1%; newly killed 48; after 1380/1495 = 92.3% (119 distinct survivors re-tested still alive)
+Conservative figures (the lower of the two dedupe methods, which differ by how mutants repeated across shards are keyed):
+  Party.sol       >= 1378/1495 = 92.2%  (1495 - 117 still alive; includes the two line-200 cardView mutants killed after
+                                          the recheck by MutationKillsTest.test_cardView_statusEveryState)
+  CreditKeys.sol  >=  536/603  = 88.9%  (410 + 126 newly killed; counting "603 - 62 alive" gives 89.7%)

@@ -1,0 +1,46 @@
+KILLED //emit AskSet(price, true);
+KILLED //emit Executed(id, msg.sender);
+KILLED //delete creditOfCard[c];
+KILLED if (!ok) owed[holder] = perCard;
+KILLED if (!ok) owed[holder] |= perCard;
+KILLED if (!ok) owed[holder] ^= perCard;
+SURVIVED st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : false ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+SURVIVED st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : false ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+SURVIVED if (false ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+KILLED if (true) {
+KILLED price = false ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+SURVIVED uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (true ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+SURVIVED uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (true ? fullAt : type(uint64).max));
+KILLED if (true) owed[holder] += perCard;
+SURVIVED if (p.epoch < priceEpoch) revert Bad("superseded");
+SURVIVED if (cards.heldNow(address(this), msg.sender) <= 0) revert Bad("card holders only");
+SURVIVED if (p.yes < need || (p.yes < need || (p.no != 0 && !p.deadlock) && !p.deadlock)) revert Bad("did not pass");
+SURVIVED } else if (s <= Status.FULL) {
+KILLED if (blockedPriceProposals == DEADLOCK_BLOCKS) return true;
+SURVIVED for (uint256 i; i != cardIds.length; ++i) {
+SURVIVED if (amt <= 0) revert Bad("nothing");
+SURVIVED uint128 public constant SLOTS = 80;
+SURVIVED uint128 public constant PASS = 41;
+SURVIVED uint128 public constant PASS_BELOW_FLOOR = 60;
+SURVIVED uint128 public constant PASS_DEADLOCK = 54;
+SURVIVED uint128 public constant DEADLOCK_BLOCKS = 3;
+SURVIVED uint128 public constant DEADLOCK_TIME = 30 days;
+SURVIVED uint128 public constant EXECUTE_WINDOW = 7 days;
+SURVIVED uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+SURVIVED uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+SURVIVED uint128 public constant FLOOR_MAX_AGE = 1 hours;
+SURVIVED uint128 public constant ROYALTY_CAP_BPS = 1000;
+SURVIVED uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+SURVIVED if (block.timestamp > uint128(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+SURVIVED floorWei = type(uint128).max;
+KILLED lastPriceExecutedAt = uint32(block.timestamp);
+KILLED askLiveAt = uint32(block.timestamp);
+KILLED buyableAt = uint32(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+SURVIVED buyableAt = uint64(block.timestamp + _t(uint128(p.buyDelayHours) * 1 hours));
+SURVIVED uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint32).max));
+SURVIVED uint128 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+SURVIVED return since != type(uint32).max && block.timestamp > since + _t(DEADLOCK_TIME);
+SURVIVED for (uint128 i; i < cardIds.length; ++i) {
+SURVIVED priceEpoch++;
+SURVIVED for (uint256 i; i < cardIds.length; i++) {
+SURVIVED cardsOutstanding--;

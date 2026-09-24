@@ -1,0 +1,1481 @@
+INFO:Slither-Mutate:Starting mutation campaign in src/Party.sol
+INFO:Slither-Mutate:Preparing to mutate files:
+- src/Party.sol
+INFO:Slither-Mutate:Timing tests..
+INFO:Slither-Mutate:Test suite passes in 8 seconds, commencing mutation campaign with a timeout of 300 seconds
+
+INFO:Slither-Mutate:Mutating contract Party
+INFO:Slither-Mutate:Targeting functions: ['cardView', 'openDeposit', 'deposit', 'execute', '_deadlocked', 'openProposalsOf', 'claimFor', 'withdraw']
+INFO:Slither-Mutate:Including modifiers: ['nonReentrant']
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 199: 'Status s = status()' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 201: 'return (_params.name, creditOfCard[cardId], st)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 208: 'nonReentrant' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 210: '_opened = true' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 211: '_deposit(from, ids, proofs)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 215: 'nonReentrant' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 217: '_deposit(msg.sender, ids, proofs)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 391: 'nonReentrant' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 392: 'Proposal storage p = _proposals[id]' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 393: 'Status s = status()' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 401: 'uint256 price' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 402: 'uint256 floorWei' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 406: 'price = uint256(p.price.value)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 407: 'floorWei = type(uint256).max' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 409: 'floorWei = _floor(floor)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 413: 'uint256 need = needFor(id, price, floorWei)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 416: 'p.executed = true' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 417: '++priceEpoch' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 418: 'lastPriceExecutedAt = uint64(block.timestamp)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 419: 'blockedPriceProposals = 0' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 421: 'ask = 0' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 422: 'askLiveAt = 0' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 424: 'pendingPrice = p.price' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 425: '_pendingBuyDelay = p.buyDelayHours' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 426: 'hasPendingPrice = true' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 427: 'emit PendingPriceSet(id, p.price.mode, p.price.value)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 429: 'ask = price' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 430: 'askSpec = p.price' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 431: 'askLiveAt = uint64(block.timestamp)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 433: 'emit AskSet(price, true)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 435: 'emit Executed(id, msg.sender)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 450: 'return true' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 463: 'return _openIds[who]' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 522: 'nonReentrant' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 524: 'for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 524: 'uint256 i' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 524: 'i < cardIds.length' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 524: '++i' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 525: 'uint256 c = cardIds[i]' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 527: 'address holder = cards.ownerOf(c)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 528: 'delete creditOfCard[c]' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 529: '--cardsOutstanding' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 530: 'cards.burn(c)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 531: 'emit Claimed(holder, c, perCard)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 532: '(bool ok,) = holder.call{value: perCard, gas: 50_000}("")' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 532: 'bool ok' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 533: 'owed[holder] += perCard' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 538: 'nonReentrant' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 539: 'uint256 amt = owed[msg.sender]' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 541: 'owed[msg.sender] = 0' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 542: '(bool ok,) = msg.sender.call{value: amt}("")' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 542: 'bool ok' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 544: 'emit Withdrawn(msg.sender, amt)' ==> 'revert()' --> CAUGHT
+INFO:Slither-Mutate:Mutator RR found 36 caught revert mutants (out of 36 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 198: '(string memory name, uint256 creditId, string memory st)' ==> '//(string memory name, uint256 creditId, string memory st)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 199: 'Status s = status()' ==> '//Status s = status()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> '//st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 201: 'return (_params.name, creditOfCard[cardId], st)' ==> '//return (_params.name, creditOfCard[cardId], st)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 208: 'nonReentrant' ==> '//nonReentrant' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 209: 'msg.sender != address(factory) || _opened || from != host' ==> '//msg.sender != address(factory) || _opened || from != host' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 209: 'revert Bad("opening")' ==> '//revert Bad("opening")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 210: '_opened = true' ==> '//_opened = true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 211: '_deposit(from, ids, proofs)' ==> '//_deposit(from, ids, proofs)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 215: 'nonReentrant' ==> '//nonReentrant' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 216: '!_opened' ==> '//!_opened' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 216: 'revert Bad("not opened")' ==> '//revert Bad("not opened")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 217: '_deposit(msg.sender, ids, proofs)' ==> '//_deposit(msg.sender, ids, proofs)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 391: 'nonReentrant' ==> '//nonReentrant' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 392: 'Proposal storage p = _proposals[id]' ==> '//Proposal storage p = _proposals[id]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 393: 'Status s = status()' ==> '//Status s = status()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 394: 'p.executed' ==> '//p.executed' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 394: 'revert Bad("executed")' ==> '//revert Bad("executed")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 395: 'block.timestamp < p.endsAt' ==> '//block.timestamp < p.endsAt' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 395: 'revert Bad("voting open")' ==> '//revert Bad("voting open")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> '//block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 396: 'revert Bad("lapsed")' ==> '//revert Bad("lapsed")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 397: 'p.epoch != priceEpoch' ==> '//p.epoch != priceEpoch' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 397: 'revert Bad("superseded")' ==> '//revert Bad("superseded")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> '//cards.heldNow(address(this), msg.sender) == 0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 398: 'revert Bad("card holders only")' ==> '//revert Bad("card holders only")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> '//p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 399: 'revert Bad("status")' ==> '//revert Bad("status")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 401: 'uint256 price' ==> '//uint256 price' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 402: 'uint256 floorWei' ==> '//uint256 floorWei' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 403: '!p.cancel' ==> '//!p.cancel' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> '//p.price.mode == PriceMode.Fixed && floor.sig.length == 0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 406: 'price = uint256(p.price.value)' ==> '//price = uint256(p.price.value)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 407: 'floorWei = type(uint256).max' ==> '//floorWei = type(uint256).max' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 409: 'floorWei = _floor(floor)' ==> '//floorWei = _floor(floor)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> '//price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 413: 'uint256 need = needFor(id, price, floorWei)' ==> '//uint256 need = needFor(id, price, floorWei)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> '//p.yes < need || (p.no > 0 && !p.deadlock)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 414: 'revert Bad("did not pass")' ==> '//revert Bad("did not pass")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 416: 'p.executed = true' ==> '//p.executed = true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 417: '++priceEpoch' ==> '//++priceEpoch' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 418: 'lastPriceExecutedAt = uint64(block.timestamp)' ==> '//lastPriceExecutedAt = uint64(block.timestamp)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 419: 'blockedPriceProposals = 0' ==> '//blockedPriceProposals = 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 420: 'p.cancel' ==> '//p.cancel' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 421: 'ask = 0' ==> '//ask = 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 422: 'askLiveAt = 0' ==> '//askLiveAt = 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 423: 's == Status.FULL' ==> '//s == Status.FULL' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 424: 'pendingPrice = p.price' ==> '//pendingPrice = p.price' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 425: '_pendingBuyDelay = p.buyDelayHours' ==> '//_pendingBuyDelay = p.buyDelayHours' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 426: 'hasPendingPrice = true' ==> '//hasPendingPrice = true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 427: 'emit PendingPriceSet(id, p.price.mode, p.price.value)' ==> '//emit PendingPriceSet(id, p.price.mode, p.price.value)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 429: 'ask = price' ==> '//ask = price' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 430: 'askSpec = p.price' ==> '//askSpec = p.price' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 431: 'askLiveAt = uint64(block.timestamp)' ==> '//askLiveAt = uint64(block.timestamp)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> '//buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 433: 'emit AskSet(price, true)' ==> '//emit AskSet(price, true)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 435: 'emit Executed(id, msg.sender)' ==> '//emit Executed(id, msg.sender)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> '//blockedPriceProposals >= DEADLOCK_BLOCKS' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 450: 'return true' ==> '//return true' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> '//uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> '//return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 463: 'return _openIds[who]' ==> '//return _openIds[who]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 522: 'nonReentrant' ==> '//nonReentrant' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 523: '!sold' ==> '//!sold' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 523: 'revert Bad("not sold")' ==> '//revert Bad("not sold")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 524: 'for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' ==> '//for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 524: 'uint256 i' ==> '//uint256 i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 524: 'i < cardIds.length' ==> '//i < cardIds.length' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 524: '++i' ==> '//++i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 525: 'uint256 c = cardIds[i]' ==> '//uint256 c = cardIds[i]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 526: 'cards.partyOf(c) != address(this)' ==> '//cards.partyOf(c) != address(this)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 526: 'revert Bad("not this party")' ==> '//revert Bad("not this party")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 527: 'address holder = cards.ownerOf(c)' ==> '//address holder = cards.ownerOf(c)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 528: 'delete creditOfCard[c]' ==> '//delete creditOfCard[c]' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 529: '--cardsOutstanding' ==> '//--cardsOutstanding' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 530: 'cards.burn(c)' ==> '//cards.burn(c)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 531: 'emit Claimed(holder, c, perCard)' ==> '//emit Claimed(holder, c, perCard)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 532: '(bool ok,) = holder.call{value: perCard, gas: 50_000}("")' ==> '//(bool ok,) = holder.call{value: perCard, gas: 50_000}("")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 532: 'bool ok' ==> '//bool ok' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 533: '!ok' ==> '//!ok' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 533: 'owed[holder] += perCard' ==> '//owed[holder] += perCard' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 538: 'nonReentrant' ==> '//nonReentrant' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 539: 'uint256 amt = owed[msg.sender]' ==> '//uint256 amt = owed[msg.sender]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 540: 'amt == 0' ==> '//amt == 0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 540: 'revert Bad("nothing")' ==> '//revert Bad("nothing")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 541: 'owed[msg.sender] = 0' ==> '//owed[msg.sender] = 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 542: '(bool ok,) = msg.sender.call{value: amt}("")' ==> '//(bool ok,) = msg.sender.call{value: amt}("")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 542: 'bool ok' ==> '//bool ok' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 543: '!ok' ==> '//!ok' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 543: 'revert Bad("send")' ==> '//revert Bad("send")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 544: 'emit Withdrawn(msg.sender, amt)' ==> '//emit Withdrawn(msg.sender, amt)' --> CAUGHT
+INFO:Slither-Mutate:Mutator CR found 40 caught comment mutants (out of 43 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp > uint256(p.endsAt) / _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp > uint256(p.endsAt) * _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp > uint256(p.endsAt) - _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp > uint256(p.endsAt) % _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) + 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) / 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) - 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) % 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp / _t(uint256(p.buyDelayHours) * 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp * _t(uint256(p.buyDelayHours) * 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp - _t(uint256(p.buyDelayHours) * 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp % _t(uint256(p.buyDelayHours) * 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp > since / _t(DEADLOCK_TIME)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp > since * _t(DEADLOCK_TIME)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp > since - _t(DEADLOCK_TIME)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp > since % _t(DEADLOCK_TIME)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] /= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] *= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] -= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] %= perCard' --> CAUGHT
+INFO:Slither-Mutate:Mutator AOR found 20 caught tweak mutants (out of 20 that compile)
+INFO:Slither-Mutate:Running total: found 20 caught tweak mutants (out of 20 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] -= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] = perCard' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] |= perCard' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] ^= perCard' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] &= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] <<= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] >>= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] *= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] /= perCard' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 533: 'owed[holder] += perCard' ==> 'owed[holder] %= perCard' --> CAUGHT
+INFO:Slither-Mutate:Mutator ASOR found 7 caught tweak mutants (out of 10 that compile)
+INFO:Slither-Mutate:Running total: found 27 caught tweak mutants (out of 30 that compile)
+INFO:Slither-Mutate:Mutator BOR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 27 caught tweak mutants (out of 30 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 198: 'function cardView(uint256 cardId) external view returns (string memory name, uint256 creditId, string memory st) {
+        Status s = status();
+        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+        return (_params.name, creditOfCard[cardId], st);
+    }' ==> 'function cardView(uint256 cardId) external pure returns (string memory name, uint256 creditId, string memory st) {
+        Status s = status();
+        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+        return (_params.name, creditOfCard[cardId], st);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 198: 'function cardView(uint256 cardId) external view returns (string memory name, uint256 creditId, string memory st) {
+        Status s = status();
+        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+        return (_params.name, creditOfCard[cardId], st);
+    }' ==> 'function cardView(uint256 cardId) private view returns (string memory name, uint256 creditId, string memory st) {
+        Status s = status();
+        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+        return (_params.name, creditOfCard[cardId], st);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 198: 'function cardView(uint256 cardId) external view returns (string memory name, uint256 creditId, string memory st) {
+        Status s = status();
+        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+        return (_params.name, creditOfCard[cardId], st);
+    }' ==> 'function cardView(uint256 cardId) internal view returns (string memory name, uint256 creditId, string memory st) {
+        Status s = status();
+        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+        return (_params.name, creditOfCard[cardId], st);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 208: 'function openDeposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
+        if (msg.sender != address(factory) || _opened || from != host) revert Bad("opening");
+        _opened = true;
+        _deposit(from, ids, proofs);
+    }' ==> 'function openDeposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) private nonReentrant {
+        if (msg.sender != address(factory) || _opened || from != host) revert Bad("opening");
+        _opened = true;
+        _deposit(from, ids, proofs);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 208: 'function openDeposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
+        if (msg.sender != address(factory) || _opened || from != host) revert Bad("opening");
+        _opened = true;
+        _deposit(from, ids, proofs);
+    }' ==> 'function openDeposit(address from, uint256[] calldata ids, bytes32[][] calldata proofs) internal nonReentrant {
+        if (msg.sender != address(factory) || _opened || from != host) revert Bad("opening");
+        _opened = true;
+        _deposit(from, ids, proofs);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 215: 'function deposit(uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
+        if (!_opened) revert Bad("not opened");
+        _deposit(msg.sender, ids, proofs);
+    }' ==> 'function deposit(uint256[] calldata ids, bytes32[][] calldata proofs) private nonReentrant {
+        if (!_opened) revert Bad("not opened");
+        _deposit(msg.sender, ids, proofs);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 215: 'function deposit(uint256[] calldata ids, bytes32[][] calldata proofs) external nonReentrant {
+        if (!_opened) revert Bad("not opened");
+        _deposit(msg.sender, ids, proofs);
+    }' ==> 'function deposit(uint256[] calldata ids, bytes32[][] calldata proofs) internal nonReentrant {
+        if (!_opened) revert Bad("not opened");
+        _deposit(msg.sender, ids, proofs);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 391: 'function execute(uint256 id, Floor calldata floor) external nonReentrant {
+        Proposal storage p = _proposals[id];
+        Status s = status();
+        if (p.executed) revert Bad("executed");
+        if (block.timestamp < p.endsAt) revert Bad("voting open");
+        if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+        if (p.epoch != priceEpoch) revert Bad("superseded");
+        if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+        if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+
+        uint256 price;
+        uint256 floorWei;
+        if (!p.cancel) {
+            if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
+                // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+                price = uint256(p.price.value);
+                floorWei = type(uint256).max;
+            } else {
+                floorWei = _floor(floor);
+                price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+            }
+        }
+        uint256 need = needFor(id, price, floorWei);
+        if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
+
+        p.executed = true;
+        ++priceEpoch;
+        lastPriceExecutedAt = uint64(block.timestamp);
+        blockedPriceProposals = 0; // deadlock mode ends once any price decision executes
+        if (p.cancel) {
+            ask = 0;
+            askLiveAt = 0;
+        } else if (s == Status.FULL) {
+            pendingPrice = p.price;
+            _pendingBuyDelay = p.buyDelayHours;
+            hasPendingPrice = true;
+            emit PendingPriceSet(id, p.price.mode, p.price.value);
+        } else {
+            ask = price;
+            askSpec = p.price;
+            askLiveAt = uint64(block.timestamp);
+            buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+            emit AskSet(price, true);
+        }
+        emit Executed(id, msg.sender);
+    }' ==> 'function execute(uint256 id, Floor calldata floor) private nonReentrant {
+        Proposal storage p = _proposals[id];
+        Status s = status();
+        if (p.executed) revert Bad("executed");
+        if (block.timestamp < p.endsAt) revert Bad("voting open");
+        if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+        if (p.epoch != priceEpoch) revert Bad("superseded");
+        if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+        if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+
+        uint256 price;
+        uint256 floorWei;
+        if (!p.cancel) {
+            if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
+                // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+                price = uint256(p.price.value);
+                floorWei = type(uint256).max;
+            } else {
+                floorWei = _floor(floor);
+                price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+            }
+        }
+        uint256 need = needFor(id, price, floorWei);
+        if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
+
+        p.executed = true;
+        ++priceEpoch;
+        lastPriceExecutedAt = uint64(block.timestamp);
+        blockedPriceProposals = 0; // deadlock mode ends once any price decision executes
+        if (p.cancel) {
+            ask = 0;
+            askLiveAt = 0;
+        } else if (s == Status.FULL) {
+            pendingPrice = p.price;
+            _pendingBuyDelay = p.buyDelayHours;
+            hasPendingPrice = true;
+            emit PendingPriceSet(id, p.price.mode, p.price.value);
+        } else {
+            ask = price;
+            askSpec = p.price;
+            askLiveAt = uint64(block.timestamp);
+            buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+            emit AskSet(price, true);
+        }
+        emit Executed(id, msg.sender);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 391: 'function execute(uint256 id, Floor calldata floor) external nonReentrant {
+        Proposal storage p = _proposals[id];
+        Status s = status();
+        if (p.executed) revert Bad("executed");
+        if (block.timestamp < p.endsAt) revert Bad("voting open");
+        if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+        if (p.epoch != priceEpoch) revert Bad("superseded");
+        if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+        if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+
+        uint256 price;
+        uint256 floorWei;
+        if (!p.cancel) {
+            if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
+                // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+                price = uint256(p.price.value);
+                floorWei = type(uint256).max;
+            } else {
+                floorWei = _floor(floor);
+                price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+            }
+        }
+        uint256 need = needFor(id, price, floorWei);
+        if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
+
+        p.executed = true;
+        ++priceEpoch;
+        lastPriceExecutedAt = uint64(block.timestamp);
+        blockedPriceProposals = 0; // deadlock mode ends once any price decision executes
+        if (p.cancel) {
+            ask = 0;
+            askLiveAt = 0;
+        } else if (s == Status.FULL) {
+            pendingPrice = p.price;
+            _pendingBuyDelay = p.buyDelayHours;
+            hasPendingPrice = true;
+            emit PendingPriceSet(id, p.price.mode, p.price.value);
+        } else {
+            ask = price;
+            askSpec = p.price;
+            askLiveAt = uint64(block.timestamp);
+            buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+            emit AskSet(price, true);
+        }
+        emit Executed(id, msg.sender);
+    }' ==> 'function execute(uint256 id, Floor calldata floor) internal nonReentrant {
+        Proposal storage p = _proposals[id];
+        Status s = status();
+        if (p.executed) revert Bad("executed");
+        if (block.timestamp < p.endsAt) revert Bad("voting open");
+        if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+        if (p.epoch != priceEpoch) revert Bad("superseded");
+        if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+        if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+
+        uint256 price;
+        uint256 floorWei;
+        if (!p.cancel) {
+            if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
+                // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+                price = uint256(p.price.value);
+                floorWei = type(uint256).max;
+            } else {
+                floorWei = _floor(floor);
+                price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+            }
+        }
+        uint256 need = needFor(id, price, floorWei);
+        if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
+
+        p.executed = true;
+        ++priceEpoch;
+        lastPriceExecutedAt = uint64(block.timestamp);
+        blockedPriceProposals = 0; // deadlock mode ends once any price decision executes
+        if (p.cancel) {
+            ask = 0;
+            askLiveAt = 0;
+        } else if (s == Status.FULL) {
+            pendingPrice = p.price;
+            _pendingBuyDelay = p.buyDelayHours;
+            hasPendingPrice = true;
+            emit PendingPriceSet(id, p.price.mode, p.price.value);
+        } else {
+            ask = price;
+            askSpec = p.price;
+            askLiveAt = uint64(block.timestamp);
+            buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+            emit AskSet(price, true);
+        }
+        emit Executed(id, msg.sender);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 449: 'function _deadlocked() internal view returns (bool) {
+        if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+        return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+    }' ==> 'function _deadlocked() internal pure returns (bool) {
+        if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+        return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 449: 'function _deadlocked() internal view returns (bool) {
+        if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+        return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+    }' ==> 'function _deadlocked() private view returns (bool) {
+        if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+        return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 463: 'function openProposalsOf(address who) external view returns (uint256[] memory) { return _openIds[who]; }' ==> 'function openProposalsOf(address who) external pure returns (uint256[] memory) { return _openIds[who]; }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 463: 'function openProposalsOf(address who) external view returns (uint256[] memory) { return _openIds[who]; }' ==> 'function openProposalsOf(address who) private view returns (uint256[] memory) { return _openIds[who]; }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 463: 'function openProposalsOf(address who) external view returns (uint256[] memory) { return _openIds[who]; }' ==> 'function openProposalsOf(address who) internal view returns (uint256[] memory) { return _openIds[who]; }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 522: 'function claimFor(uint256[] calldata cardIds) external nonReentrant {
+        if (!sold) revert Bad("not sold");
+        for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }
+    }' ==> 'function claimFor(uint256[] calldata cardIds) private nonReentrant {
+        if (!sold) revert Bad("not sold");
+        for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 522: 'function claimFor(uint256[] calldata cardIds) external nonReentrant {
+        if (!sold) revert Bad("not sold");
+        for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }
+    }' ==> 'function claimFor(uint256[] calldata cardIds) internal nonReentrant {
+        if (!sold) revert Bad("not sold");
+        for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 538: 'function withdraw() external nonReentrant {
+        uint256 amt = owed[msg.sender];
+        if (amt == 0) revert Bad("nothing");
+        owed[msg.sender] = 0;
+        (bool ok,) = msg.sender.call{value: amt}("");
+        if (!ok) revert Bad("send");
+        emit Withdrawn(msg.sender, amt);
+    }' ==> 'function withdraw() private nonReentrant {
+        uint256 amt = owed[msg.sender];
+        if (amt == 0) revert Bad("nothing");
+        owed[msg.sender] = 0;
+        (bool ok,) = msg.sender.call{value: amt}("");
+        if (!ok) revert Bad("send");
+        emit Withdrawn(msg.sender, amt);
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 538: 'function withdraw() external nonReentrant {
+        uint256 amt = owed[msg.sender];
+        if (amt == 0) revert Bad("nothing");
+        owed[msg.sender] = 0;
+        (bool ok,) = msg.sender.call{value: amt}("");
+        if (!ok) revert Bad("send");
+        emit Withdrawn(msg.sender, amt);
+    }' ==> 'function withdraw() internal nonReentrant {
+        uint256 amt = owed[msg.sender];
+        if (amt == 0) revert Bad("nothing");
+        owed[msg.sender] = 0;
+        (bool ok,) = msg.sender.call{value: amt}("");
+        if (!ok) revert Bad("send");
+        emit Withdrawn(msg.sender, amt);
+    }' --> COMPILATION FAILURE
+INFO:Slither-Mutate:Mutator FHR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 27 caught tweak mutants (out of 30 that compile)
+INFO:Slither-Mutate:Mutator LIR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 27 caught tweak mutants (out of 30 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LOR] Line 209: 'msg.sender != address(factory) || _opened || from != host' ==> 'msg.sender != address(factory)  &&  _opened ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LOR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL  ||  s != Status.ASSEMBLED)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LOR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode == PriceMode.Fixed  ||  floor.sig.length == 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LOR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes < need || (p.no > 0  ||  !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LOR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes < need  &&  (p.no > 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LOR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max  ||  block.timestamp > since + _t(DEADLOCK_TIME)' --> CAUGHT
+INFO:Slither-Mutate:Mutator LOR found 6 caught tweak mutants (out of 6 that compile)
+INFO:Slither-Mutate:Running total: found 33 caught tweak mutants (out of 36 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> '!(st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> '!(st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'false' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> '!(st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'false' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> '!(st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 209: 'msg.sender != address(factory) || _opened || from != host' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 209: 'msg.sender != address(factory) || _opened || from != host' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 209: 'msg.sender != address(factory) || _opened || from != host' ==> '!(msg.sender != address(factory) || _opened || from != host)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 216: '!_opened' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 216: '!_opened' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 394: 'p.executed' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 394: 'p.executed' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 394: 'p.executed' ==> '!(p.executed)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 395: 'block.timestamp < p.endsAt' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 395: 'block.timestamp < p.endsAt' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 395: 'block.timestamp < p.endsAt' ==> '!(block.timestamp < p.endsAt)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> '!(block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 397: 'p.epoch != priceEpoch' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 397: 'p.epoch != priceEpoch' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 397: 'p.epoch != priceEpoch' ==> '!(p.epoch != priceEpoch)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> '!(cards.heldNow(address(this), msg.sender) == 0)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'false' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> '!(p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 403: '!p.cancel' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 403: '!p.cancel' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> '!(p.price.mode == PriceMode.Fixed && floor.sig.length == 0)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'false' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> '!(price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei)))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> '!(p.yes < need || (p.no > 0 && !p.deadlock))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 420: 'p.cancel' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 420: 'p.cancel' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 420: 'p.cancel' ==> '!(p.cancel)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 423: 's == Status.FULL' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 423: 's == Status.FULL' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 423: 's == Status.FULL' ==> '!(s == Status.FULL)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> '!(blockedPriceProposals >= DEADLOCK_BLOCKS)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> '!(uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max)))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> '!(uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max)))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> '!(uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max)))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 523: '!sold' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 523: '!sold' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 526: 'cards.partyOf(c) != address(this)' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 526: 'cards.partyOf(c) != address(this)' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 526: 'cards.partyOf(c) != address(this)' ==> '!(cards.partyOf(c) != address(this))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 533: '!ok' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 533: '!ok' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 540: 'amt == 0' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 540: 'amt == 0' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 540: 'amt == 0' ==> '!(amt == 0)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 543: '!ok' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 543: '!ok' ==> 'false' --> CAUGHT
+INFO:Slither-Mutate:Mutator MIA found 60 caught tweak mutants (out of 68 that compile)
+INFO:Slither-Mutate:Running total: found 93 caught tweak mutants (out of 104 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 199: 'Status s = status()' ==> 'Status s ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 392: 'Proposal storage p = _proposals[id]' ==> 'Proposal storage p ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 393: 'Status s = status()' ==> 'Status s ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 413: 'uint256 need = needFor(id, price, floorWei)' ==> 'uint256 need ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 525: 'uint256 c = cardIds[i]' ==> 'uint256 c ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 527: 'address holder = cards.ownerOf(c)' ==> 'address holder ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 539: 'uint256 amt = owed[msg.sender]' ==> 'uint256 amt ' --> CAUGHT
+INFO:Slither-Mutate:Mutator MVIE found 7 caught tweak mutants (out of 7 that compile)
+INFO:Slither-Mutate:Running total: found 100 caught tweak mutants (out of 111 that compile)
+INFO:Slither-Mutate:Mutator MVIV found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 100 caught tweak mutants (out of 111 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 524: 'i < cardIds.length' ==> '!(i < cardIds.length)' --> CAUGHT
+INFO:Slither-Mutate:Mutator MWA found 1 caught tweak mutants (out of 1 that compile)
+INFO:Slither-Mutate:Running total: found 101 caught tweak mutants (out of 112 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s < Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s > Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s <= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s >= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s != Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s < Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s > Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s <= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s >= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s != Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s < Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s > Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s <= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s >= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s != Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s < Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s > Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s <= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s >= Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 200: 'st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE"' ==> 'st = s != Status.OPEN ? "FILLING" : s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 395: 'block.timestamp < p.endsAt' ==> 'block.timestamp > p.endsAt' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 395: 'block.timestamp < p.endsAt' ==> 'block.timestamp <= p.endsAt' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 395: 'block.timestamp < p.endsAt' ==> 'block.timestamp >= p.endsAt' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 395: 'block.timestamp < p.endsAt' ==> 'block.timestamp == p.endsAt' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 395: 'block.timestamp < p.endsAt' ==> 'block.timestamp != p.endsAt' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp < uint256(p.endsAt) + _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp <= uint256(p.endsAt) + _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp >= uint256(p.endsAt) + _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp == uint256(p.endsAt) + _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp != uint256(p.endsAt) + _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 397: 'p.epoch != priceEpoch' ==> 'p.epoch < priceEpoch' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 397: 'p.epoch != priceEpoch' ==> 'p.epoch > priceEpoch' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 397: 'p.epoch != priceEpoch' ==> 'p.epoch <= priceEpoch' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 397: 'p.epoch != priceEpoch' ==> 'p.epoch >= priceEpoch' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 397: 'p.epoch != priceEpoch' ==> 'p.epoch == priceEpoch' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'cards.heldNow(address(this), msg.sender) < 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'cards.heldNow(address(this), msg.sender) > 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'cards.heldNow(address(this), msg.sender) <= 0' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'cards.heldNow(address(this), msg.sender) >= 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'cards.heldNow(address(this), msg.sender) != 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s < Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s > Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s <= Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s >= Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s == Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s < Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s > Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s <= Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s >= Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s == Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s < Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s > Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s <= Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s >= Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 399: 'p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)' ==> 'p.cancel ? s == Status.ASSEMBLED : (s ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode < PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode > PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode <= PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode >= PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode != PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode < PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode > PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode <= PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode >= PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 404: 'p.price.mode == PriceMode.Fixed && floor.sig.length == 0' ==> 'p.price.mode != PriceMode.Fixed && floor.sig.length ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'price = p.price.mode < PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'price = p.price.mode > PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'price = p.price.mode <= PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'price = p.price.mode >= PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'price = p.price.mode != PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes > need || (p.no > 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes <= need || (p.no > 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes >= need || (p.no > 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes == need || (p.no > 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes != need || (p.no > 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes < need || (p.no < 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes < need || (p.no <= 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes < need || (p.no >= 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes < need || (p.no == 0 && !p.deadlock)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 414: 'p.yes < need || (p.no > 0 && !p.deadlock)' ==> 'p.yes < need || (p.no != 0 && !p.deadlock)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 423: 's == Status.FULL' ==> 's < Status.FULL' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 423: 's == Status.FULL' ==> 's > Status.FULL' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 423: 's == Status.FULL' ==> 's <= Status.FULL' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 423: 's == Status.FULL' ==> 's >= Status.FULL' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 423: 's == Status.FULL' ==> 's != Status.FULL' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> 'blockedPriceProposals < DEADLOCK_BLOCKS' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> 'blockedPriceProposals > DEADLOCK_BLOCKS' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> 'blockedPriceProposals <= DEADLOCK_BLOCKS' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> 'blockedPriceProposals == DEADLOCK_BLOCKS' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 450: 'blockedPriceProposals >= DEADLOCK_BLOCKS' ==> 'blockedPriceProposals != DEADLOCK_BLOCKS' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt < 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt > 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt <= 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt >= 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt == 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt < 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt > 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt <= 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt >= 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt == 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt < 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt > 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt <= 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt >= 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt == 0 ? lastPriceExecutedAt : (assembledAt ' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since < type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since > type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since <= type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since >= type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since == type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp < since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp <= since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp >= since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp == since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && block.timestamp != since + _t(DEADLOCK_TIME)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 524: 'i < cardIds.length' ==> 'i > cardIds.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 524: 'i < cardIds.length' ==> 'i <= cardIds.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 524: 'i < cardIds.length' ==> 'i >= cardIds.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 524: 'i < cardIds.length' ==> 'i == cardIds.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 524: 'i < cardIds.length' ==> 'i != cardIds.length' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 540: 'amt == 0' ==> 'amt < 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 540: 'amt == 0' ==> 'amt > 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 540: 'amt == 0' ==> 'amt <= 0' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 540: 'amt == 0' ==> 'amt >= 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 540: 'amt == 0' ==> 'amt != 0' --> CAUGHT
+INFO:Slither-Mutate:Mutator ROR found 43 caught tweak mutants (out of 50 that compile)
+INFO:Slither-Mutate:Running total: found 144 caught tweak mutants (out of 162 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 43: 'uint256 public constant SLOTS = 80' ==> 'uint256 public immutable SLOTS = 80' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 43: 'uint256 public constant SLOTS = 80' ==> 'uint128 public constant SLOTS = 80' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 44: 'uint256 public constant PASS = 41' ==> 'uint256 public immutable PASS = 41' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 44: 'uint256 public constant PASS = 41' ==> 'uint128 public constant PASS = 41' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 45: 'uint256 public constant PASS_BELOW_FLOOR = 60' ==> 'uint256 public immutable PASS_BELOW_FLOOR = 60' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 45: 'uint256 public constant PASS_BELOW_FLOOR = 60' ==> 'uint128 public constant PASS_BELOW_FLOOR = 60' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 46: 'uint256 public constant PASS_DEADLOCK = 54' ==> 'uint256 public immutable PASS_DEADLOCK = 54' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 46: 'uint256 public constant PASS_DEADLOCK = 54' ==> 'uint128 public constant PASS_DEADLOCK = 54' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 47: 'uint256 public constant DEADLOCK_BLOCKS = 3' ==> 'uint256 public immutable DEADLOCK_BLOCKS = 3' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 47: 'uint256 public constant DEADLOCK_BLOCKS = 3' ==> 'uint128 public constant DEADLOCK_BLOCKS = 3' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'uint256 public constant DEADLOCK_TIME = 30 days' ==> 'uint256 public constant DEADLOCK_TIME = 30 seconds' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'uint256 public constant DEADLOCK_TIME = 30 days' ==> 'uint256 public constant DEADLOCK_TIME = 30 minutes' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'uint256 public constant DEADLOCK_TIME = 30 days' ==> 'uint256 public constant DEADLOCK_TIME = 30 hours' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'uint256 public constant DEADLOCK_TIME = 30 days' ==> 'uint256 public constant DEADLOCK_TIME = 30 weeks' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'uint256 public constant DEADLOCK_TIME = 30 days' ==> 'uint256 public immutable DEADLOCK_TIME = 30 days' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'uint256 public constant DEADLOCK_TIME = 30 days' ==> 'uint128 public constant DEADLOCK_TIME = 30 days' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 49: 'uint256 public constant EXECUTE_WINDOW = 7 days' ==> 'uint256 public constant EXECUTE_WINDOW = 7 seconds' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 49: 'uint256 public constant EXECUTE_WINDOW = 7 days' ==> 'uint256 public constant EXECUTE_WINDOW = 7 minutes' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 49: 'uint256 public constant EXECUTE_WINDOW = 7 days' ==> 'uint256 public constant EXECUTE_WINDOW = 7 hours' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 49: 'uint256 public constant EXECUTE_WINDOW = 7 days' ==> 'uint256 public constant EXECUTE_WINDOW = 7 weeks' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 49: 'uint256 public constant EXECUTE_WINDOW = 7 days' ==> 'uint256 public immutable EXECUTE_WINDOW = 7 days' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 49: 'uint256 public constant EXECUTE_WINDOW = 7 days' ==> 'uint128 public constant EXECUTE_WINDOW = 7 days' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 50: 'uint256 public constant MAX_BUY_DELAY_HOURS = 72' ==> 'uint256 public immutable MAX_BUY_DELAY_HOURS = 72' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 50: 'uint256 public constant MAX_BUY_DELAY_HOURS = 72' ==> 'uint128 public constant MAX_BUY_DELAY_HOURS = 72' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 51: 'uint256 public constant FILL_GRACE = 2 days' ==> 'uint256 public constant FILL_GRACE = 2 seconds' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 51: 'uint256 public constant FILL_GRACE = 2 days' ==> 'uint256 public constant FILL_GRACE = 2 minutes' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 51: 'uint256 public constant FILL_GRACE = 2 days' ==> 'uint256 public constant FILL_GRACE = 2 hours' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 51: 'uint256 public constant FILL_GRACE = 2 days' ==> 'uint256 public constant FILL_GRACE = 2 weeks' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 51: 'uint256 public constant FILL_GRACE = 2 days' ==> 'uint256 public immutable FILL_GRACE = 2 days' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 51: 'uint256 public constant FILL_GRACE = 2 days' ==> 'uint128 public constant FILL_GRACE = 2 days' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256 public constant FLOOR_MAX_AGE = 1 hours' ==> 'uint256 public constant FLOOR_MAX_AGE = 1 seconds' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256 public constant FLOOR_MAX_AGE = 1 hours' ==> 'uint256 public constant FLOOR_MAX_AGE = 1 minutes' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256 public constant FLOOR_MAX_AGE = 1 hours' ==> 'uint256 public constant FLOOR_MAX_AGE = 1 days' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256 public constant FLOOR_MAX_AGE = 1 hours' ==> 'uint256 public constant FLOOR_MAX_AGE = 1 weeks' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256 public constant FLOOR_MAX_AGE = 1 hours' ==> 'uint256 public immutable FLOOR_MAX_AGE = 1 hours' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256 public constant FLOOR_MAX_AGE = 1 hours' ==> 'uint128 public constant FLOOR_MAX_AGE = 1 hours' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 53: 'uint256 public constant ROYALTY_CAP_BPS = 1000' ==> 'uint256 public immutable ROYALTY_CAP_BPS = 1000' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 53: 'uint256 public constant ROYALTY_CAP_BPS = 1000' ==> 'uint128 public constant ROYALTY_CAP_BPS = 1000' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 54: 'uint256 public constant MAX_OPEN_PER_PROPOSER = 3' ==> 'uint256 public immutable MAX_OPEN_PER_PROPOSER = 3' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 54: 'uint256 public constant MAX_OPEN_PER_PROPOSER = 3' ==> 'uint128 public constant MAX_OPEN_PER_PROPOSER = 3' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 198: '(string memory name, uint256 creditId, string memory st)' ==> '(string storage name, uint256 creditId, string storage st)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 198: '(string memory name, uint256 creditId, string memory st)' ==> '(string memory name, uint128 creditId, string memory st)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 209: 'msg.sender != address(factory) || _opened || from != host' ==> 'tx.origin != address(factory) || _opened || from != host' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 217: '_deposit(msg.sender, ids, proofs)' ==> '_deposit(tx.origin, ids, proofs)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 392: 'Proposal storage p = _proposals[id]' ==> 'Proposal memory p = _proposals[id]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 395: 'block.timestamp < p.endsAt' ==> '0 < p.endsAt' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> '0 > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 396: 'block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)' ==> 'block.timestamp > uint128(p.endsAt) + _t(EXECUTE_WINDOW)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 398: 'cards.heldNow(address(this), msg.sender) == 0' ==> 'cards.heldNow(address(this), tx.origin) == 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 401: 'uint256 price' ==> 'uint128 price' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 402: 'uint256 floorWei' ==> 'uint128 floorWei' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 406: 'price = uint256(p.price.value)' ==> 'price = uint128(p.price.value)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 407: 'floorWei = type(uint256).max' ==> 'floorWei = type(uint128).max' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 410: 'price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' ==> 'price = p.price.mode == PriceMode.Fixed ? uint128(p.price.value) : _clampMin(_resolveWith(p.price, floorWei))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 413: 'uint256 need = needFor(id, price, floorWei)' ==> 'uint128 need = needFor(id, price, floorWei)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 418: 'lastPriceExecutedAt = uint64(block.timestamp)' ==> 'lastPriceExecutedAt = uint64(0)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 418: 'lastPriceExecutedAt = uint64(block.timestamp)' ==> 'lastPriceExecutedAt = uint32(block.timestamp)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 431: 'askLiveAt = uint64(block.timestamp)' ==> 'askLiveAt = uint64(0)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 431: 'askLiveAt = uint64(block.timestamp)' ==> 'askLiveAt = uint32(block.timestamp)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(0 + _t(uint256(p.buyDelayHours) * 1 hours))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 seconds))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 minutes))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 days))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 weeks))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint32(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 432: 'buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours))' ==> 'buyableAt = uint64(block.timestamp + _t(uint128(p.buyDelayHours) * 1 hours))' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint32).max))' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 451: 'uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' ==> 'uint128 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max))' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint64).max && 0 > since + _t(DEADLOCK_TIME)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 452: 'return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME)' ==> 'return since != type(uint32).max && block.timestamp > since + _t(DEADLOCK_TIME)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 524: 'for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' ==> 'for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.delegatecall{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 524: 'for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' ==> 'for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.staticcall{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 524: 'for (uint256 i; i < cardIds.length; ++i) {
+            uint256 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' ==> 'for (uint128 i; i < cardIds.length; ++i) {
+            uint128 c = cardIds[i];
+            if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+            address holder = cards.ownerOf(c);
+            delete creditOfCard[c];
+            --cardsOutstanding;
+            cards.burn(c);
+            emit Claimed(holder, c, perCard);
+            (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+            if (!ok) owed[holder] += perCard;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 524: 'uint256 i' ==> 'uint128 i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 525: 'uint256 c = cardIds[i]' ==> 'uint128 c = cardIds[i]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 532: '(bool ok,) = holder.call{value: perCard, gas: 50_000}("")' ==> '(bool ok,) = holder.delegatecall{value: perCard, gas: 50_000}("")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 532: '(bool ok,) = holder.call{value: perCard, gas: 50_000}("")' ==> '(bool ok,) = holder.staticcall{value: perCard, gas: 50_000}("")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 539: 'uint256 amt = owed[msg.sender]' ==> 'uint256 amt = owed[tx.origin]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 539: 'uint256 amt = owed[msg.sender]' ==> 'uint128 amt = owed[msg.sender]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 541: 'owed[msg.sender] = 0' ==> 'owed[tx.origin] = 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 542: '(bool ok,) = msg.sender.call{value: amt}("")' ==> '(bool ok,) = msg.sender.delegatecall{value: amt}("")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 542: '(bool ok,) = msg.sender.call{value: amt}("")' ==> '(bool ok,) = msg.sender.staticcall{value: amt}("")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 542: '(bool ok,) = msg.sender.call{value: amt}("")' ==> '(bool ok,) = tx.origin.call{value: amt}("")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 544: 'emit Withdrawn(msg.sender, amt)' ==> 'emit Withdrawn(tx.origin, amt)' --> CAUGHT
+INFO:Slither-Mutate:Mutator SBR found 46 caught tweak mutants (out of 68 that compile)
+INFO:Slither-Mutate:Running total: found 190 caught tweak mutants (out of 230 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 417: '++priceEpoch' ==> '--priceEpoch' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 417: '++priceEpoch' ==> 'priceEpoch--' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 417: '++priceEpoch' ==> 'priceEpoch++' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 417: '++priceEpoch' ==> 'priceEpoch-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 524: '++i' ==> '--i' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 524: '++i' ==> 'i--' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 524: '++i' ==> 'i++' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 524: '++i' ==> 'i-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 529: '--cardsOutstanding' ==> '++cardsOutstanding' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 529: '--cardsOutstanding' ==> 'cardsOutstanding++' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 529: '--cardsOutstanding' ==> 'cardsOutstanding--' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 529: '--cardsOutstanding' ==> 'cardsOutstanding-' --> COMPILATION FAILURE
+INFO:Slither-Mutate:Mutator UOR found 6 caught tweak mutants (out of 9 that compile)
+INFO:Slither-Mutate:Running total: found 196 caught tweak mutants (out of 239 that compile)
+INFO:Slither-Mutate:Done mutating Party.
+INFO:Slither-Mutate:Revert mutants: 36 caught of 36 (100.0% caught)
+INFO:Slither-Mutate:Comment mutants: 40 caught of 43 (93.0% caught)
+INFO:Slither-Mutate:Tweak mutants: 196 caught of 239 (82.0% caught)
+INFO:Slither-Mutate:Finished mutation testing assessment of 'src/Party.sol' in 1 hour
+

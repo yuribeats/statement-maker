@@ -1,0 +1,1096 @@
+INFO:Slither-Mutate:Starting mutation campaign in src/CreditKeys.sol
+INFO:Slither-Mutate:Preparing to mutate files:
+- src/CreditKeys.sol
+INFO:Slither-Mutate:Timing tests..
+INFO:Slither-Mutate:Test suite passes in 3 seconds, commencing mutation campaign with a timeout of 300 seconds
+
+INFO:Slither-Mutate:Mutating contract CreditKeys
+INFO:Slither-Mutate:Targeting functions: ['key', 'colorRank', 'printRank', 'printWeight', 'weightWeight', 'eightsWeight']
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 66: 'require(id < 2 ** ID_BITS, "id")' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 67: 'return id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 68: 'uint64 paidAt = credits.timestampOf(id)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 72: 'ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 76: 'return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 78: 'uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 86: 'return 0' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 87: 'return 1' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 88: 'return 2' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 89: 'return 3' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 90: 'return 4' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 91: 'return 5' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 92: 'return 6' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 93: 'return 7' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 94: 'return 8' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 95: 'return 9' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 96: 'return 10' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 97: 'return 11' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 98: 'return 12' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 99: 'return 13' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 100: 'return 14' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 105: 'bytes32 h = keccak256(bytes(reg))' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 106: 'return 0' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 107: 'return 1' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 108: 'return 2' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 109: 'return 3' ==> 'revert()' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 110: 'return 4' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 111: 'return 5' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 145: 'uint256 r = printRank(reg)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 146: 'return 195465472' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 147: 'return 4661729380' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 148: 'return 4640364522' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 149: 'return 5366472805' ==> 'revert()' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 150: 'return 6072587748' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 151: 'return 6964650926' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 155: 'uint256 r = weightRank(w)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 156: 'return 2887813475' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 157: 'return 1831411512' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 158: 'return 801626426' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 159: 'return 6615253228' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 163: 'return 448838239' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 164: 'return 2125356957' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 165: 'return 4849173708' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 166: 'return 8261716960' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 167: 'return 12197901863' ==> 'revert()' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 168: 'return 16898341581' ==> 'revert()' --> UNCAUGHT
+INFO:Slither-Mutate:Mutator RR found 42 caught revert mutants (out of 46 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 66: 'require(id < 2 ** ID_BITS, "id")' ==> '//require(id < 2 ** ID_BITS, "id")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 67: 'p == Preset.Number' ==> '//p == Preset.Number' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 67: 'return id' ==> '//return id' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 68: 'uint64 paidAt = credits.timestampOf(id)' ==> '//uint64 paidAt = credits.timestampOf(id)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 69: 'p == Preset.Time' ==> '//p == Preset.Time' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> '//return (uint256(paidAt) << ID_BITS) | id' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> '//uint256 mask = uint256(paidAt) % 15 + 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 71: 'p == Preset.Colors' ==> '//p == Preset.Colors' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> '//return (colorRank(mask) << ID_BITS) | id' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 72: 'ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt)' ==> '//ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 73: 'p == Preset.Ink' ==> '//p == Preset.Ink' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 73: 'return (r.marks << ID_BITS) | id' ==> '//return (r.marks << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 74: 'p == Preset.Eights' ==> '//p == Preset.Eights' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> '//return ((type(uint32).max - r.eights) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 75: 'p == Preset.Print' ==> '//p == Preset.Print' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> '//return ((5 - printRank(r.register)) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 76: 'p == Preset.Weight' ==> '//p == Preset.Weight' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 76: 'return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id' ==> '//return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 77: 'p == Preset.Rarity' ==> '//p == Preset.Rarity' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 78: 'uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' ==> '//uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> '//return ((type(uint64).max - score) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 81: 'revert("preset")' ==> '//revert("preset")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 86: 'mask == 1' ==> '//mask == 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 86: 'return 0' ==> '//return 0' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 87: 'mask == 2' ==> '//mask == 2' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 87: 'return 1' ==> '//return 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 88: 'mask == 4' ==> '//mask == 4' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 88: 'return 2' ==> '//return 2' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 89: 'mask == 8' ==> '//mask == 8' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 89: 'return 3' ==> '//return 3' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 90: 'mask == 3' ==> '//mask == 3' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 90: 'return 4' ==> '//return 4' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 91: 'mask == 5' ==> '//mask == 5' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 91: 'return 5' ==> '//return 5' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 92: 'mask == 6' ==> '//mask == 6' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 92: 'return 6' ==> '//return 6' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 93: 'mask == 9' ==> '//mask == 9' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 93: 'return 7' ==> '//return 7' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 94: 'mask == 10' ==> '//mask == 10' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 94: 'return 8' ==> '//return 8' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 95: 'mask == 12' ==> '//mask == 12' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 95: 'return 9' ==> '//return 9' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 96: 'mask == 7' ==> '//mask == 7' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 96: 'return 10' ==> '//return 10' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 97: 'mask == 11' ==> '//mask == 11' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 97: 'return 11' ==> '//return 11' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 98: 'mask == 13' ==> '//mask == 13' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 98: 'return 12' ==> '//return 12' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 99: 'mask == 14' ==> '//mask == 14' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 99: 'return 13' ==> '//return 13' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 100: 'return 14' ==> '//return 14' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 105: 'bytes32 h = keccak256(bytes(reg))' ==> '//bytes32 h = keccak256(bytes(reg))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 106: 'h == keccak256("Registered")' ==> '//h == keccak256("Registered")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 106: 'return 0' ==> '//return 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 107: 'h == keccak256("Nudge")' ==> '//h == keccak256("Nudge")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 107: 'return 1' ==> '//return 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 108: 'h == keccak256("Slip")' ==> '//h == keccak256("Slip")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 108: 'return 2' ==> '//return 2' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 110: 'h == keccak256("Drift")' ==> '//h == keccak256("Drift")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 110: 'return 4' ==> '//return 4' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 111: 'h == keccak256("Loose")' ==> '//h == keccak256("Loose")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 111: 'return 5' ==> '//return 5' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 112: 'revert("print")' ==> '//revert("print")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 145: 'uint256 r = printRank(reg)' ==> '//uint256 r = printRank(reg)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 146: 'r == 0' ==> '//r == 0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 146: 'return 195465472' ==> '//return 195465472' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 147: 'r == 1' ==> '//r == 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 147: 'return 4661729380' ==> '//return 4661729380' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 148: 'r == 2' ==> '//r == 2' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 148: 'return 4640364522' ==> '//return 4640364522' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 150: 'r == 4' ==> '//r == 4' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 150: 'return 6072587748' ==> '//return 6072587748' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 151: 'return 6964650926' ==> '//return 6964650926' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 155: 'uint256 r = weightRank(w)' ==> '//uint256 r = weightRank(w)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 156: 'r == 0' ==> '//r == 0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 156: 'return 2887813475' ==> '//return 2887813475' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 157: 'r == 1' ==> '//r == 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 157: 'return 1831411512' ==> '//return 1831411512' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 158: 'r == 2' ==> '//r == 2' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 158: 'return 801626426' ==> '//return 801626426' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 159: 'return 6615253228' ==> '//return 6615253228' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 163: 'e == 0' ==> '//e == 0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 163: 'return 448838239' ==> '//return 448838239' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 164: 'e == 1' ==> '//e == 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 164: 'return 2125356957' ==> '//return 2125356957' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 165: 'e == 2' ==> '//e == 2' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 165: 'return 4849173708' ==> '//return 4849173708' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 166: 'e == 3' ==> '//e == 3' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 166: 'return 8261716960' ==> '//return 8261716960' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 169: 'revert("eights")' ==> '//revert("eights")' --> UNCAUGHT
+INFO:Slither-Mutate:Mutator CR found 14 caught comment mutants (out of 42 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) + 15 + 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) / 15 + 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) * 15 + 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) - 15 + 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) % 15 / 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) % 15 * 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) % 15 - 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask = uint256(paidAt) % 15 % 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max + r.eights) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max / r.eights) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max * r.eights) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max % r.eights) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 + printRank(r.register)) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 / printRank(r.register)) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 * printRank(r.register)) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 % printRank(r.register)) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max + score) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max / score) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max * score) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max % score) << ID_BITS) | id' --> UNCAUGHT
+INFO:Slither-Mutate:Mutator AOR found 5 caught tweak mutants (out of 20 that compile)
+INFO:Slither-Mutate:Running total: found 5 caught tweak mutants (out of 20 that compile)
+INFO:Slither-Mutate:Mutator ASOR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 5 caught tweak mutants (out of 20 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) & ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) | ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) >> ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) ^ ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) << ID_BITS) & id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) << ID_BITS) << id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) << ID_BITS) >> id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint256(paidAt) << ID_BITS) ^ id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) & ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) | ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) >> ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) ^ ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) << ID_BITS) & id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) << ID_BITS) << id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) << ID_BITS) >> id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 71: 'return (colorRank(mask) << ID_BITS) | id' ==> 'return (colorRank(mask) << ID_BITS) ^ id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks & ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks | ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks >> ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks ^ ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks << ID_BITS) & id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks << ID_BITS) << id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks << ID_BITS) >> id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 73: 'return (r.marks << ID_BITS) | id' ==> 'return (r.marks << ID_BITS) ^ id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) & ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) | ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) >> ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) ^ ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) << ID_BITS) & id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) << ID_BITS) << id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) << ID_BITS) >> id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint32).max - r.eights) << ID_BITS) ^ id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) & ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) | ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) >> ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) ^ ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) << ID_BITS) & id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) << ID_BITS) << id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) << ID_BITS) >> id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 75: 'return ((5 - printRank(r.register)) << ID_BITS) | id' ==> 'return ((5 - printRank(r.register)) << ID_BITS) ^ id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) & ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) | ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) >> ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) ^ ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) << ID_BITS) & id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) << ID_BITS) << id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) << ID_BITS) >> id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint64).max - score) << ID_BITS) ^ id' --> UNCAUGHT
+INFO:Slither-Mutate:Mutator BOR found 31 caught tweak mutants (out of 48 that compile)
+INFO:Slither-Mutate:Running total: found 36 caught tweak mutants (out of 68 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 65: 'function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }' ==> 'function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public pure returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 65: 'function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }' ==> 'function key(Preset p, ICredits credits, ICreditArt art, uint256 id) private view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 65: 'function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }' ==> 'function key(Preset p, ICredits credits, ICreditArt art, uint256 id) internal view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 85: 'function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }' ==> 'function colorRank(uint256 mask) internal view returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 85: 'function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }' ==> 'function colorRank(uint256 mask) private pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 104: 'function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }' ==> 'function printRank(string memory reg) internal view returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 104: 'function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }' ==> 'function printRank(string memory reg) private pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 144: 'function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }' ==> 'function printWeight(string memory reg) internal view returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 144: 'function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }' ==> 'function printWeight(string memory reg) private pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 154: 'function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }' ==> 'function weightWeight(string memory w) internal view returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 154: 'function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }' ==> 'function weightWeight(string memory w) private pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 162: 'function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }' ==> 'function eightsWeight(uint256 e) internal view returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 162: 'function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }' ==> 'function eightsWeight(uint256 e) private pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }' --> COMPILATION FAILURE
+INFO:Slither-Mutate:Mutator FHR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 36 caught tweak mutants (out of 68 that compile)
+INFO:Slither-Mutate:Mutator LIR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 36 caught tweak mutants (out of 68 that compile)
+INFO:Slither-Mutate:Mutator LOR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 36 caught tweak mutants (out of 68 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 67: 'p == Preset.Number' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 67: 'p == Preset.Number' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 67: 'p == Preset.Number' ==> '!(p == Preset.Number)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 69: 'p == Preset.Time' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 69: 'p == Preset.Time' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 69: 'p == Preset.Time' ==> '!(p == Preset.Time)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 71: 'p == Preset.Colors' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 71: 'p == Preset.Colors' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 71: 'p == Preset.Colors' ==> '!(p == Preset.Colors)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 73: 'p == Preset.Ink' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 73: 'p == Preset.Ink' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 73: 'p == Preset.Ink' ==> '!(p == Preset.Ink)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 74: 'p == Preset.Eights' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 74: 'p == Preset.Eights' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 74: 'p == Preset.Eights' ==> '!(p == Preset.Eights)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 75: 'p == Preset.Print' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 75: 'p == Preset.Print' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 75: 'p == Preset.Print' ==> '!(p == Preset.Print)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 76: 'p == Preset.Weight' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 76: 'p == Preset.Weight' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 76: 'p == Preset.Weight' ==> '!(p == Preset.Weight)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 77: 'p == Preset.Rarity' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 77: 'p == Preset.Rarity' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 77: 'p == Preset.Rarity' ==> '!(p == Preset.Rarity)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 106: 'h == keccak256("Registered")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 106: 'h == keccak256("Registered")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 106: 'h == keccak256("Registered")' ==> '!(h == keccak256("Registered"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 107: 'h == keccak256("Nudge")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 107: 'h == keccak256("Nudge")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 107: 'h == keccak256("Nudge")' ==> '!(h == keccak256("Nudge"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 108: 'h == keccak256("Slip")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 108: 'h == keccak256("Slip")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 108: 'h == keccak256("Slip")' ==> '!(h == keccak256("Slip"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 110: 'h == keccak256("Drift")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 110: 'h == keccak256("Drift")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 110: 'h == keccak256("Drift")' ==> '!(h == keccak256("Drift"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 111: 'h == keccak256("Loose")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 111: 'h == keccak256("Loose")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 111: 'h == keccak256("Loose")' ==> '!(h == keccak256("Loose"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 163: 'e == 0' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 163: 'e == 0' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 163: 'e == 0' ==> '!(e == 0)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 164: 'e == 1' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 164: 'e == 1' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 164: 'e == 1' ==> '!(e == 1)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 165: 'e == 2' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 165: 'e == 2' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 165: 'e == 2' ==> '!(e == 2)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 166: 'e == 3' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 166: 'e == 3' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 166: 'e == 3' ==> '!(e == 3)' --> CAUGHT
+INFO:Slither-Mutate:Mutator MIA found 34 caught tweak mutants (out of 51 that compile)
+INFO:Slither-Mutate:Running total: found 70 caught tweak mutants (out of 119 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 68: 'uint64 paidAt = credits.timestampOf(id)' ==> 'uint64 paidAt ' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint256 mask ' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 72: 'ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt)' ==> 'ICreditArt.Read memory r ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 78: 'uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' ==> 'uint256 score ' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 105: 'bytes32 h = keccak256(bytes(reg))' ==> 'bytes32 h ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 145: 'uint256 r = printRank(reg)' ==> 'uint256 r ' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 155: 'uint256 r = weightRank(w)' ==> 'uint256 r ' --> UNCAUGHT
+INFO:Slither-Mutate:Mutator MVIE found 2 caught tweak mutants (out of 7 that compile)
+INFO:Slither-Mutate:Running total: found 72 caught tweak mutants (out of 126 that compile)
+INFO:Slither-Mutate:Mutator MVIV found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 72 caught tweak mutants (out of 126 that compile)
+INFO:Slither-Mutate:Mutator MWA found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 72 caught tweak mutants (out of 126 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 67: 'p == Preset.Number' ==> 'p < Preset.Number' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 67: 'p == Preset.Number' ==> 'p > Preset.Number' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 67: 'p == Preset.Number' ==> 'p <= Preset.Number' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 67: 'p == Preset.Number' ==> 'p >= Preset.Number' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 67: 'p == Preset.Number' ==> 'p != Preset.Number' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 69: 'p == Preset.Time' ==> 'p < Preset.Time' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 69: 'p == Preset.Time' ==> 'p > Preset.Time' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 69: 'p == Preset.Time' ==> 'p <= Preset.Time' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 69: 'p == Preset.Time' ==> 'p >= Preset.Time' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 69: 'p == Preset.Time' ==> 'p != Preset.Time' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 71: 'p == Preset.Colors' ==> 'p < Preset.Colors' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 71: 'p == Preset.Colors' ==> 'p > Preset.Colors' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 71: 'p == Preset.Colors' ==> 'p <= Preset.Colors' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 71: 'p == Preset.Colors' ==> 'p >= Preset.Colors' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 71: 'p == Preset.Colors' ==> 'p != Preset.Colors' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 73: 'p == Preset.Ink' ==> 'p < Preset.Ink' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 73: 'p == Preset.Ink' ==> 'p > Preset.Ink' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 73: 'p == Preset.Ink' ==> 'p <= Preset.Ink' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 73: 'p == Preset.Ink' ==> 'p >= Preset.Ink' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 73: 'p == Preset.Ink' ==> 'p != Preset.Ink' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 74: 'p == Preset.Eights' ==> 'p < Preset.Eights' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 74: 'p == Preset.Eights' ==> 'p > Preset.Eights' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 74: 'p == Preset.Eights' ==> 'p <= Preset.Eights' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 74: 'p == Preset.Eights' ==> 'p >= Preset.Eights' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 74: 'p == Preset.Eights' ==> 'p != Preset.Eights' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 75: 'p == Preset.Print' ==> 'p < Preset.Print' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 75: 'p == Preset.Print' ==> 'p > Preset.Print' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 75: 'p == Preset.Print' ==> 'p <= Preset.Print' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 75: 'p == Preset.Print' ==> 'p >= Preset.Print' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 75: 'p == Preset.Print' ==> 'p != Preset.Print' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 76: 'p == Preset.Weight' ==> 'p < Preset.Weight' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 76: 'p == Preset.Weight' ==> 'p > Preset.Weight' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 76: 'p == Preset.Weight' ==> 'p <= Preset.Weight' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 76: 'p == Preset.Weight' ==> 'p >= Preset.Weight' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 76: 'p == Preset.Weight' ==> 'p != Preset.Weight' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 77: 'p == Preset.Rarity' ==> 'p < Preset.Rarity' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 77: 'p == Preset.Rarity' ==> 'p > Preset.Rarity' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 77: 'p == Preset.Rarity' ==> 'p <= Preset.Rarity' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 77: 'p == Preset.Rarity' ==> 'p >= Preset.Rarity' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 77: 'p == Preset.Rarity' ==> 'p != Preset.Rarity' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 106: 'h == keccak256("Registered")' ==> 'h < keccak256("Registered")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 106: 'h == keccak256("Registered")' ==> 'h > keccak256("Registered")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 106: 'h == keccak256("Registered")' ==> 'h <= keccak256("Registered")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 106: 'h == keccak256("Registered")' ==> 'h >= keccak256("Registered")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 106: 'h == keccak256("Registered")' ==> 'h != keccak256("Registered")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 107: 'h == keccak256("Nudge")' ==> 'h < keccak256("Nudge")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 107: 'h == keccak256("Nudge")' ==> 'h > keccak256("Nudge")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 107: 'h == keccak256("Nudge")' ==> 'h <= keccak256("Nudge")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 107: 'h == keccak256("Nudge")' ==> 'h >= keccak256("Nudge")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 107: 'h == keccak256("Nudge")' ==> 'h != keccak256("Nudge")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 108: 'h == keccak256("Slip")' ==> 'h < keccak256("Slip")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 108: 'h == keccak256("Slip")' ==> 'h > keccak256("Slip")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 108: 'h == keccak256("Slip")' ==> 'h <= keccak256("Slip")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 108: 'h == keccak256("Slip")' ==> 'h >= keccak256("Slip")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 108: 'h == keccak256("Slip")' ==> 'h != keccak256("Slip")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 110: 'h == keccak256("Drift")' ==> 'h < keccak256("Drift")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 110: 'h == keccak256("Drift")' ==> 'h > keccak256("Drift")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 110: 'h == keccak256("Drift")' ==> 'h <= keccak256("Drift")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 110: 'h == keccak256("Drift")' ==> 'h >= keccak256("Drift")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 110: 'h == keccak256("Drift")' ==> 'h != keccak256("Drift")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 111: 'h == keccak256("Loose")' ==> 'h < keccak256("Loose")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 111: 'h == keccak256("Loose")' ==> 'h > keccak256("Loose")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 111: 'h == keccak256("Loose")' ==> 'h <= keccak256("Loose")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 111: 'h == keccak256("Loose")' ==> 'h >= keccak256("Loose")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 111: 'h == keccak256("Loose")' ==> 'h != keccak256("Loose")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 163: 'e == 0' ==> 'e < 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 163: 'e == 0' ==> 'e > 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 163: 'e == 0' ==> 'e <= 0' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 163: 'e == 0' ==> 'e >= 0' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 163: 'e == 0' ==> 'e != 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 164: 'e == 1' ==> 'e < 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 164: 'e == 1' ==> 'e > 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 164: 'e == 1' ==> 'e <= 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 164: 'e == 1' ==> 'e >= 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 164: 'e == 1' ==> 'e != 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 165: 'e == 2' ==> 'e < 2' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 165: 'e == 2' ==> 'e > 2' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 165: 'e == 2' ==> 'e <= 2' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 165: 'e == 2' ==> 'e >= 2' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 165: 'e == 2' ==> 'e != 2' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 166: 'e == 3' ==> 'e < 3' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 166: 'e == 3' ==> 'e > 3' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 166: 'e == 3' ==> 'e <= 3' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 166: 'e == 3' ==> 'e >= 3' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 166: 'e == 3' ==> 'e != 3' --> CAUGHT
+INFO:Slither-Mutate:Mutator ROR found 51 caught tweak mutants (out of 85 that compile)
+INFO:Slither-Mutate:Running total: found 123 caught tweak mutants (out of 211 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 26: 'uint256 internal constant ID_BITS = 32' ==> 'uint256 internal immutable ID_BITS = 32' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 26: 'uint256 internal constant ID_BITS = 32' ==> 'uint128 internal constant ID_BITS = 32' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 68: 'uint64 paidAt = credits.timestampOf(id)' ==> 'uint32 paidAt = credits.timestampOf(id)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 69: 'return (uint256(paidAt) << ID_BITS) | id' ==> 'return (uint128(paidAt) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 70: 'uint256 mask = uint256(paidAt) % 15 + 1' ==> 'uint128 mask = uint128(paidAt) % 15 + 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 72: 'ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt)' ==> 'ICreditArt.Read storage r = art.describe(credits.seedOf(id), paidAt)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 74: 'return ((type(uint32).max - r.eights) << ID_BITS) | id' ==> 'return ((type(uint16).max - r.eights) << ID_BITS) | id' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 78: 'uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' ==> 'uint256 score = colorWeight(mask) + printWeight(r.register) + etherghtWeight(r.weight) + eightsWeight(r.eights)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 78: 'uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' ==> 'uint256 score = colorWeight(mask) + printWeight(r.register) + gweightWeight(r.weight) + eightsWeight(r.eights)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 78: 'uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' ==> 'uint128 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 79: 'return ((type(uint64).max - score) << ID_BITS) | id' ==> 'return ((type(uint32).max - score) << ID_BITS) | id' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 145: 'uint256 r = printRank(reg)' ==> 'uint128 r = printRank(reg)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 155: 'uint256 r = weightRank(w)' ==> 'uint256 r = etherghtRank(w)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 155: 'uint256 r = weightRank(w)' ==> 'uint256 r = gweightRank(w)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 155: 'uint256 r = weightRank(w)' ==> 'uint128 r = weightRank(w)' --> COMPILATION FAILURE
+INFO:Slither-Mutate:Mutator SBR found 1 caught tweak mutants (out of 5 that compile)
+INFO:Slither-Mutate:Running total: found 124 caught tweak mutants (out of 216 that compile)
+INFO:Slither-Mutate:Mutator UOR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 124 caught tweak mutants (out of 216 that compile)
+INFO:Slither-Mutate:Done mutating CreditKeys.
+INFO:Slither-Mutate:Revert mutants: 42 caught of 46 (91.3% caught)
+INFO:Slither-Mutate:Comment mutants: 14 caught of 42 (33.3% caught)
+INFO:Slither-Mutate:Tweak mutants: 124 caught of 216 (57.4% caught)
+INFO:Slither-Mutate:Finished mutation testing assessment of 'src/CreditKeys.sol' in 48 minutes
+

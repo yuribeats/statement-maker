@@ -1,0 +1,44 @@
+KILLED //emit Deposited(from, id, card);
+SURVIVED //revert Bad("missing");
+KILLED //emit AskSet(next, false);
+SURVIVED if (false) revert Bad("not received");
+SURVIVED if (status() > Status.OPEN) revert Bad("not open");
+SURVIVED if (ids.length < min || ids.length > remaining || ids.length < min || ids.length > remaining || ids.length < 0) revert Bad("count");
+SURVIVED if (ids.length < min || ids.length > remaining || ids.length < min || ids.length > remaining || ids.length <= 0) revert Bad("count");
+SURVIVED for (uint256 i; i != ids.length; ++i) {
+SURVIVED if (cardOfCredit[id] > 0) revert Bad("duplicate");
+SURVIVED if (_params.eligibleRoot > bytes32(0)) {
+SURVIVED if (_order.length >= SLOTS) {
+SURVIVED if (deadline <= grace) deadline = uint64(grace);
+SURVIVED for (uint256 i; i <= n; ++i) {
+SURVIVED for (uint256 i; i != n; ++i) {
+KILLED if (_order[i] >= id) {
+SURVIVED for (uint256 j = i; j + 1 != n; ++j) _order[j] = _order[j + 1];
+SURVIVED if (status() < Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
+SURVIVED if (status() > Status.ASSEMBLED || ask == 0 || askSpec.mode == PriceMode.Fixed || ask == 0 || askSpec.mode == PriceMode.Fixed) revert Bad("fixed");
+SURVIVED if (f.floorWei <= 0) revert Bad("floor");
+SURVIVED if (a <= 0 || a >> 160 != 0 || a >> 160 != 0) return (address(0), 0);
+SURVIVED if (a == 0 || a == 0 || a >> 160 > 0) return (address(0), 0);
+SURVIVED uint128 public constant SLOTS = 80;
+SURVIVED uint128 public constant PASS = 41;
+SURVIVED uint128 public constant PASS_BELOW_FLOOR = 60;
+SURVIVED uint128 public constant PASS_DEADLOCK = 54;
+SURVIVED uint128 public constant DEADLOCK_BLOCKS = 3;
+SURVIVED uint128 public constant DEADLOCK_TIME = 30 days;
+SURVIVED uint128 public constant EXECUTE_WINDOW = 7 days;
+SURVIVED uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+SURVIVED uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+SURVIVED uint128 public constant FLOOR_MAX_AGE = 1 hours;
+SURVIVED uint128 public constant ROYALTY_CAP_BPS = 1000;
+SURVIVED uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+SURVIVED bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(id))));
+SURVIVED for (uint128 i; i < ids.length; ++i) {
+SURVIVED bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(id))));
+KILLED fullAt = uint32(block.timestamp);
+KILLED if (deadline < grace) deadline = uint32(grace);
+SURVIVED for (uint128 i; i < n; ++i) {
+SURVIVED for (uint128 i; i < n; ++i) {
+SURVIVED for (uint256 i; i < ids.length; i++) {
+SURVIVED cardsOutstanding++;
+SURVIVED for (uint256 i; i < n; i++) {
+SURVIVED for (uint256 j = i; j + 1 < n; j++) _order[j] = _order[j + 1];

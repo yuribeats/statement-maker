@@ -1,0 +1,852 @@
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -119,7 +119,7 @@
+         if (h == keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+-        revert("weight");
++        //revert("weight");
+     }
+ 
+     // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -124,7 +124,7 @@
+ 
+     // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+     function colorWeight(uint256 mask) internal pure returns (uint256) {
+-        if (mask == 1) return 3908947081;
++        if (mask == 1) //return 3908947081;
+         if (mask == 2) return 3913745110;
+         if (mask == 3) return 3903634585;
+         if (mask == 4) return 3908060305;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -125,7 +125,7 @@
+     // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+     function colorWeight(uint256 mask) internal pure returns (uint256) {
+         if (mask == 1) return 3908947081;
+-        if (mask == 2) return 3913745110;
++        if (mask == 2) //return 3913745110;
+         if (mask == 3) return 3903634585;
+         if (mask == 4) return 3908060305;
+         if (mask == 5) return 3919631122;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -126,7 +126,7 @@
+     function colorWeight(uint256 mask) internal pure returns (uint256) {
+         if (mask == 1) return 3908947081;
+         if (mask == 2) return 3913745110;
+-        if (mask == 3) return 3903634585;
++        if (mask == 3) //return 3903634585;
+         if (mask == 4) return 3908060305;
+         if (mask == 5) return 3919631122;
+         if (mask == 6) return 3887463858;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -127,7 +127,7 @@
+         if (mask == 1) return 3908947081;
+         if (mask == 2) return 3913745110;
+         if (mask == 3) return 3903634585;
+-        if (mask == 4) return 3908060305;
++        if (mask == 4) //return 3908060305;
+         if (mask == 5) return 3919631122;
+         if (mask == 6) return 3887463858;
+         if (mask == 7) return 3915169818;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -128,7 +128,7 @@
+         if (mask == 2) return 3913745110;
+         if (mask == 3) return 3903634585;
+         if (mask == 4) return 3908060305;
+-        if (mask == 5) return 3919631122;
++        if (mask == 5) //return 3919631122;
+         if (mask == 6) return 3887463858;
+         if (mask == 7) return 3915169818;
+         if (mask == 8) return 3939426425;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -129,7 +129,7 @@
+         if (mask == 3) return 3903634585;
+         if (mask == 4) return 3908060305;
+         if (mask == 5) return 3919631122;
+-        if (mask == 6) return 3887463858;
++        if (mask == 6) //return 3887463858;
+         if (mask == 7) return 3915169818;
+         if (mask == 8) return 3939426425;
+         if (mask == 9) return 3889562832;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -130,7 +130,7 @@
+         if (mask == 4) return 3908060305;
+         if (mask == 5) return 3919631122;
+         if (mask == 6) return 3887463858;
+-        if (mask == 7) return 3915169818;
++        if (mask == 7) //return 3915169818;
+         if (mask == 8) return 3939426425;
+         if (mask == 9) return 3889562832;
+         if (mask == 10) return 3910011931;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -131,7 +131,7 @@
+         if (mask == 5) return 3919631122;
+         if (mask == 6) return 3887463858;
+         if (mask == 7) return 3915169818;
+-        if (mask == 8) return 3939426425;
++        if (mask == 8) //return 3939426425;
+         if (mask == 9) return 3889562832;
+         if (mask == 10) return 3910011931;
+         if (mask == 11) return 3901515053;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -132,7 +132,7 @@
+         if (mask == 6) return 3887463858;
+         if (mask == 7) return 3915169818;
+         if (mask == 8) return 3939426425;
+-        if (mask == 9) return 3889562832;
++        if (mask == 9) //return 3889562832;
+         if (mask == 10) return 3910011931;
+         if (mask == 11) return 3901515053;
+         if (mask == 12) return 3926259272;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -133,7 +133,7 @@
+         if (mask == 7) return 3915169818;
+         if (mask == 8) return 3939426425;
+         if (mask == 9) return 3889562832;
+-        if (mask == 10) return 3910011931;
++        if (mask == 10) //return 3910011931;
+         if (mask == 11) return 3901515053;
+         if (mask == 12) return 3926259272;
+         if (mask == 13) return 3895350809;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -134,7 +134,7 @@
+         if (mask == 8) return 3939426425;
+         if (mask == 9) return 3889562832;
+         if (mask == 10) return 3910011931;
+-        if (mask == 11) return 3901515053;
++        if (mask == 11) //return 3901515053;
+         if (mask == 12) return 3926259272;
+         if (mask == 13) return 3895350809;
+         if (mask == 14) return 3877188084;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -135,7 +135,7 @@
+         if (mask == 9) return 3889562832;
+         if (mask == 10) return 3910011931;
+         if (mask == 11) return 3901515053;
+-        if (mask == 12) return 3926259272;
++        if (mask == 12) //return 3926259272;
+         if (mask == 13) return 3895350809;
+         if (mask == 14) return 3877188084;
+         return 3908592305; // 15
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -136,7 +136,7 @@
+         if (mask == 10) return 3910011931;
+         if (mask == 11) return 3901515053;
+         if (mask == 12) return 3926259272;
+-        if (mask == 13) return 3895350809;
++        if (mask == 13) //return 3895350809;
+         if (mask == 14) return 3877188084;
+         return 3908592305; // 15
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -137,7 +137,7 @@
+         if (mask == 11) return 3901515053;
+         if (mask == 12) return 3926259272;
+         if (mask == 13) return 3895350809;
+-        if (mask == 14) return 3877188084;
++        if (mask == 14) //return 3877188084;
+         return 3908592305; // 15
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -138,7 +138,7 @@
+         if (mask == 12) return 3926259272;
+         if (mask == 13) return 3895350809;
+         if (mask == 14) return 3877188084;
+-        return 3908592305; // 15
++        //return 3908592305; // 15
+     }
+ 
+     function printWeight(string memory reg) internal pure returns (uint256) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -174,7 +174,7 @@
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+-            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
++            uint256 j = uint256(keccak256(abi.encodePacked(seed, i + 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -174,7 +174,7 @@
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+-            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
++            uint256 j = uint256(keccak256(abi.encodePacked(seed, i / 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -174,7 +174,7 @@
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+-            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
++            uint256 j = uint256(keccak256(abi.encodePacked(seed, i * 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -174,7 +174,7 @@
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+-            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
++            uint256 j = uint256(keccak256(abi.encodePacked(seed, i % 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -41,7 +41,7 @@
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+             if (seen[w] & bit != 0) revert Bad("repeat");
+-            seen[w] |= bit;
++            seen[w] += bit;
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -41,7 +41,7 @@
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+             if (seen[w] & bit != 0) revert Bad("repeat");
+-            seen[w] |= bit;
++            seen[w] ^= bit;
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -39,7 +39,7 @@
+             for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+             uint256 w = pos >> 8;
+-            uint256 bit = 1 << (pos & 255);
++            uint256 bit = 1 << (pos ^ 255);
+             if (seen[w] & bit != 0) revert Bad("repeat");
+             seen[w] |= bit;
+         }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -41,7 +41,7 @@
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+             if (seen[w] & bit != 0) revert Bad("repeat");
+-            seen[w] |= bit;
++            seen[w] ^= bit;
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -115,7 +115,7 @@
+     // WEIGHT_ORDER = sparse, lean, even, extreme
+     function weightRank(string memory w) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(w));
+-        if (h == keccak256("sparse")) return 0;
++        if (true) return 0;
+         if (h == keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -116,7 +116,7 @@
+     function weightRank(string memory w) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(w));
+         if (h == keccak256("sparse")) return 0;
+-        if (h == keccak256("lean")) return 1;
++        if (true) return 1;
+         if (h == keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+         revert("weight");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -117,7 +117,7 @@
+         bytes32 h = keccak256(bytes(w));
+         if (h == keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+-        if (h == keccak256("even")) return 2;
++        if (true) return 2;
+         if (h == keccak256("extreme")) return 3;
+         revert("weight");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -118,7 +118,7 @@
+         if (h == keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+-        if (h == keccak256("extreme")) return 3;
++        if (true) return 3;
+         revert("weight");
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -38,7 +38,7 @@
+             uint256 pos = type(uint256).max;
+             for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+-            uint256 w = pos >> 8;
++            uint256 w ;
+             uint256 bit = 1 << (pos & 255);
+             if (seen[w] & bit != 0) revert Bad("repeat");
+             seen[w] |= bit;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -34,7 +34,7 @@
+         uint256 n = deposited.length;
+         if (order.length != n) revert Bad("length");
+         uint256[3] memory seen;
+-        for (uint256 i; i < n; ++i) {
++        for (uint256 i; i != n; ++i) {
+             uint256 pos = type(uint256).max;
+             for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -36,7 +36,7 @@
+         uint256[3] memory seen;
+         for (uint256 i; i < n; ++i) {
+             uint256 pos = type(uint256).max;
+-            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
++            for (uint256 j; j != n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -37,7 +37,7 @@
+         for (uint256 i; i < n; ++i) {
+             uint256 pos = type(uint256).max;
+             for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+-            if (pos == type(uint256).max) revert Bad("not deposited");
++            if (pos >= type(uint256).max) revert Bad("not deposited");
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+             if (seen[w] & bit != 0) revert Bad("repeat");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -40,7 +40,7 @@
+             if (pos == type(uint256).max) revert Bad("not deposited");
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+-            if (seen[w] & bit != 0) revert Bad("repeat");
++            if (seen[w] & bit > 0) revert Bad("repeat");
+             seen[w] |= bit;
+         }
+         if (p == Preset.Manual) return;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -43,7 +43,7 @@
+             if (seen[w] & bit != 0) revert Bad("repeat");
+             seen[w] |= bit;
+         }
+-        if (p == Preset.Manual) return;
++        if (p >= Preset.Manual) return;
+         if (p == Preset.Deposit) {
+             for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+             return;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -44,7 +44,7 @@
+             seen[w] |= bit;
+         }
+         if (p == Preset.Manual) return;
+-        if (p == Preset.Deposit) {
++        if (p <= Preset.Deposit) {
+             for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+             return;
+         }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -45,7 +45,7 @@
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+-            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
++            for (uint256 i; i != n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+             return;
+         }
+         if (p == Preset.Random) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -45,7 +45,7 @@
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+-            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
++            for (uint256 i; i < n; ++i) if (order[i] < deposited[i]) revert Bad("order");
+             return;
+         }
+         if (p == Preset.Random) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -45,7 +45,7 @@
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+-            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
++            for (uint256 i; i < n; ++i) if (order[i] > deposited[i]) revert Bad("order");
+             return;
+         }
+         if (p == Preset.Random) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -48,7 +48,7 @@
+             for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+             return;
+         }
+-        if (p == Preset.Random) {
++        if (p >= Preset.Random) {
+             uint256[] memory want = shuffle(deposited, seed);
+             for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+             return;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -50,7 +50,7 @@
+         }
+         if (p == Preset.Random) {
+             uint256[] memory want = shuffle(deposited, seed);
+-            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
++            for (uint256 i; i != n; ++i) if (order[i] != want[i]) revert Bad("order");
+             return;
+         }
+         ICreditArt art = ICreditArt(credits.art());
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -50,7 +50,7 @@
+         }
+         if (p == Preset.Random) {
+             uint256[] memory want = shuffle(deposited, seed);
+-            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
++            for (uint256 i; i < n; ++i) if (order[i] < want[i]) revert Bad("order");
+             return;
+         }
+         ICreditArt art = ICreditArt(credits.art());
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -50,7 +50,7 @@
+         }
+         if (p == Preset.Random) {
+             uint256[] memory want = shuffle(deposited, seed);
+-            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
++            for (uint256 i; i < n; ++i) if (order[i] > want[i]) revert Bad("order");
+             return;
+         }
+         ICreditArt art = ICreditArt(credits.art());
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -55,7 +55,7 @@
+         }
+         ICreditArt art = ICreditArt(credits.art());
+         uint256 prev = key(p, credits, art, order[0]);
+-        for (uint256 i = 1; i < n; ++i) {
++        for (uint256 i = 1; i != n; ++i) {
+             uint256 k = key(p, credits, art, order[i]);
+             if (k <= prev) revert Bad("order");
+             prev = k;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -57,7 +57,7 @@
+         uint256 prev = key(p, credits, art, order[0]);
+         for (uint256 i = 1; i < n; ++i) {
+             uint256 k = key(p, credits, art, order[i]);
+-            if (k <= prev) revert Bad("order");
++            if (k < prev) revert Bad("order");
+             prev = k;
+         }
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -115,7 +115,7 @@
+     // WEIGHT_ORDER = sparse, lean, even, extreme
+     function weightRank(string memory w) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(w));
+-        if (h == keccak256("sparse")) return 0;
++        if (h <= keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -115,7 +115,7 @@
+     // WEIGHT_ORDER = sparse, lean, even, extreme
+     function weightRank(string memory w) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(w));
+-        if (h == keccak256("sparse")) return 0;
++        if (h >= keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -116,7 +116,7 @@
+     function weightRank(string memory w) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(w));
+         if (h == keccak256("sparse")) return 0;
+-        if (h == keccak256("lean")) return 1;
++        if (h <= keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+         revert("weight");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -116,7 +116,7 @@
+     function weightRank(string memory w) internal pure returns (uint256) {
+         bytes32 h = keccak256(bytes(w));
+         if (h == keccak256("sparse")) return 0;
+-        if (h == keccak256("lean")) return 1;
++        if (h >= keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+         revert("weight");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -117,7 +117,7 @@
+         bytes32 h = keccak256(bytes(w));
+         if (h == keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+-        if (h == keccak256("even")) return 2;
++        if (h <= keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+         revert("weight");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -117,7 +117,7 @@
+         bytes32 h = keccak256(bytes(w));
+         if (h == keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+-        if (h == keccak256("even")) return 2;
++        if (h >= keccak256("even")) return 2;
+         if (h == keccak256("extreme")) return 3;
+         revert("weight");
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -118,7 +118,7 @@
+         if (h == keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+-        if (h == keccak256("extreme")) return 3;
++        if (h <= keccak256("extreme")) return 3;
+         revert("weight");
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -118,7 +118,7 @@
+         if (h == keccak256("sparse")) return 0;
+         if (h == keccak256("lean")) return 1;
+         if (h == keccak256("even")) return 2;
+-        if (h == keccak256("extreme")) return 3;
++        if (h >= keccak256("extreme")) return 3;
+         revert("weight");
+     }
+ 
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -172,7 +172,7 @@
+     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+     function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+         out = new uint256[](ids.length);
+-        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
++        for (uint256 i; i != ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+             uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -173,7 +173,7 @@
+     function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+-        for (uint256 i = out.length; i > 1; --i) {
++        for (uint256 i = out.length; i >= 1; --i) {
+             uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -173,7 +173,7 @@
+     function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+-        for (uint256 i = out.length; i > 1; --i) {
++        for (uint256 i = out.length; i != 1; --i) {
+             uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -23,7 +23,7 @@
+         Manual // host supplies the order; no key check
+     }
+ 
+-    uint256 internal constant ID_BITS = 32;
++    uint128 internal constant ID_BITS = 32;
+ 
+     /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+     error Bad(string why);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -34,7 +34,7 @@
+         uint256 n = deposited.length;
+         if (order.length != n) revert Bad("length");
+         uint256[3] memory seen;
+-        for (uint256 i; i < n; ++i) {
++        for (uint128 i; i < n; ++i) {
+             uint256 pos = type(uint256).max;
+             for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -36,7 +36,7 @@
+         uint256[3] memory seen;
+         for (uint256 i; i < n; ++i) {
+             uint256 pos = type(uint256).max;
+-            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
++            for (uint128 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -36,7 +36,7 @@
+         uint256[3] memory seen;
+         for (uint256 i; i < n; ++i) {
+             uint256 pos = type(uint256).max;
+-            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
++            for (uint128 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -45,7 +45,7 @@
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+-            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
++            for (uint128 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+             return;
+         }
+         if (p == Preset.Random) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -45,7 +45,7 @@
+         }
+         if (p == Preset.Manual) return;
+         if (p == Preset.Deposit) {
+-            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
++            for (uint128 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+             return;
+         }
+         if (p == Preset.Random) {
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -50,7 +50,7 @@
+         }
+         if (p == Preset.Random) {
+             uint256[] memory want = shuffle(deposited, seed);
+-            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
++            for (uint128 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+             return;
+         }
+         ICreditArt art = ICreditArt(credits.art());
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -50,7 +50,7 @@
+         }
+         if (p == Preset.Random) {
+             uint256[] memory want = shuffle(deposited, seed);
+-            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
++            for (uint128 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+             return;
+         }
+         ICreditArt art = ICreditArt(credits.art());
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -55,7 +55,7 @@
+         }
+         ICreditArt art = ICreditArt(credits.art());
+         uint256 prev = key(p, credits, art, order[0]);
+-        for (uint256 i = 1; i < n; ++i) {
++        for (uint128 i = 1; i < n; ++i) {
+             uint256 k = key(p, credits, art, order[i]);
+             if (k <= prev) revert Bad("order");
+             prev = k;
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -172,7 +172,7 @@
+     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+     function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+         out = new uint256[](ids.length);
+-        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
++        for (uint128 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+             uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -172,7 +172,7 @@
+     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+     function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+         out = new uint256[](ids.length);
+-        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
++        for (uint128 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+             uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -174,7 +174,7 @@
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+-            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
++            uint256 j = uint256(keccak256(abi.encode(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -174,7 +174,7 @@
+         out = new uint256[](ids.length);
+         for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+-            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
++            uint256 j = uint256(keccak256(abi.encode(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+         }
+     }
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -34,7 +34,7 @@
+         uint256 n = deposited.length;
+         if (order.length != n) revert Bad("length");
+         uint256[3] memory seen;
+-        for (uint256 i; i < n; ++i) {
++        for (uint256 i; i < n; i++) {
+             uint256 pos = type(uint256).max;
+             for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -36,7 +36,7 @@
+         uint256[3] memory seen;
+         for (uint256 i; i < n; ++i) {
+             uint256 pos = type(uint256).max;
+-            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
++            for (uint256 j; j < n; j++) if (deposited[j] == order[i]) { pos = j; break; }
+             if (pos == type(uint256).max) revert Bad("not deposited");
+             uint256 w = pos >> 8;
+             uint256 bit = 1 << (pos & 255);
+
+--- ./src/CreditKeys.sol
++++ ./src/CreditKeys.sol
+@@ -172,7 +172,7 @@
+     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+     function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+         out = new uint256[](ids.length);
+-        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
++        for (uint256 i; i < ids.length; i++) out[i] = ids[i];
+         for (uint256 i = out.length; i > 1; --i) {
+             uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+             (out[i - 1], out[j]) = (out[j], out[i - 1]);
+

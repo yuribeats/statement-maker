@@ -1,0 +1,39 @@
+SURVIVED revert();
+KILLED if (timeUnit == 0 || timeUnit > 1 hours) //revert Bad("timeUnit");
+KILLED //emit Voted(id, voter, support, w);
+KILLED if (false) revert Bad("host");
+SURVIVED if (true) {
+SURVIVED uint128 w ;
+SURVIVED if (p.minDeposit <= 0 || p.minDeposit > SLOTS || p.minDeposit > SLOTS) revert Bad("minDeposit");
+SURVIVED if (p.durationDays <= 0 || p.durationDays > 60 || p.durationDays > 60) revert Bad("duration");
+SURVIVED if (p.defaultPrice.mode > PriceMode.Fixed && p.minAskWei == 0 && p.minAskWei == 0) revert Bad("minAsk");
+SURVIVED if (p.defaultPrice.mode != PriceMode.Fixed && p.defaultPrice.mode != PriceMode.Fixed && p.minAskWei <= 0) revert Bad("minAsk");
+SURVIVED if (bytes(p.name).length <= 0 || bytes(p.name).length > 60 || bytes(p.name).length > 60) revert Bad("name");
+KILLED if (block.timestamp == p.endsAt) revert Bad("closed");
+SURVIVED if (w <= 0) {
+SURVIVED if (w >= 0) {
+SURVIVED if (w <= 0) revert Bad("no weight at snapshot");
+SURVIVED if (prev == 1) p.yes -= w; else if (prev >= 2) p.no -= w;
+SURVIVED if (p.deadlock && p.deadlock && need <= PASS_DEADLOCK) need = PASS_DEADLOCK;
+SURVIVED if (blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no <= 0 || p.deadlock || p.yes < PASS || p.epoch != priceEpoch || p.deadlock || p.yes < PASS || p.epoch != priceEpoch) revert Bad("not blocked");
+SURVIVED if (blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no == 0 || p.deadlock || p.yes < PASS || blockedCounted[id] || p.cancel || p.executed || block.timestamp < p.endsAt || p.no == 0 || p.deadlock || p.yes < PASS || p.epoch < priceEpoch) revert Bad("not blocked");
+SURVIVED if (p.mode <= PriceMode.Fixed) return uint256(p.value);
+SURVIVED uint128 public constant SLOTS = 80;
+SURVIVED uint128 public constant PASS = 41;
+SURVIVED uint128 public constant PASS_BELOW_FLOOR = 60;
+SURVIVED uint128 public constant PASS_DEADLOCK = 54;
+SURVIVED uint128 public constant DEADLOCK_BLOCKS = 3;
+SURVIVED uint128 public constant DEADLOCK_TIME = 30 days;
+SURVIVED uint128 public constant EXECUTE_WINDOW = 7 days;
+SURVIVED uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+SURVIVED uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+SURVIVED uint128 public constant FLOOR_MAX_AGE = 1 hours;
+SURVIVED uint128 public constant ROYALTY_CAP_BPS = 1000;
+SURVIVED uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+KILLED createdAt = uint32(block.timestamp);
+KILLED deadline = uint32(block.timestamp + _t(uint256(p.durationDays) * 1 days));
+SURVIVED deadline = uint64(block.timestamp + _t(uint128(p.durationDays) * 1 days));
+SURVIVED w = uint64(cards.heldAt(address(this), voter, p.snapshot));
+SURVIVED Proposal memory p = _proposals[id];
+SURVIVED Proposal memory p = _proposals[id];
+SURVIVED blockedPriceProposals++;

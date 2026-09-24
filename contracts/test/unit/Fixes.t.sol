@@ -85,7 +85,7 @@ contract GasHog {
 
 /// Regression tests for the audit-fix batch (884add5) and the voted buy wait (89f4ff3): each fix, positive and
 /// negative, plus the grief scenarios from audit/static/TRIAGE.md.
-contract FixesTest is UnitBase {
+abstract contract FixesBase is UnitBase {
     uint256 constant FLOOR = 3 ether;
 
     // ------------------------------------------------------------------ helpers
@@ -147,6 +147,10 @@ contract FixesTest is UnitBase {
         vm.deal(b, eth);
     }
 
+}
+
+/// Governance, deadlock, buy wait, minimum ask, floor readings, fixed price without floor.
+contract FixesTest is FixesBase {
     // ================================================================== T-1: no lifetime proposal cap
 
     /// Grief: one card rotated over 100 fresh addresses opens 300 proposals (the old lifetime cap was 256). The
@@ -707,6 +711,10 @@ contract FixesTest is UnitBase {
         assertTrue(party.hasPendingPrice());
     }
 
+}
+
+/// Royalty call, claimFor, fill grace, time unit, opening deposit, order verification.
+contract FixesSaleTest is FixesBase {
     // ================================================================== T-5: raw royalty call
 
     function _weirdParty(uint8 mode, address r, uint256 a) internal returns (Party party, WeirdStatement st) {

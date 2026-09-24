@@ -1,0 +1,2715 @@
+INFO:Slither-Mutate:Starting mutation campaign in src/CreditKeys.sol
+INFO:Slither-Mutate:Preparing to mutate files:
+- src/CreditKeys.sol
+INFO:Slither-Mutate:Timing tests..
+INFO:Slither-Mutate:Test suite passes in 4 seconds, commencing mutation campaign with a timeout of 300 seconds
+
+INFO:Slither-Mutate:Mutating contract CreditKeys
+INFO:Slither-Mutate:Targeting functions: ['verifyOrder', 'weightRank', 'colorWeight', 'shuffle', 'slitherConstructorConstantVariables']
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 26: 'uint256 internal constant ID_BITS = 32' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 34: 'uint256 n = deposited.length' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 36: 'uint256[3] memory seen' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 37: 'for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 37: 'uint256 i' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 37: 'i < n' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 37: '++i' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 38: 'uint256 pos = type(uint256).max' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 39: 'for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 39: 'uint256 j' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 39: 'j < n' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 39: '++j' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 39: 'pos = j' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 39: 'break' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 41: 'uint256 w = pos >> 8' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 44: 'seen[w] |= bit' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 46: 'return;' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 48: 'for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order")' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 48: 'uint256 i' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 48: 'i < n' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 48: '++i' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 49: 'return;' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 52: 'uint256[] memory want = shuffle(deposited, seed)' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 53: 'for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order")' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 53: 'uint256 i' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 53: 'i < n' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 53: '++i' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 54: 'return;' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 56: 'ICreditArt art = ICreditArt(credits.art())' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 57: 'uint256 prev = key(p, credits, art, order[0])' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 58: 'for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 58: 'uint256 i = 1' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 58: 'i < n' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 58: '++i' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 59: 'uint256 k = key(p, credits, art, order[i])' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 61: 'prev = k' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 117: 'bytes32 h = keccak256(bytes(w))' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 118: 'return 0' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 119: 'return 1' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 120: 'return 2' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 121: 'return 3' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 127: 'return 3908947081' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 128: 'return 3913745110' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 129: 'return 3903634585' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 130: 'return 3908060305' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 131: 'return 3919631122' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 132: 'return 3887463858' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 133: 'return 3915169818' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 134: 'return 3939426425' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 135: 'return 3889562832' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 136: 'return 3910011931' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 137: 'return 3901515053' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 138: 'return 3926259272' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 139: 'return 3895350809' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 140: 'return 3877188084' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 141: 'return 3908592305' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 174: 'out = new uint256[](ids.length)' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 175: 'for (uint256 i; i < ids.length; ++i) out[i] = ids[i]' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 175: 'uint256 i' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 175: 'i < ids.length' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 175: '++i' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 175: 'out[i] = ids[i]' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 176: 'for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 176: 'uint256 i = out.length' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 176: 'i > 1' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 176: '--i' ==> 'revert()' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'revert()' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[RR] Line 178: '(out[i - 1], out[j]) = (out[j], out[i - 1])' ==> 'revert()' --> CAUGHT
+INFO:Slither-Mutate:Mutator RR found 36 caught revert mutants (out of 36 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 26: 'uint256 internal constant ID_BITS = 32' ==> '//uint256 internal constant ID_BITS = 32' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 34: 'uint256 n = deposited.length' ==> '//uint256 n = deposited.length' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 35: 'order.length != n' ==> '//order.length != n' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 35: 'revert Bad("length")' ==> '//revert Bad("length")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 36: 'uint256[3] memory seen' ==> '//uint256[3] memory seen' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 37: 'for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }' ==> '//for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 37: 'uint256 i' ==> '//uint256 i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 37: 'i < n' ==> '//i < n' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 37: '++i' ==> '//++i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 38: 'uint256 pos = type(uint256).max' ==> '//uint256 pos = type(uint256).max' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 39: 'for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }' ==> '//for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 39: 'uint256 j' ==> '//uint256 j' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 39: 'j < n' ==> '//j < n' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 39: '++j' ==> '//++j' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 39: 'deposited[j] == order[i]' ==> '//deposited[j] == order[i]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 39: 'pos = j' ==> '//pos = j' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 39: 'break' ==> '//break' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 40: 'pos == type(uint256).max' ==> '//pos == type(uint256).max' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 40: 'revert Bad("not deposited")' ==> '//revert Bad("not deposited")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 41: 'uint256 w = pos >> 8' ==> '//uint256 w = pos >> 8' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> '//uint256 bit = 1 << (pos & 255)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 43: 'seen[w] & bit != 0' ==> '//seen[w] & bit != 0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 43: 'revert Bad("repeat")' ==> '//revert Bad("repeat")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 44: 'seen[w] |= bit' ==> '//seen[w] |= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 46: 'p == Preset.Manual' ==> '//p == Preset.Manual' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 46: 'return;' ==> '//return;' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 47: 'p == Preset.Deposit' ==> '//p == Preset.Deposit' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 48: 'for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order")' ==> '//for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 48: 'uint256 i' ==> '//uint256 i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 48: 'i < n' ==> '//i < n' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 48: '++i' ==> '//++i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 48: 'order[i] != deposited[i]' ==> '//order[i] != deposited[i]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 48: 'revert Bad("order")' ==> '//revert Bad("order")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 49: 'return;' ==> '//return;' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 51: 'p == Preset.Random' ==> '//p == Preset.Random' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 52: 'uint256[] memory want = shuffle(deposited, seed)' ==> '//uint256[] memory want = shuffle(deposited, seed)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 53: 'for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order")' ==> '//for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 53: 'uint256 i' ==> '//uint256 i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 53: 'i < n' ==> '//i < n' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 53: '++i' ==> '//++i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 53: 'order[i] != want[i]' ==> '//order[i] != want[i]' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 53: 'revert Bad("order")' ==> '//revert Bad("order")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 54: 'return;' ==> '//return;' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 56: 'ICreditArt art = ICreditArt(credits.art())' ==> '//ICreditArt art = ICreditArt(credits.art())' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 57: 'uint256 prev = key(p, credits, art, order[0])' ==> '//uint256 prev = key(p, credits, art, order[0])' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 58: 'for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }' ==> '//for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 58: 'uint256 i = 1' ==> '//uint256 i = 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 58: 'i < n' ==> '//i < n' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 58: '++i' ==> '//++i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 59: 'uint256 k = key(p, credits, art, order[i])' ==> '//uint256 k = key(p, credits, art, order[i])' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 60: 'k <= prev' ==> '//k <= prev' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 60: 'revert Bad("order")' ==> '//revert Bad("order")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 61: 'prev = k' ==> '//prev = k' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 117: 'bytes32 h = keccak256(bytes(w))' ==> '//bytes32 h = keccak256(bytes(w))' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 118: 'h == keccak256("sparse")' ==> '//h == keccak256("sparse")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 118: 'return 0' ==> '//return 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 119: 'h == keccak256("lean")' ==> '//h == keccak256("lean")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 119: 'return 1' ==> '//return 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 120: 'h == keccak256("even")' ==> '//h == keccak256("even")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 120: 'return 2' ==> '//return 2' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 121: 'h == keccak256("extreme")' ==> '//h == keccak256("extreme")' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 121: 'return 3' ==> '//return 3' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 122: 'revert("weight")' ==> '//revert("weight")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 127: 'mask == 1' ==> '//mask == 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 127: 'return 3908947081' ==> '//return 3908947081' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 128: 'mask == 2' ==> '//mask == 2' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 128: 'return 3913745110' ==> '//return 3913745110' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 129: 'mask == 3' ==> '//mask == 3' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 129: 'return 3903634585' ==> '//return 3903634585' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 130: 'mask == 4' ==> '//mask == 4' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 130: 'return 3908060305' ==> '//return 3908060305' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 131: 'mask == 5' ==> '//mask == 5' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 131: 'return 3919631122' ==> '//return 3919631122' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 132: 'mask == 6' ==> '//mask == 6' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 132: 'return 3887463858' ==> '//return 3887463858' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 133: 'mask == 7' ==> '//mask == 7' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 133: 'return 3915169818' ==> '//return 3915169818' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 134: 'mask == 8' ==> '//mask == 8' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 134: 'return 3939426425' ==> '//return 3939426425' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 135: 'mask == 9' ==> '//mask == 9' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 135: 'return 3889562832' ==> '//return 3889562832' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 136: 'mask == 10' ==> '//mask == 10' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 136: 'return 3910011931' ==> '//return 3910011931' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 137: 'mask == 11' ==> '//mask == 11' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 137: 'return 3901515053' ==> '//return 3901515053' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 138: 'mask == 12' ==> '//mask == 12' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 138: 'return 3926259272' ==> '//return 3926259272' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 139: 'mask == 13' ==> '//mask == 13' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 139: 'return 3895350809' ==> '//return 3895350809' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 140: 'mask == 14' ==> '//mask == 14' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 140: 'return 3877188084' ==> '//return 3877188084' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 141: 'return 3908592305' ==> '//return 3908592305' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 173: '(uint256[] memory out)' ==> '//(uint256[] memory out)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 174: 'out = new uint256[](ids.length)' ==> '//out = new uint256[](ids.length)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 175: 'for (uint256 i; i < ids.length; ++i) out[i] = ids[i]' ==> '//for (uint256 i; i < ids.length; ++i) out[i] = ids[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 175: 'uint256 i' ==> '//uint256 i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 175: 'i < ids.length' ==> '//i < ids.length' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 175: '++i' ==> '//++i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 175: 'out[i] = ids[i]' ==> '//out[i] = ids[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 176: 'for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }' ==> '//for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 176: 'uint256 i = out.length' ==> '//uint256 i = out.length' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 176: 'i > 1' ==> '//i > 1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 176: '--i' ==> '//--i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> '//uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[CR] Line 178: '(out[i - 1], out[j]) = (out[j], out[i - 1])' ==> '//(out[i - 1], out[j]) = (out[j], out[i - 1])' --> CAUGHT
+INFO:Slither-Mutate:Mutator CR found 20 caught comment mutants (out of 36 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i + 1))) % i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i / 1))) % i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i * 1))) % i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i % 1))) % i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) + i' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) / i' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) * i' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[AOR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) - i' --> CAUGHT
+INFO:Slither-Mutate:Mutator AOR found 4 caught tweak mutants (out of 8 that compile)
+INFO:Slither-Mutate:Running total: found 4 caught tweak mutants (out of 8 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] += bit' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] -= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] = bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] ^= bit' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] &= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] <<= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] >>= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] *= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] /= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ASOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] %= bit' --> CAUGHT
+INFO:Slither-Mutate:Mutator ASOR found 8 caught tweak mutants (out of 10 that compile)
+INFO:Slither-Mutate:Running total: found 12 caught tweak mutants (out of 18 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 41: 'uint256 w = pos >> 8' ==> 'uint256 w = pos & 8' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 41: 'uint256 w = pos >> 8' ==> 'uint256 w = pos | 8' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 41: 'uint256 w = pos >> 8' ==> 'uint256 w = pos << 8' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 41: 'uint256 w = pos >> 8' ==> 'uint256 w = pos ^ 8' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 << (pos | 255)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 << (pos << 255)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 << (pos >> 255)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 << (pos ^ 255)' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 & (pos & 255)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 | (pos & 255)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 >> (pos & 255)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit = 1 ^ (pos & 255)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] | bit != 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] << bit != 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] >> bit != 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] ^ bit != 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] &= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] <<= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] >>= bit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[BOR] Line 44: 'seen[w] |= bit' ==> 'seen[w] ^= bit' --> UNCAUGHT
+INFO:Slither-Mutate:Mutator BOR found 18 caught tweak mutants (out of 20 that compile)
+INFO:Slither-Mutate:Running total: found 30 caught tweak mutants (out of 38 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 11: 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 internal constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' ==> 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 internal constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) internal view returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) internal view returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) internal view returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) internal view returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) internal view returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) internal view returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) internal view returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) public view returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 11: 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 internal constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' ==> 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 internal constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public pure {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public pure returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 11: 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 internal constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' ==> 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 private constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) private view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) private view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) private pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) private pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) private pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) private pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) private pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) private pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) private pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) private pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 11: 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 internal constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) public view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' ==> 'library CreditKeys {
+    enum Preset {
+        Deposit, // deposit order (verified against the stored order, no keys)
+        Number, // id ascending
+        Time, // payment time ascending
+        Rarity, // rarity score descending
+        Colors, // plate combination, COLOR_ORDER
+        Print, // registration, most misregistered first
+        Weight, // sparse → extreme, then ink ascending
+        Eights, // most eights first
+        Ink, // marks ascending
+        Random, // keccak Fisher–Yates of the deposit order with a published seed
+        Manual // host supplies the order; no key check
+    }
+
+    uint256 internal constant ID_BITS = 32;
+
+    /// @dev Same signature as Party.Bad, so a Party caller surfaces identical revert data.
+    error Bad(string why);
+
+    /// @notice Reverts unless `order` is exactly the 80 `deposited` ids and, for auto presets, exactly the order
+    ///         the preset produces. Manual accepts any permutation.
+    function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) internal view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }
+
+    function key(Preset p, ICredits credits, ICreditArt art, uint256 id) internal view returns (uint256) {
+        require(id < 2 ** ID_BITS, "id");
+        if (p == Preset.Number) return id;
+        uint64 paidAt = credits.timestampOf(id);
+        if (p == Preset.Time) return (uint256(paidAt) << ID_BITS) | id;
+        uint256 mask = uint256(paidAt) % 15 + 1; // CreditDrawing.platesAt
+        if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
+        ICreditArt.Read memory r = art.describe(credits.seedOf(id), paidAt);
+        if (p == Preset.Ink) return (r.marks << ID_BITS) | id;
+        if (p == Preset.Eights) return ((type(uint32).max - r.eights) << ID_BITS) | id;
+        if (p == Preset.Print) return ((5 - printRank(r.register)) << ID_BITS) | id;
+        if (p == Preset.Weight) return (((weightRank(r.weight) << 16) | r.marks) << ID_BITS) | id;
+        if (p == Preset.Rarity) {
+            uint256 score = colorWeight(mask) + printWeight(r.register) + weightWeight(r.weight) + eightsWeight(r.eights);
+            return ((type(uint64).max - score) << ID_BITS) | id;
+        }
+        revert("preset");
+    }
+
+    // COLOR_ORDER = C, M, Y, K, CM, CY, MY, CK, MK, YK, CMY, CMK, CYK, MYK, CMYK (mask bits C=1 M=2 Y=4 K=8)
+    function colorRank(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 0;
+        if (mask == 2) return 1;
+        if (mask == 4) return 2;
+        if (mask == 8) return 3;
+        if (mask == 3) return 4;
+        if (mask == 5) return 5;
+        if (mask == 6) return 6;
+        if (mask == 9) return 7;
+        if (mask == 10) return 8;
+        if (mask == 12) return 9;
+        if (mask == 7) return 10;
+        if (mask == 11) return 11;
+        if (mask == 13) return 12;
+        if (mask == 14) return 13;
+        return 14; // 15 = CMYK
+    }
+
+    // PRINT_ORDER = Registered, Nudge, Slip, Skew, Drift, Loose
+    function printRank(string memory reg) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(reg));
+        if (h == keccak256("Registered")) return 0;
+        if (h == keccak256("Nudge")) return 1;
+        if (h == keccak256("Slip")) return 2;
+        if (h == keccak256("Skew")) return 3;
+        if (h == keccak256("Drift")) return 4;
+        if (h == keccak256("Loose")) return 5;
+        revert("print");
+    }
+
+    // WEIGHT_ORDER = sparse, lean, even, extreme
+    function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }
+
+    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
+    function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }
+
+    function printWeight(string memory reg) internal pure returns (uint256) {
+        uint256 r = printRank(reg);
+        if (r == 0) return 195465472;
+        if (r == 1) return 4661729380;
+        if (r == 2) return 4640364522;
+        if (r == 3) return 5366472805;
+        if (r == 4) return 6072587748;
+        return 6964650926;
+    }
+
+    function weightWeight(string memory w) internal pure returns (uint256) {
+        uint256 r = weightRank(w);
+        if (r == 0) return 2887813475;
+        if (r == 1) return 1831411512;
+        if (r == 2) return 801626426;
+        return 6615253228;
+    }
+
+    function eightsWeight(uint256 e) internal pure returns (uint256) {
+        if (e == 0) return 448838239;
+        if (e == 1) return 2125356957;
+        if (e == 2) return 4849173708;
+        if (e == 3) return 8261716960;
+        if (e == 4) return 12197901863;
+        if (e == 5) return 16898341581;
+        revert("eights"); // no Credit in the sealed supply has more than 5
+    }
+
+    /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).
+    function shuffle(uint256[] memory ids, uint256 seed) internal pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }
+}' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 33: 'function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }' ==> 'function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public pure {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 33: 'function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }' ==> 'function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) private view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 33: 'function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) public view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }' ==> 'function verifyOrder(Preset p, ICredits credits, uint256[] memory deposited, uint256[] calldata order, uint256 seed) internal view {
+        uint256 n = deposited.length;
+        if (order.length != n) revert Bad("length");
+        uint256[3] memory seen;
+        for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }
+        if (p == Preset.Manual) return;
+        if (p == Preset.Deposit) {
+            for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order");
+            return;
+        }
+        if (p == Preset.Random) {
+            uint256[] memory want = shuffle(deposited, seed);
+            for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order");
+            return;
+        }
+        ICreditArt art = ICreditArt(credits.art());
+        uint256 prev = key(p, credits, art, order[0]);
+        for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 116: 'function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }' ==> 'function weightRank(string memory w) internal view returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 116: 'function weightRank(string memory w) internal pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }' ==> 'function weightRank(string memory w) private pure returns (uint256) {
+        bytes32 h = keccak256(bytes(w));
+        if (h == keccak256("sparse")) return 0;
+        if (h == keccak256("lean")) return 1;
+        if (h == keccak256("even")) return 2;
+        if (h == keccak256("extreme")) return 3;
+        revert("weight");
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 126: 'function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }' ==> 'function colorWeight(uint256 mask) internal view returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 126: 'function colorWeight(uint256 mask) internal pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }' ==> 'function colorWeight(uint256 mask) private pure returns (uint256) {
+        if (mask == 1) return 3908947081;
+        if (mask == 2) return 3913745110;
+        if (mask == 3) return 3903634585;
+        if (mask == 4) return 3908060305;
+        if (mask == 5) return 3919631122;
+        if (mask == 6) return 3887463858;
+        if (mask == 7) return 3915169818;
+        if (mask == 8) return 3939426425;
+        if (mask == 9) return 3889562832;
+        if (mask == 10) return 3910011931;
+        if (mask == 11) return 3901515053;
+        if (mask == 12) return 3926259272;
+        if (mask == 13) return 3895350809;
+        if (mask == 14) return 3877188084;
+        return 3908592305; // 15
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 173: 'function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }' ==> 'function shuffle(uint256[] memory ids, uint256 seed) public view returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 173: 'function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }' ==> 'function shuffle(uint256[] memory ids, uint256 seed) private pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[FHR] Line 173: 'function shuffle(uint256[] memory ids, uint256 seed) public pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }' ==> 'function shuffle(uint256[] memory ids, uint256 seed) internal pure returns (uint256[] memory out) {
+        out = new uint256[](ids.length);
+        for (uint256 i; i < ids.length; ++i) out[i] = ids[i];
+        for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }
+    }' --> COMPILATION FAILURE
+INFO:Slither-Mutate:Mutator FHR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 30 caught tweak mutants (out of 38 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LIR] Line 58: 'uint256 i = 1' ==> 'uint256 i = 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[LIR] Line 58: 'uint256 i = 1' ==> 'uint256 i = 115792089237316195423570985008687907853269984665640564039457584007913129639935' --> CAUGHT
+INFO:Slither-Mutate:Mutator LIR found 2 caught tweak mutants (out of 2 that compile)
+INFO:Slither-Mutate:Running total: found 32 caught tweak mutants (out of 40 that compile)
+INFO:Slither-Mutate:Mutator LOR found 0 caught tweak mutants (out of 0 that compile)
+INFO:Slither-Mutate:Running total: found 32 caught tweak mutants (out of 40 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 35: 'order.length != n' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 35: 'order.length != n' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 35: 'order.length != n' ==> '!(order.length != n)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 39: 'deposited[j] == order[i]' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 39: 'deposited[j] == order[i]' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 39: 'deposited[j] == order[i]' ==> '!(deposited[j] == order[i])' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 40: 'pos == type(uint256).max' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 40: 'pos == type(uint256).max' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 40: 'pos == type(uint256).max' ==> '!(pos == type(uint256).max)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 43: 'seen[w] & bit != 0' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 43: 'seen[w] & bit != 0' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 43: 'seen[w] & bit != 0' ==> '!(seen[w] & bit != 0)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 46: 'p == Preset.Manual' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 46: 'p == Preset.Manual' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 46: 'p == Preset.Manual' ==> '!(p == Preset.Manual)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 47: 'p == Preset.Deposit' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 47: 'p == Preset.Deposit' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 47: 'p == Preset.Deposit' ==> '!(p == Preset.Deposit)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 48: 'order[i] != deposited[i]' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 48: 'order[i] != deposited[i]' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 48: 'order[i] != deposited[i]' ==> '!(order[i] != deposited[i])' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 51: 'p == Preset.Random' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 51: 'p == Preset.Random' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 51: 'p == Preset.Random' ==> '!(p == Preset.Random)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 53: 'order[i] != want[i]' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 53: 'order[i] != want[i]' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 53: 'order[i] != want[i]' ==> '!(order[i] != want[i])' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 60: 'k <= prev' ==> 'true' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 60: 'k <= prev' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 60: 'k <= prev' ==> '!(k <= prev)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 118: 'h == keccak256("sparse")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 118: 'h == keccak256("sparse")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 118: 'h == keccak256("sparse")' ==> '!(h == keccak256("sparse"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 119: 'h == keccak256("lean")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 119: 'h == keccak256("lean")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 119: 'h == keccak256("lean")' ==> '!(h == keccak256("lean"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 120: 'h == keccak256("even")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 120: 'h == keccak256("even")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 120: 'h == keccak256("even")' ==> '!(h == keccak256("even"))' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 121: 'h == keccak256("extreme")' ==> 'true' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 121: 'h == keccak256("extreme")' ==> 'false' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MIA] Line 121: 'h == keccak256("extreme")' ==> '!(h == keccak256("extreme"))' --> CAUGHT
+INFO:Slither-Mutate:Mutator MIA found 38 caught tweak mutants (out of 42 that compile)
+INFO:Slither-Mutate:Running total: found 70 caught tweak mutants (out of 82 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 34: 'uint256 n = deposited.length' ==> 'uint256 n ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 38: 'uint256 pos = type(uint256).max' ==> 'uint256 pos ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 41: 'uint256 w = pos >> 8' ==> 'uint256 w ' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint256 bit ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 52: 'uint256[] memory want = shuffle(deposited, seed)' ==> 'uint256[] memory want ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 56: 'ICreditArt art = ICreditArt(credits.art())' ==> 'ICreditArt art ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 57: 'uint256 prev = key(p, credits, art, order[0])' ==> 'uint256 prev ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 59: 'uint256 k = key(p, credits, art, order[i])' ==> 'uint256 k ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 117: 'bytes32 h = keccak256(bytes(w))' ==> 'bytes32 h ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 176: 'uint256 i = out.length' ==> 'uint256 i ' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIE] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j ' --> CAUGHT
+INFO:Slither-Mutate:Mutator MVIE found 10 caught tweak mutants (out of 11 that compile)
+INFO:Slither-Mutate:Running total: found 80 caught tweak mutants (out of 93 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MVIV] Line 58: 'uint256 i = 1' ==> 'uint256 i ' --> CAUGHT
+INFO:Slither-Mutate:Mutator MVIV found 1 caught tweak mutants (out of 1 that compile)
+INFO:Slither-Mutate:Running total: found 81 caught tweak mutants (out of 94 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 37: 'i < n' ==> '!(i < n)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 39: 'j < n' ==> '!(j < n)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 48: 'i < n' ==> '!(i < n)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 53: 'i < n' ==> '!(i < n)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 58: 'i < n' ==> '!(i < n)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 175: 'i < ids.length' ==> '!(i < ids.length)' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[MWA] Line 176: 'i > 1' ==> '!(i > 1)' --> CAUGHT
+INFO:Slither-Mutate:Mutator MWA found 7 caught tweak mutants (out of 7 that compile)
+INFO:Slither-Mutate:Running total: found 88 caught tweak mutants (out of 101 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 35: 'order.length != n' ==> 'order.length < n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 35: 'order.length != n' ==> 'order.length > n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 35: 'order.length != n' ==> 'order.length <= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 35: 'order.length != n' ==> 'order.length >= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 35: 'order.length != n' ==> 'order.length == n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 37: 'i < n' ==> 'i > n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 37: 'i < n' ==> 'i <= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 37: 'i < n' ==> 'i >= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 37: 'i < n' ==> 'i == n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 37: 'i < n' ==> 'i != n' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'j < n' ==> 'j > n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'j < n' ==> 'j <= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'j < n' ==> 'j >= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'j < n' ==> 'j == n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'j < n' ==> 'j != n' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'deposited[j] == order[i]' ==> 'deposited[j] < order[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'deposited[j] == order[i]' ==> 'deposited[j] > order[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'deposited[j] == order[i]' ==> 'deposited[j] <= order[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'deposited[j] == order[i]' ==> 'deposited[j] >= order[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 39: 'deposited[j] == order[i]' ==> 'deposited[j] != order[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 40: 'pos == type(uint256).max' ==> 'pos < type(uint256).max' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 40: 'pos == type(uint256).max' ==> 'pos > type(uint256).max' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 40: 'pos == type(uint256).max' ==> 'pos <= type(uint256).max' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 40: 'pos == type(uint256).max' ==> 'pos >= type(uint256).max' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 40: 'pos == type(uint256).max' ==> 'pos != type(uint256).max' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] & bit < 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] & bit > 0' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] & bit <= 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] & bit >= 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 43: 'seen[w] & bit != 0' ==> 'seen[w] & bit == 0' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 46: 'p == Preset.Manual' ==> 'p < Preset.Manual' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 46: 'p == Preset.Manual' ==> 'p > Preset.Manual' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 46: 'p == Preset.Manual' ==> 'p <= Preset.Manual' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 46: 'p == Preset.Manual' ==> 'p >= Preset.Manual' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 46: 'p == Preset.Manual' ==> 'p != Preset.Manual' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 47: 'p == Preset.Deposit' ==> 'p < Preset.Deposit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 47: 'p == Preset.Deposit' ==> 'p > Preset.Deposit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 47: 'p == Preset.Deposit' ==> 'p <= Preset.Deposit' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 47: 'p == Preset.Deposit' ==> 'p >= Preset.Deposit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 47: 'p == Preset.Deposit' ==> 'p != Preset.Deposit' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'i < n' ==> 'i > n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'i < n' ==> 'i <= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'i < n' ==> 'i >= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'i < n' ==> 'i == n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'i < n' ==> 'i != n' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'order[i] != deposited[i]' ==> 'order[i] < deposited[i]' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'order[i] != deposited[i]' ==> 'order[i] > deposited[i]' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'order[i] != deposited[i]' ==> 'order[i] <= deposited[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'order[i] != deposited[i]' ==> 'order[i] >= deposited[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 48: 'order[i] != deposited[i]' ==> 'order[i] == deposited[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 51: 'p == Preset.Random' ==> 'p < Preset.Random' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 51: 'p == Preset.Random' ==> 'p > Preset.Random' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 51: 'p == Preset.Random' ==> 'p <= Preset.Random' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 51: 'p == Preset.Random' ==> 'p >= Preset.Random' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 51: 'p == Preset.Random' ==> 'p != Preset.Random' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'i < n' ==> 'i > n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'i < n' ==> 'i <= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'i < n' ==> 'i >= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'i < n' ==> 'i == n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'i < n' ==> 'i != n' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'order[i] != want[i]' ==> 'order[i] < want[i]' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'order[i] != want[i]' ==> 'order[i] > want[i]' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'order[i] != want[i]' ==> 'order[i] <= want[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'order[i] != want[i]' ==> 'order[i] >= want[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 53: 'order[i] != want[i]' ==> 'order[i] == want[i]' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 58: 'i < n' ==> 'i > n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 58: 'i < n' ==> 'i <= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 58: 'i < n' ==> 'i >= n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 58: 'i < n' ==> 'i == n' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 58: 'i < n' ==> 'i != n' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 60: 'k <= prev' ==> 'k < prev' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 60: 'k <= prev' ==> 'k > prev' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 60: 'k <= prev' ==> 'k >= prev' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 60: 'k <= prev' ==> 'k == prev' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 60: 'k <= prev' ==> 'k != prev' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 118: 'h == keccak256("sparse")' ==> 'h < keccak256("sparse")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 118: 'h == keccak256("sparse")' ==> 'h > keccak256("sparse")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 118: 'h == keccak256("sparse")' ==> 'h <= keccak256("sparse")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 118: 'h == keccak256("sparse")' ==> 'h >= keccak256("sparse")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 118: 'h == keccak256("sparse")' ==> 'h != keccak256("sparse")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 119: 'h == keccak256("lean")' ==> 'h < keccak256("lean")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 119: 'h == keccak256("lean")' ==> 'h > keccak256("lean")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 119: 'h == keccak256("lean")' ==> 'h <= keccak256("lean")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 119: 'h == keccak256("lean")' ==> 'h >= keccak256("lean")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 119: 'h == keccak256("lean")' ==> 'h != keccak256("lean")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 120: 'h == keccak256("even")' ==> 'h < keccak256("even")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 120: 'h == keccak256("even")' ==> 'h > keccak256("even")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 120: 'h == keccak256("even")' ==> 'h <= keccak256("even")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 120: 'h == keccak256("even")' ==> 'h >= keccak256("even")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 120: 'h == keccak256("even")' ==> 'h != keccak256("even")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 121: 'h == keccak256("extreme")' ==> 'h < keccak256("extreme")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 121: 'h == keccak256("extreme")' ==> 'h > keccak256("extreme")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 121: 'h == keccak256("extreme")' ==> 'h <= keccak256("extreme")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 121: 'h == keccak256("extreme")' ==> 'h >= keccak256("extreme")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 121: 'h == keccak256("extreme")' ==> 'h != keccak256("extreme")' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 175: 'i < ids.length' ==> 'i > ids.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 175: 'i < ids.length' ==> 'i <= ids.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 175: 'i < ids.length' ==> 'i >= ids.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 175: 'i < ids.length' ==> 'i == ids.length' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 175: 'i < ids.length' ==> 'i != ids.length' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 176: 'i > 1' ==> 'i < 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 176: 'i > 1' ==> 'i <= 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 176: 'i > 1' ==> 'i >= 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 176: 'i > 1' ==> 'i == 1' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[ROR] Line 176: 'i > 1' ==> 'i != 1' --> UNCAUGHT
+INFO:Slither-Mutate:Mutator ROR found 79 caught tweak mutants (out of 105 that compile)
+INFO:Slither-Mutate:Running total: found 167 caught tweak mutants (out of 206 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 26: 'uint256 internal constant ID_BITS = 32' ==> 'uint256 internal immutable ID_BITS = 32' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 26: 'uint256 internal constant ID_BITS = 32' ==> 'uint128 internal constant ID_BITS = 32' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 34: 'uint256 n = deposited.length' ==> 'uint128 n = deposited.length' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 36: 'uint256[3] memory seen' ==> 'uint256[3] storage seen' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 36: 'uint256[3] memory seen' ==> 'uint128[3] memory seen' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 37: 'for (uint256 i; i < n; ++i) {
+            uint256 pos = type(uint256).max;
+            for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint256).max) revert Bad("not deposited");
+            uint256 w = pos >> 8;
+            uint256 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }' ==> 'for (uint128 i; i < n; ++i) {
+            uint128 pos = type(uint128).max;
+            for (uint128 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }
+            if (pos == type(uint128).max) revert Bad("not deposited");
+            uint128 w = pos >> 8;
+            uint128 bit = 1 << (pos & 255);
+            if (seen[w] & bit != 0) revert Bad("repeat");
+            seen[w] |= bit;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 37: 'uint256 i' ==> 'uint128 i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 38: 'uint256 pos = type(uint256).max' ==> 'uint128 pos = type(uint128).max' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 39: 'for (uint256 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }' ==> 'for (uint128 j; j < n; ++j) if (deposited[j] == order[i]) { pos = j; break; }' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 39: 'uint256 j' ==> 'uint128 j' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 40: 'pos == type(uint256).max' ==> 'pos == type(uint128).max' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 41: 'uint256 w = pos >> 8' ==> 'uint128 w = pos >> 8' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 42: 'uint256 bit = 1 << (pos & 255)' ==> 'uint128 bit = 1 << (pos & 255)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'for (uint256 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order")' ==> 'for (uint128 i; i < n; ++i) if (order[i] != deposited[i]) revert Bad("order")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 48: 'uint256 i' ==> 'uint128 i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256[] memory want = shuffle(deposited, seed)' ==> 'uint256[] storage want = shuffle(deposited, seed)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 52: 'uint256[] memory want = shuffle(deposited, seed)' ==> 'uint128[] memory want = shuffle(deposited, seed)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 53: 'for (uint256 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order")' ==> 'for (uint128 i; i < n; ++i) if (order[i] != want[i]) revert Bad("order")' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 53: 'uint256 i' ==> 'uint128 i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 57: 'uint256 prev = key(p, credits, art, order[0])' ==> 'uint128 prev = key(p, credits, art, order[0])' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 58: 'for (uint256 i = 1; i < n; ++i) {
+            uint256 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }' ==> 'for (uint128 i = 1; i < n; ++i) {
+            uint128 k = key(p, credits, art, order[i]);
+            if (k <= prev) revert Bad("order");
+            prev = k;
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 58: 'uint256 i = 1' ==> 'uint128 i = 1' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 59: 'uint256 k = key(p, credits, art, order[i])' ==> 'uint128 k = key(p, credits, art, order[i])' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 173: '(uint256[] memory out)' ==> '(uint256[] storage out)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 173: '(uint256[] memory out)' ==> '(uint128[] memory out)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 174: 'out = new uint256[](ids.length)' ==> 'out = new uint128[](ids.length)' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 175: 'for (uint256 i; i < ids.length; ++i) out[i] = ids[i]' ==> 'for (uint128 i; i < ids.length; ++i) out[i] = ids[i]' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 175: 'uint256 i' ==> 'uint128 i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 176: 'for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }' ==> 'for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encode(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 176: 'for (uint256 i = out.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }' ==> 'for (uint128 i = out.length; i > 1; --i) {
+            uint128 j = uint128(keccak256(abi.encodePacked(seed, i - 1))) % i;
+            (out[i - 1], out[j]) = (out[j], out[i - 1]);
+        }' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 176: 'uint256 i = out.length' ==> 'uint128 i = out.length' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint256 j = uint256(keccak256(abi.encode(seed, i - 1))) % i' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[SBR] Line 177: 'uint256 j = uint256(keccak256(abi.encodePacked(seed, i - 1))) % i' ==> 'uint128 j = uint128(keccak256(abi.encodePacked(seed, i - 1))) % i' --> COMPILATION FAILURE
+INFO:Slither-Mutate:Mutator SBR found 1 caught tweak mutants (out of 14 that compile)
+INFO:Slither-Mutate:Running total: found 168 caught tweak mutants (out of 220 that compile)
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 37: '++i' ==> '--i' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 37: '++i' ==> 'i--' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 37: '++i' ==> 'i++' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 37: '++i' ==> 'i-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 39: '++j' ==> '--j' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 39: '++j' ==> 'j--' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 39: '++j' ==> 'j++' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 39: '++j' ==> 'j-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 48: '++i' ==> '--i_scope_0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 48: '++i' ==> 'i_scope_0--' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 48: '++i' ==> '++i_scope_0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 48: '++i' ==> 'i_scope_0++' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 48: '++i' ==> 'i_scope_0-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 53: '++i' ==> '--i_scope_1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 53: '++i' ==> 'i_scope_1--' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 53: '++i' ==> '++i_scope_1' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 53: '++i' ==> 'i_scope_1++' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 53: '++i' ==> 'i_scope_1-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 58: '++i' ==> '--i_scope_2' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 58: '++i' ==> 'i_scope_2--' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 58: '++i' ==> '++i_scope_2' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 58: '++i' ==> 'i_scope_2++' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 58: '++i' ==> 'i_scope_2-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 175: '++i' ==> '--i' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 175: '++i' ==> 'i--' --> CAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 175: '++i' ==> 'i++' --> UNCAUGHT
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 175: '++i' ==> 'i-' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 176: '--i' ==> '++i_scope_0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 176: '--i' ==> 'i_scope_0++' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 176: '--i' ==> '--i_scope_0' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 176: '--i' ==> 'i_scope_0--' --> COMPILATION FAILURE
+WARNING:CryticCompile:Multiple frameworks detected: solc, Solc-json. Using solc (highest priority). Use --compile-force-framework to override.
+INFO:Slither-Mutate:[UOR] Line 176: '--i' ==> 'i_scope_0-' --> COMPILATION FAILURE
+INFO:Slither-Mutate:Mutator UOR found 6 caught tweak mutants (out of 9 that compile)
+INFO:Slither-Mutate:Running total: found 174 caught tweak mutants (out of 229 that compile)
+INFO:Slither-Mutate:Done mutating CreditKeys.
+INFO:Slither-Mutate:Revert mutants: 36 caught of 36 (100.0% caught)
+INFO:Slither-Mutate:Comment mutants: 20 caught of 36 (55.6% caught)
+INFO:Slither-Mutate:Tweak mutants: 174 caught of 229 (76.0% caught)
+INFO:Slither-Mutate:Finished mutation testing assessment of 'src/CreditKeys.sol' in 47 minutes
+

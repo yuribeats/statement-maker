@@ -1,0 +1,552 @@
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -430,7 +430,7 @@
+             askSpec = p.price;
+             askLiveAt = uint64(block.timestamp);
+             buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+-            emit AskSet(price, true);
++            //emit AskSet(price, true);
+         }
+         emit Executed(id, msg.sender);
+     }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -432,7 +432,7 @@
+             buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+             emit AskSet(price, true);
+         }
+-        emit Executed(id, msg.sender);
++        //emit Executed(id, msg.sender);
+     }
+ 
+     /// @notice Records a closed price proposal that was blocked by NO, toward the deadlock rule. Anyone may call.
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -525,7 +525,7 @@
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+             address holder = cards.ownerOf(c);
+-            delete creditOfCard[c];
++            //delete creditOfCard[c];
+             --cardsOutstanding;
+             cards.burn(c);
+             emit Claimed(holder, c, perCard);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -530,7 +530,7 @@
+             cards.burn(c);
+             emit Claimed(holder, c, perCard);
+             (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+-            if (!ok) owed[holder] += perCard;
++            if (!ok) owed[holder] = perCard;
+         }
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -530,7 +530,7 @@
+             cards.burn(c);
+             emit Claimed(holder, c, perCard);
+             (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+-            if (!ok) owed[holder] += perCard;
++            if (!ok) owed[holder] |= perCard;
+         }
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -530,7 +530,7 @@
+             cards.burn(c);
+             emit Claimed(holder, c, perCard);
+             (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+-            if (!ok) owed[holder] += perCard;
++            if (!ok) owed[holder] ^= perCard;
+         }
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -197,7 +197,7 @@
+ 
+     function cardView(uint256 cardId) external view returns (string memory name, uint256 creditId, string memory st) {
+         Status s = status();
+-        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
++        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : false ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+         return (_params.name, creditOfCard[cardId], st);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -197,7 +197,7 @@
+ 
+     function cardView(uint256 cardId) external view returns (string memory name, uint256 creditId, string memory st) {
+         Status s = status();
+-        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : s == Status.SOLD ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
++        st = s == Status.OPEN ? "FILLING" : s == Status.FULL ? "FULL" : s == Status.ASSEMBLED ? "STATEMENT MADE" : false ? "SOLD / CLAIMABLE" : "EXPIRED / REDEEMABLE";
+         return (_params.name, creditOfCard[cardId], st);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -396,7 +396,7 @@
+         if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+         if (p.epoch != priceEpoch) revert Bad("superseded");
+         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+-        if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
++        if (false ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+ 
+         uint256 price;
+         uint256 floorWei;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -400,7 +400,7 @@
+ 
+         uint256 price;
+         uint256 floorWei;
+-        if (!p.cancel) {
++        if (true) {
+             if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
+                 // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+                 price = uint256(p.price.value);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -407,7 +407,7 @@
+                 floorWei = type(uint256).max;
+             } else {
+                 floorWei = _floor(floor);
+-                price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
++                price = false ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+             }
+         }
+         uint256 need = needFor(id, price, floorWei);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -448,7 +448,7 @@
+ 
+     function _deadlocked() internal view returns (bool) {
+         if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+-        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
++        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (true ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+         return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -448,7 +448,7 @@
+ 
+     function _deadlocked() internal view returns (bool) {
+         if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+-        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
++        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (true ? fullAt : type(uint64).max));
+         return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -530,7 +530,7 @@
+             cards.burn(c);
+             emit Claimed(holder, c, perCard);
+             (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+-            if (!ok) owed[holder] += perCard;
++            if (true) owed[holder] += perCard;
+         }
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -394,7 +394,7 @@
+         if (p.executed) revert Bad("executed");
+         if (block.timestamp < p.endsAt) revert Bad("voting open");
+         if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+-        if (p.epoch != priceEpoch) revert Bad("superseded");
++        if (p.epoch < priceEpoch) revert Bad("superseded");
+         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+         if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -395,7 +395,7 @@
+         if (block.timestamp < p.endsAt) revert Bad("voting open");
+         if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+         if (p.epoch != priceEpoch) revert Bad("superseded");
+-        if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
++        if (cards.heldNow(address(this), msg.sender) <= 0) revert Bad("card holders only");
+         if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+ 
+         uint256 price;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -411,7 +411,7 @@
+             }
+         }
+         uint256 need = needFor(id, price, floorWei);
+-        if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
++        if (p.yes < need || (p.yes < need || (p.no != 0 && !p.deadlock) && !p.deadlock)) revert Bad("did not pass");
+ 
+         p.executed = true;
+         ++priceEpoch;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -420,7 +420,7 @@
+         if (p.cancel) {
+             ask = 0;
+             askLiveAt = 0;
+-        } else if (s == Status.FULL) {
++        } else if (s <= Status.FULL) {
+             pendingPrice = p.price;
+             _pendingBuyDelay = p.buyDelayHours;
+             hasPendingPrice = true;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -447,7 +447,7 @@
+     }
+ 
+     function _deadlocked() internal view returns (bool) {
+-        if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
++        if (blockedPriceProposals == DEADLOCK_BLOCKS) return true;
+         uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+         return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+     }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -521,7 +521,7 @@
+     ///         A holder that cannot receive ETH is credited in `owed` instead.
+     function claimFor(uint256[] calldata cardIds) external nonReentrant {
+         if (!sold) revert Bad("not sold");
+-        for (uint256 i; i < cardIds.length; ++i) {
++        for (uint256 i; i != cardIds.length; ++i) {
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+             address holder = cards.ownerOf(c);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -537,7 +537,7 @@
+     /// @notice Pull payment for the fee recipient, royalty receiver, rounding dust, and holders that could not receive ETH.
+     function withdraw() external nonReentrant {
+         uint256 amt = owed[msg.sender];
+-        if (amt == 0) revert Bad("nothing");
++        if (amt <= 0) revert Bad("nothing");
+         owed[msg.sender] = 0;
+         (bool ok,) = msg.sender.call{value: amt}("");
+         if (!ok) revert Bad("send");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -40,7 +40,7 @@
+ contract Party is Initializable, ReentrancyGuardTransient {
+     using CreditKeys for CreditKeys.Preset;
+ 
+-    uint256 public constant SLOTS = 80;
++    uint128 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -41,7 +41,7 @@
+     using CreditKeys for CreditKeys.Preset;
+ 
+     uint256 public constant SLOTS = 80;
+-    uint256 public constant PASS = 41;
++    uint128 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -42,7 +42,7 @@
+ 
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+-    uint256 public constant PASS_BELOW_FLOOR = 60;
++    uint128 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -43,7 +43,7 @@
+     uint256 public constant SLOTS = 80;
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+-    uint256 public constant PASS_DEADLOCK = 54;
++    uint128 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -44,7 +44,7 @@
+     uint256 public constant PASS = 41;
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+-    uint256 public constant DEADLOCK_BLOCKS = 3;
++    uint128 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -45,7 +45,7 @@
+     uint256 public constant PASS_BELOW_FLOOR = 60;
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+-    uint256 public constant DEADLOCK_TIME = 30 days;
++    uint128 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -46,7 +46,7 @@
+     uint256 public constant PASS_DEADLOCK = 54;
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+-    uint256 public constant EXECUTE_WINDOW = 7 days;
++    uint128 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -47,7 +47,7 @@
+     uint256 public constant DEADLOCK_BLOCKS = 3;
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+-    uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
++    uint128 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -48,7 +48,7 @@
+     uint256 public constant DEADLOCK_TIME = 30 days;
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+-    uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
++    uint128 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -49,7 +49,7 @@
+     uint256 public constant EXECUTE_WINDOW = 7 days;
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+-    uint256 public constant FLOOR_MAX_AGE = 1 hours;
++    uint128 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -50,7 +50,7 @@
+     uint256 public constant MAX_BUY_DELAY_HOURS = 72; // a price's wait before buying opens is voted with the price (host default at creation)
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+-    uint256 public constant ROYALTY_CAP_BPS = 1000;
++    uint128 public constant ROYALTY_CAP_BPS = 1000;
+     uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -51,7 +51,7 @@
+     uint256 public constant FILL_GRACE = 2 days; // filling always leaves at least this long to burn
+     uint256 public constant FLOOR_MAX_AGE = 1 hours;
+     uint256 public constant ROYALTY_CAP_BPS = 1000;
+-    uint256 public constant MAX_OPEN_PER_PROPOSER = 3;
++    uint128 public constant MAX_OPEN_PER_PROPOSER = 3;
+ 
+     enum Status { OPEN, FULL, ASSEMBLED, SOLD, EXPIRED }
+     enum PriceMode { Fixed, FloorPct, FloorDelta } // FloorPct value in basis points; FloorDelta in wei
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -393,7 +393,7 @@
+         Status s = status();
+         if (p.executed) revert Bad("executed");
+         if (block.timestamp < p.endsAt) revert Bad("voting open");
+-        if (block.timestamp > uint256(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
++        if (block.timestamp > uint128(p.endsAt) + _t(EXECUTE_WINDOW)) revert Bad("lapsed");
+         if (p.epoch != priceEpoch) revert Bad("superseded");
+         if (cards.heldNow(address(this), msg.sender) == 0) revert Bad("card holders only");
+         if (p.cancel ? s != Status.ASSEMBLED : (s != Status.FULL && s != Status.ASSEMBLED)) revert Bad("status");
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -404,7 +404,7 @@
+             if (p.price.mode == PriceMode.Fixed && floor.sig.length == 0) {
+                 // No floor reading: a fixed price can still execute, but is treated as below the floor (60 YES).
+                 price = uint256(p.price.value);
+-                floorWei = type(uint256).max;
++                floorWei = type(uint128).max;
+             } else {
+                 floorWei = _floor(floor);
+                 price = p.price.mode == PriceMode.Fixed ? uint256(p.price.value) : _clampMin(_resolveWith(p.price, floorWei));
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -415,7 +415,7 @@
+ 
+         p.executed = true;
+         ++priceEpoch;
+-        lastPriceExecutedAt = uint64(block.timestamp);
++        lastPriceExecutedAt = uint32(block.timestamp);
+         blockedPriceProposals = 0; // deadlock mode ends once any price decision executes
+         if (p.cancel) {
+             ask = 0;
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -428,7 +428,7 @@
+         } else {
+             ask = price;
+             askSpec = p.price;
+-            askLiveAt = uint64(block.timestamp);
++            askLiveAt = uint32(block.timestamp);
+             buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+             emit AskSet(price, true);
+         }
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -429,7 +429,7 @@
+             ask = price;
+             askSpec = p.price;
+             askLiveAt = uint64(block.timestamp);
+-            buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
++            buyableAt = uint32(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
+             emit AskSet(price, true);
+         }
+         emit Executed(id, msg.sender);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -429,7 +429,7 @@
+             ask = price;
+             askSpec = p.price;
+             askLiveAt = uint64(block.timestamp);
+-            buyableAt = uint64(block.timestamp + _t(uint256(p.buyDelayHours) * 1 hours));
++            buyableAt = uint64(block.timestamp + _t(uint128(p.buyDelayHours) * 1 hours));
+             emit AskSet(price, true);
+         }
+         emit Executed(id, msg.sender);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -448,7 +448,7 @@
+ 
+     function _deadlocked() internal view returns (bool) {
+         if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+-        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
++        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint32).max));
+         return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -448,7 +448,7 @@
+ 
+     function _deadlocked() internal view returns (bool) {
+         if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+-        uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
++        uint128 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+         return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
+     }
+ 
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -449,7 +449,7 @@
+     function _deadlocked() internal view returns (bool) {
+         if (blockedPriceProposals >= DEADLOCK_BLOCKS) return true;
+         uint256 since = lastPriceExecutedAt != 0 ? lastPriceExecutedAt : (assembledAt != 0 ? assembledAt : (fullAt != 0 ? fullAt : type(uint64).max));
+-        return since != type(uint64).max && block.timestamp > since + _t(DEADLOCK_TIME);
++        return since != type(uint32).max && block.timestamp > since + _t(DEADLOCK_TIME);
+     }
+ 
+     function _refreshOpen(address who) internal {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -521,7 +521,7 @@
+     ///         A holder that cannot receive ETH is credited in `owed` instead.
+     function claimFor(uint256[] calldata cardIds) external nonReentrant {
+         if (!sold) revert Bad("not sold");
+-        for (uint256 i; i < cardIds.length; ++i) {
++        for (uint128 i; i < cardIds.length; ++i) {
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+             address holder = cards.ownerOf(c);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -414,7 +414,7 @@
+         if (p.yes < need || (p.no > 0 && !p.deadlock)) revert Bad("did not pass");
+ 
+         p.executed = true;
+-        ++priceEpoch;
++        priceEpoch++;
+         lastPriceExecutedAt = uint64(block.timestamp);
+         blockedPriceProposals = 0; // deadlock mode ends once any price decision executes
+         if (p.cancel) {
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -521,7 +521,7 @@
+     ///         A holder that cannot receive ETH is credited in `owed` instead.
+     function claimFor(uint256[] calldata cardIds) external nonReentrant {
+         if (!sold) revert Bad("not sold");
+-        for (uint256 i; i < cardIds.length; ++i) {
++        for (uint256 i; i < cardIds.length; i++) {
+             uint256 c = cardIds[i];
+             if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+             address holder = cards.ownerOf(c);
+
+--- ./src/Party.sol
++++ ./src/Party.sol
+@@ -526,7 +526,7 @@
+             if (cards.partyOf(c) != address(this)) revert Bad("not this party");
+             address holder = cards.ownerOf(c);
+             delete creditOfCard[c];
+-            --cardsOutstanding;
++            cardsOutstanding--;
+             cards.burn(c);
+             emit Claimed(holder, c, perCard);
+             (bool ok,) = holder.call{value: perCard, gas: 50_000}("");
+

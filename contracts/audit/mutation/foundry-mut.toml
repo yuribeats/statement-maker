@@ -1,0 +1,17 @@
+
+# Appended by setup-shard.sh to the throwaway copies only: legacy codegen for speed, via-IR only for Jack's art sources
+[profile.mut]
+src = "src"
+test = "test"
+out = "out-mutp"
+cache_path = "cache-mutp"
+libs = ["lib"]
+solc_version = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+remappings = ["@openzeppelin/=lib/openzeppelin-contracts/", "forge-std/=lib/forge-std/src/"]
+fs_permissions = [{ access = "read", path = "./data" }, { access = "read", path = "./out-mutp" }]
+additional_compiler_profiles = [{ name = "ir", via_ir = true }]
+compilation_restrictions = [{ paths = "test/credits/**", via_ir = true }]
