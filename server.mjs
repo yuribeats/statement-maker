@@ -14,7 +14,7 @@ const DEV = process.env.NODE_ENV !== 'production'; // dev clock only outside pro
 const MAX_BODY = 64 * 1024;
 const SLOTS = 80;
 const ZERO = '0x0000000000000000000000000000000000000000';
-const TERMS_VERSION = '2026-09-23.2';
+const TERMS_VERSION = '2026-09-23.3';
 const VOTE_WINDOW = 48 * 36e5;
 const WINDOWS = [24, 48, 72, 168]; // allowed voting windows, hours
 const EXEC_WINDOW = 7 * 864e5;
@@ -194,11 +194,11 @@ const PRESETS = {
   Random: (cs, seed) => { const r = rng(seed), o = [...cs]; for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } return o; },
 };
 function cleanArrangement(a) {
-  const preset = Object.hasOwn(PRESETS, a?.preset) ? a.preset : 'Deposit';
+  // 'Manual' means the host orders the 80 by hand in the same step as the burn.
+  const preset = a?.preset === 'Manual' || Object.hasOwn(PRESETS, a?.preset) ? a.preset : 'Deposit';
   return preset === 'Random' ? { preset, seed: int(a?.seed, 1, 999999) || 1 + Math.floor(Math.random() * 999999) } : { preset };
 }
-const defaultOrder = p => { const a = p.params.arrangement || { preset: 'Deposit' }; return PRESETS[a.preset](p.deposits.map(d => byId.get(d.id)), a.seed).map(c => c.id); };
-const ASSEMBLY_DELAY = p => (p.params.voteHours || 48) * 36e5; // time after filling for members to change the defaults
+const defaultOrder = p => { const a = p.params.arrangement || { preset: 'Deposit' }; return (PRESETS[a.preset] || PRESETS.Deposit)(p.deposits.map(d => byId.get(d.id)), a.seed).map(c => c.id); };
 const BUY_DELAY = 24 * 36e5; // a price must be live this long before anyone can buy
 const eligibleCount = f => { let n = 0; for (const c of byId.values()) if (matches(c, f)) n++; return n; };
 const isAddr = a => /^0x[0-9a-f]{40}$/.test(a);
@@ -254,18 +254,16 @@ function targetEth(p) {
   if (!base) return null;
   return t.mode === 'floorPct' ? base * (1 + t.value / 100) : base + t.value;
 }
-// The first host arranges unless members elect someone else.
-const arrangerOf = p => p.arranger || p.hosts[0];
 function view(p) {
-  const order = p.order || deposited(p);
+  // Until the burn, show the order the party's arrangement setting would produce.
+  const order = p.order || (p.deposits.length === SLOTS ? defaultOrder(p) : deposited(p));
   return {
-    ...p, now: now(), orderApproved: !!p.order, arranger: arrangerOf(p), arrangerElected: !!p.arranger, status: status(p), members: members(p), targetEth: targetEth(p),
+    ...p, now: now(), manual: p.params.arrangement?.preset === 'Manual', status: status(p), members: members(p), targetEth: targetEth(p),
     credits: order.map(id => { const d = p.deposits.find(x => x.id === id); return { ...card(byId.get(id), d?.address), card: d?.card, depositorAddr: d?.depositor, claimed: !!d?.claimed }; }),
     perCard: p.sold ? p.sold.perCard : null,
-    assemblyOpensAt: p.fullAt ? p.fullAt + ASSEMBLY_DELAY(p) : null,
     buyOpensAt: p.listing ? p.listing.at + BUY_DELAY : null,
     defaultBelowFloor: belowFloor(p.params.target),
-    deadlock: { LIST: deadlocked(p, 'LIST'), NOMINATE_ARRANGER: deadlocked(p, 'NOMINATE_ARRANGER'), APPROVE_ARRANGEMENT: deadlocked(p, 'APPROVE_ARRANGEMENT') },
+    deadlock: { LIST: deadlocked(p, 'LIST') },
     proposals: p.proposals.map(x => ({ ...x, ...tally(p, x) })),
     eligible: p.eligible ?? (p.eligible = eligibleCount(p.params.filters)),
     floorEth: floor.credit ? floor.credit * SLOTS : null,
@@ -355,25 +353,16 @@ if (!state.parties.length) {
   };
   const a = mk('eights', 'Two Eights Or More', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Eights' }, target: { mode: 'floorPct', value: 40 }, filters: { eights: [2, 3, 4, 5] } }, 51, 6);
   const b = mk('cyan', 'Cyan Plate Only', { minDeposit: 2, voteHours: 48, arrangement: { preset: 'Ink' }, target: { mode: 'fixed', value: 3 }, filters: { colors: ['C'] } }, 23, 4);
-  const c = mk('slip', 'Misregistered', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Rarity' }, target: { mode: 'floorEth', value: 0.5 }, filters: { print: ['Slip', 'Drift', 'Skew', 'Loose', 'Nudge'] } }, 80, 5);
+  const c = mk('slip', 'Misregistered', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Manual' }, target: { mode: 'floorEth', value: 0.5 }, filters: { print: ['Slip', 'Drift', 'Skew', 'Loose', 'Nudge'] } }, 80, 5);
   const snap = q => Object.fromEntries(members(q).map(m => [m.address, m.count]));
   const votesUpTo = (q, cap, skip = []) => { const v = {}; let w = 0; for (const m of members(q)) { if (skip.includes(m.address) || w + m.count > cap) continue; v[m.address] = true; w += m.count; } return v; };
   const T = Date.now();
   const ms = members(c);
   c.fullAt = T - 3 * 864e5;
-  c.order = defaultOrder(c); c.orderSource = 'default';
-  const fl = floor.credit ? floor.credit * SLOTS : 2.4;
-  c.arranger = ms[1].address;
-  c.proposals.push({ id: 1, type: 'NOMINATE_ARRANGER', args: { address: ms[1].address }, by: ms[0].address, at: T - 60 * 36e5, endsAt: T - 12 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 46), executed: true, executedBy: ms[3].address });
-  const printOrder = ['Registered', 'Nudge', 'Slip', 'Skew', 'Drift', 'Loose'];
-  const ord = deposited(c).map(id => byId.get(id)).sort((x, y) => printOrder.indexOf(y.print) - printOrder.indexOf(x.print) || x.id - y.id).map(x => x.id);
-  c.order = ord; c.orderSource = 'arranger'; c.orderPreset = 'Print';
-  const rar = deposited(c).map(id => byId.get(id)).sort((x, y) => x.rank - y.rank).map(x => x.id);
-  c.proposals.push({ id: 2, type: 'APPROVE_ARRANGEMENT', args: { order: rar, preset: 'Rarity (challenge)' }, by: ms[4].address, at: T - 28 * 36e5, endsAt: T + 20 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 40) });
   const v3 = votesUpTo(c, 50, [ms[9].address]); v3[ms[9].address] = false;
-  c.proposals.push({ id: 3, type: 'LIST', args: { mode: 'floorPct', value: -20 }, by: ms[2].address, at: T - 10 * 36e5, endsAt: T + 38 * 36e5, snapshot: snap(c), votes: v3 });
-  c.proposals.push({ id: 4, type: 'LIST', args: { mode: 'floorPct', value: 15 }, by: ms[0].address, at: T - 50 * 36e5, endsAt: T - 2 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 48) });
-  c.chat.push({ address: ms[0].address, text: 'arranger elected. price at floor +15% passed, anyone can execute it.', at: T - 35e5 });
+  c.proposals.push({ id: 1, type: 'LIST', args: { mode: 'floorPct', value: -20 }, by: ms[2].address, at: T - 10 * 36e5, endsAt: T + 38 * 36e5, snapshot: snap(c), votes: v3 });
+  c.proposals.push({ id: 2, type: 'LIST', args: { mode: 'floorPct', value: 15 }, by: ms[0].address, at: T - 50 * 36e5, endsAt: T - 2 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 48) });
+  c.chat.push({ address: ms[0].address, text: 'full. i will hand-arrange: drift and loose along the bottom. price at floor +15% passed, anyone can execute it.', at: T - 35e5 });
   c.chat.push({ address: ms[9].address, text: 'voted no on -20%. not selling below floor.', at: T - 20e5 });
   a.chat.push({ address: a.hosts[0], text: 'twos and up only. 29 slots left.', at: T - 50e5 });
   // An assembled, listed party so the buy and claim flow can be seen.
@@ -381,11 +370,22 @@ if (!state.parties.length) {
   k.fullAt = T - 6 * 864e5;
   k.order = deposited(k).map(id => byId.get(id)).sort((x, y) => x.marks - y.marks).map(x => x.id);
   k.assembled = { by: members(k)[2].address, at: T - 2 * 864e5, number: 1 };
-  k.proposals.push({ id: 1, type: 'APPROVE_ARRANGEMENT', args: { order: k.order, preset: 'Ink' }, by: k.hosts[0], at: T - 5 * 864e5, endsAt: T - 3 * 864e5, snapshot: snap(k), votes: votesUpTo(k, 52), executed: true, executedBy: k.hosts[0] });
-  k.proposals.push({ id: 2, type: 'LIST', args: { mode: 'fixed', value: 3 }, by: k.hosts[0], at: T - 44 * 36e5, endsAt: T - 20 * 36e5, snapshot: snap(k), votes: votesUpTo(k, 47), executed: true, executedBy: members(k)[1].address });
+  k.proposals.push({ id: 1, type: 'LIST', args: { mode: 'fixed', value: 3 }, by: k.hosts[0], at: T - 44 * 36e5, endsAt: T - 20 * 36e5, snapshot: snap(k), votes: votesUpTo(k, 47), executed: true, executedBy: members(k)[1].address });
   k.listing = { mode: 'fixed', value: 3, startEth: 3, at: T - 19 * 36e5, source: 'vote' };
-  k.orderSource = 'vote';
+  k.orderSource = 'Ink';
   k.deadline = T + 10 * 864e5;
+  // Two more assembled parties so the buyer gallery shows a listing and a sale.
+  const y = mk('yellow', 'Yellow Plate Only', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Weight' }, target: { mode: 'floorPct', value: 30 }, filters: { colors: ['Y'] } }, 80, 5);
+  y.fullAt = T - 4 * 864e5; y.order = defaultOrder(y); y.orderSource = 'Weight';
+  y.assembled = { by: y.hosts[0], at: T - 3 * 864e5, number: 2 };
+  y.listing = { mode: 'floorPct', value: 30, startEth: priceEth({ mode: 'floorPct', value: 30 }), at: T - 60 * 36e5, source: 'default' };
+  y.deadline = T + 10 * 864e5; y.description = 'Yellow only, sparse to extreme.';
+  const mg = mk('magenta', 'Magenta Plate Only', { minDeposit: 1, voteHours: 48, arrangement: { preset: 'Rarity' }, target: { mode: 'fixed', value: 2.9 }, filters: { colors: ['M'] } }, 80, 5);
+  mg.fullAt = T - 7 * 864e5; mg.order = defaultOrder(mg); mg.orderSource = 'Rarity';
+  mg.assembled = { by: mg.hosts[0], at: T - 6 * 864e5, number: 3 };
+  mg.listing = { mode: 'fixed', value: 2.9, startEth: 2.9, at: T - 5 * 864e5, source: 'default' };
+  mg.sold = { buyer: '0x00000000000000000000000000000000000b0b0b', price: 2.9, royalty: 0, fee: 0.029, perCard: 2.9 * 0.99 / SLOTS, at: T - 3 * 864e5 };
+  mg.deadline = T + 10 * 864e5; mg.description = 'Magenta only, rarest first.';
   a.description = 'Only Credits with two or more eights in the transaction ID. Arranged by eights, most first.';
   b.description = 'Cyan plate only. One colour, eighty ways. Light to dark.';
   c.description = 'Every print that slipped, drifted, skewed or came loose. Registration errors as the subject.';
@@ -393,7 +393,7 @@ if (!state.parties.length) {
   // In production, demo parties must not attribute invented votes or chat to real people: swap in synthetic addresses.
   if (!DEV) {
     const map = new Map(); const fake = a => { if (!map.has(a)) map.set(a, '0x' + (map.size + 1).toString(16).padStart(40, '0')); return map.get(a); };
-    for (const q of [a, b, c, k]) {
+    for (const q of [a, b, c, k, y, mg]) {
       q.hosts = q.hosts.map(fake);
       q.deposits.forEach(d => { d.address = fake(d.address); d.depositor = fake(d.depositor); });
       if (q.arranger) q.arranger = fake(q.arranger);
@@ -407,7 +407,7 @@ if (!state.parties.length) {
       if (q.assembled) q.assembled.by = fake(q.assembled.by);
     }
   }
-  state.parties = [a, b, c, k];
+  state.parties = [a, b, c, k, y, mg];
   save();
 }
 
@@ -616,7 +616,7 @@ http.createServer(async (req, res) => {
         }
         ids.forEach(id => p.deposits.push({ address: who, depositor: who, card: state.nextCard++, id, at: now() }));
         // At 80 the host's default arrangement applies at once; card holders can vote a different one.
-        if (p.deposits.length === SLOTS) { p.fullAt = now(); p.order = defaultOrder(p); p.orderSource = 'default'; }
+        if (p.deposits.length === SLOTS) p.fullAt = now();
         save(); return json(res, 200, view(p));
       }
       if (c === 'withdraw') {
@@ -639,15 +639,11 @@ http.createServer(async (req, res) => {
       if (c === 'propose') {
         if (st !== 'FULL' && st !== 'ASSEMBLED') return json(res, 400, { error: 'proposals open once the party is full' });
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
-        // APPROVE_ARRANGEMENT is created only through /arrange, which checks the arranger and the order.
-        const allowed = st === 'FULL' ? ['NOMINATE_ARRANGER', 'LIST'] : ['LIST', 'CANCEL_LISTING']; // proceeds are claimed per card after a sale; no DISTRIBUTE vote
+        // Only prices are voted on. Arrangement is a party setting; the host is the only arranger.
+        const allowed = st === 'FULL' ? ['LIST'] : ['LIST', 'CANCEL_LISTING'];
         if (!allowed.includes(x.type)) return json(res, 400, { error: `${String(x.type).slice(0, 40)} not allowed while ${st}` });
         if (p.proposals.filter(q => q.by === who && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 open proposals per member' });
-        if (x.type === 'NOMINATE_ARRANGER') {
-          const nominee = addr(x.args?.address);
-          if (!isAddr(nominee) || !p.deposits.some(d => d.address === nominee)) return json(res, 400, { error: 'the nominee must be a member' });
-          x.args = { address: nominee };
-        } else if (x.type !== 'LIST') x.args = {};
+        if (x.type !== 'LIST') x.args = {};
         if (x.type === 'LIST') {
           // Any price may be proposed, including below the floor. Only a vote sets it.
           const t = cleanTarget(x.args);
@@ -674,41 +670,29 @@ http.createServer(async (req, res) => {
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         const t = tally(p, prop);
         if (!t.executable) return json(res, 400, { error: prop.executed ? 'already executed' : prop.superseded ? 'superseded by a later decision' : !t.closed ? 'voting is still open' : t.lapsed ? 'lapsed: not executed within 7 days' : 'did not pass' });
-        const RUNS_IN = { NOMINATE_ARRANGER: ['FULL'], APPROVE_ARRANGEMENT: ['FULL'], LIST: ['FULL', 'ASSEMBLED'], CANCEL_LISTING: ['ASSEMBLED'], };
+        const RUNS_IN = { LIST: ['FULL', 'ASSEMBLED'], CANCEL_LISTING: ['ASSEMBLED'] };
         if (!RUNS_IN[prop.type]?.includes(st)) return json(res, 400, { error: `${prop.type} cannot run while ${st}` });
-        if (prop.type === 'APPROVE_ARRANGEMENT' && !validOrder(p, prop.args.order)) return json(res, 400, { error: 'order no longer matches the party' });
         prop.executed = true; prop.executedBy = who;
-        if (prop.type === 'NOMINATE_ARRANGER') p.arranger = prop.args.address;
-        if (prop.type === 'APPROVE_ARRANGEMENT') { p.order = prop.args.order; p.orderSource = 'vote'; }
         if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: now(), source: 'vote' };
         if (prop.type === 'CANCEL_LISTING') p.listing = null;
         // Executing one proposal supersedes every other pending proposal of the same kind (no stale re-runs).
         for (const q of p.proposals) if (q !== prop && !q.executed && kindOf(q.type) === kindOf(prop.type)) q.superseded = true;
         save(); return json(res, 200, view(p));
       }
-      if (c === 'arrange') {
-        if (st !== 'FULL') return json(res, 400, { error: 'arranging happens only while the party is full' });
-        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
-        const order = Array.isArray(x.order) ? x.order.slice(0, SLOTS + 1).map(Number) : [];
-        if (!validOrder(p, order)) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });
-        // The arranger (host by default) sets the order directly, no vote. Anyone else's order becomes a challenge vote.
-        if (who === arrangerOf(p)) {
-          p.order = order; p.orderSource = 'arranger'; p.orderPreset = String(x.preset || 'Manual').slice(0, 60);
-          save(); return json(res, 200, view(p));
-        }
-        if (p.proposals.filter(q => q.type === 'APPROVE_ARRANGEMENT' && q.by === who && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 open challenges per member' });
-        const at = now();
-        p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: String(x.preset || 'custom').slice(0, 60) }, by: who, at, endsAt: at + windowMs(x.hours, p), override: deadlocked(p, 'APPROVE_ARRANGEMENT'), snapshot: Object.fromEntries(members(p).map(m => [m.address, m.count])), votes: { [who]: true } });
-        save(); return json(res, 200, view(p));
-      }
       if (c === 'assemble') {
-        // Simulated: the Statement contract is not public yet. Any member may call once the order is approved.
-        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
+        // One step: the arrangement is fixed and the 80 are burned together. Simulated until the Statement contract is public.
+        // Auto arrangement: any card holder may burn; the order comes from the party setting at that moment.
+        // Manual arrangement: only a host may burn, sending the hand-made order with the call.
+        if (!p.deposits.some(d => d.address === who) && !p.hosts.includes(who)) return json(res, 403, { error: 'members only' });
         if (st !== 'FULL') return json(res, 400, { error: 'party is ' + st });
-        if (!p.order || !validOrder(p, p.order)) return json(res, 400, { error: 'the arrangement has not been approved' });
-        const opensAt = (p.fullAt || 0) + ASSEMBLY_DELAY(p);
-        if (now() < opensAt) return json(res, 400, { error: `assembly opens in ${Math.ceil((opensAt - now()) / 36e5)}h, so card holders can change the defaults first` });
-        if (p.proposals.some(q => q.type === 'APPROVE_ARRANGEMENT' && !q.executed && !q.superseded && !tally(p, q).closed)) return json(res, 400, { error: 'an arrangement vote is still open' });
+        let order, source;
+        if (p.params.arrangement?.preset === 'Manual') {
+          if (!p.hosts.includes(who)) return json(res, 403, { error: 'this party is arranged by hand: only the host can burn it' });
+          order = Array.isArray(x.order) ? x.order.slice(0, SLOTS + 1).map(Number) : [];
+          if (!validOrder(p, order)) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });
+          source = 'Manual';
+        } else { order = defaultOrder(p); source = p.params.arrangement?.preset || 'Deposit'; }
+        p.order = order; p.orderSource = source;
         p.assembled = { by: who, at: now(), number: state.parties.filter(q => q.assembled).length + 1 };
         // The host's default price goes live at assembly unless card holders already voted a price.
         if (!p.listing) p.listing = { ...p.params.target, startEth: priceEth(p.params.target), at: now(), source: 'default' };

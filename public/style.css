@@ -191,3 +191,12 @@ form.new{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
 .desc{text-transform:none;font-size:13px;max-width:620px;margin:8px 0 4px}
 .card-desc{text-transform:none;font-size:12px;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .field textarea{border:0;border-bottom:1px solid var(--line);background:none;padding:3px 0;width:100%;text-transform:none;font-size:12px;resize:vertical}
+
+.alert-c{color:var(--c)}
+.chips button[data-arr="Manual"][aria-pressed=true]{color:var(--c);text-decoration-color:var(--c)}
+
+.price-line{display:flex;gap:10px;align-items:baseline}
+.price-line strong{font-size:16px;font-weight:700}
+.price-line .muted{margin-left:auto}
+.buy-box{border:1px solid var(--ink);padding:18px 20px;margin-top:32px}
+.buy-box .big{font-size:20px}
