@@ -1,0 +1,12 @@
+{
+  "name": "statement-maker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "traits": "node scripts/traits.mjs",
+    "dev": "node server.mjs"
+  },
+  "dependencies": {
+    "viem": "^2.56.8"
+  }
+}
