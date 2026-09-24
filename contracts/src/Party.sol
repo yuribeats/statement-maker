@@ -565,7 +565,7 @@ contract Party is Initializable, ReentrancyGuardTransient {
         if (f.issuedAt < lastFloorAt) revert Bad("older floor");
         lastFloorAt = f.issuedAt;
         if (!factory.isValidFloor(f.floorWei, uint8(_params.floorMode), f.issuedAt, f.sig)) revert Bad("floor sig");
-        if (f.floorWei == 0) revert Bad("floor");
+        if (f.floorWei == 0 || f.floorWei > 1e30) revert Bad("floor"); // bound keeps int256 casts and FloorPct math in range
         return f.floorWei;
     }
 

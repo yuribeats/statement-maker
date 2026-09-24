@@ -554,7 +554,8 @@ contract Handler is Test {
         }
         bool statusOk = cancel ? (st == Party.Status.ASSEMBLED && p.ask() > 0) : (st == Party.Status.FULL || st == Party.Status.ASSEMBLED);
         bool expected = statusOk && cards.heldNow(address(p), who) > 0 && cards.heldAt(address(p), who, block.number - 1) > 0
-            && open < 3 && (cancel || (_priceOk(price) && h != 25 && d <= 72)); // no lifetime cap; cancels always run 24h
+            && open < 3 && (cancel || (_priceOk(price) && h != 25 && d <= 72
+                && (price.mode == Party.PriceMode.Fixed || p.params().minAskWei > 0))); // no lifetime cap; cancels always run 24h; floor-relative needs a host minimum ask
         bool expectDeadlock = _deadlockModel(p);
 
         curAction = PROPOSE;

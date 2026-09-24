@@ -54,7 +54,7 @@ Borrowed from PartyGovernance.sol: propose → vote → close → execute. No ho
 Time limits: each proposal has a voting window of 24 h, 48 h, 72 h or 7 days, chosen by the proposer (party default set by hosts, 48 h). A passed proposal must be executed within 7 days of closing or it lapses.
 Vote weight = ERC721Votes checkpoint at creation block − 1 (stops buy-vote-sell and flash loans; Party uses the same offset).
 **Pass rule:** 1 card = 1 vote, weight = cards held at proposal creation (snapshot). Passes with YES ≥ 41 of 80 AND zero NO.
-- Below floor: a LIST priced below the floor at creation or execution needs YES ≥ 60 (75%), still zero NO.
+- Below floor: a LIST priced below the floor at execution needs YES ≥ 60 (75%), still zero NO.
 - Deadlock escape: after 3 NO-blocked proposals of a kind, or 30 days since FULL/assembly without one executing, a new proposal of that kind passes with YES ≥ 54 (2/3) and NO is ignored. Below-floor prices still need 60.
 - Dust veto: impossible — cards are whole (ERC-721).
 - Executing a proposal supersedes every other pending proposal of the same kind.
