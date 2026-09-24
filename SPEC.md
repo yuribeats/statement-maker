@@ -26,6 +26,10 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 ## 3. Per-sheet governance (binding, on-chain) — Party-style
 Borrowed from PartyGovernance.sol: propose → vote → passThresholdBps → executionDelay → execute; host veto; rage quit.
 Vote weight = ERC20Votes checkpoint at the proposal's creation block (stops buy-vote-sell, which matters now that tokens trade).
+**Pass rule:** YES weight > 50% of total supply (more than 40 of 80 tokens) AND NO weight = 0 when voting closes. Any NO vote kills the proposal. No host veto (the NO rule replaces it).
+Guard options (undecided):
+- Dust veto: with 18 decimals, 0.000000000000000001 token can block every proposal. Option: a NO counts only from holders of ≥ 1 whole token at the snapshot.
+- Permanent deadlock: one holder can block every sale forever, leaving the Statement stuck in the vault. Option: after N failed proposals or T days, the same proposal can pass by supermajority (e.g. 2/3) despite NO votes; or dissenters may redeem at the listed price.
 Proposal types (closed set, no arbitrary calls):
 - Pre-assembly: NOMINATE_ARRANGER (address), APPROVE_ARRANGEMENT (80-id array hash), ASSEMBLE
 - Post-assembly: LIST (price, venue, duration) · ACCEPT_OFFER (offer id, min price) · AUCTION (reserve, duration) · CANCEL_LISTING · DISTRIBUTE
@@ -66,7 +70,7 @@ One page per sheet: 8×10 frame, member list with token balances, chat, open pro
 - Text buttons only (underline when pressed), no fills, no rounded corners.
 
 ## 8. Open decisions
-- Pass thresholds and host veto (who is host).
+- Pass rule guards: dust-veto minimum, deadlock escape (§3).
 - Chat readable by public or members only.
 - Fork Party Protocol governance or build on OZ Governor/ERC20Votes.
 
