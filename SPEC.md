@@ -42,11 +42,11 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 
 - Every setting is a DEFAULT that runs automatically; depositing accepts the defaults; card holders can change any of them by vote.
   - Name (≤ 60) and description (≤ 1,000), plain text.
-  - Default arrangement: one auto-order preset (Deposit order, Number, Time, Rarity, Colors, Print, Weight, Eights, Ink, Random with a published seed). Applied the moment the party fills.
+  - Arrangement: one auto-order preset (Deposit order, Number, Time, Rarity, Colors, Print, Weight, Eights, Ink, Random with a published seed) or Manual.
   - Default price: goes live at assembly unless card holders already voted a price.
   - Default voting window.
-- Arranging: the host is the default arranger. The arranger may save any order (auto or manual) at any time while FULL; it takes effect at once, no vote. Any card holder may challenge with a different order (APPROVE_ARRANGEMENT vote) or propose a new arranger (NOMINATE_ARRANGER). Neither vote is required before the burn.
-- Assembly opens one voting window after the party fills (default 48 h), and waits for any open arrangement challenge to close.
+- Arranging: the host is the ONLY arranger. Arrangement is a party setting: an auto-order preset, or Manual (host orders by hand; flagged cyan in the UI). No arranger or arrangement votes.
+- Arranging and burning are ONE step: auto-order → any card holder burns and the preset is applied at that moment; Manual → only the host burns, sending the hand-made order in the same call. UI asks for a second confirmation.
 - Buying opens 24 h after a price goes live (default or voted), so card holders can react before a sale.
 
 ## 4. Party governance (binding, on-chain) — Party-style
@@ -159,3 +159,8 @@ One page per party: 8×10 frame, member list with Credit Card balances, chat, op
 - POSTs from another origin are refused.
 - Simulated wallets exist only in dev builds (`/api/auth/dev`), not registered when NODE_ENV=production.
 - Ownership: the server follows Credits Transfer events from the snapshot block (every 30 s) and re-reads `ownerOf` on-chain for each Credit at deposit. The real vault counts only Credits it actually receives.
+
+## 12. Buyers and cards
+- Statements gallery is buyer-first: For sale (sortable by price or newest, with buy countdowns), Sold, Not listed, Yours. Buy from the Statement page or the party page.
+- Credit Cards are ERC-721s and can be listed and traded on OpenSea or any marketplace. Only the Statement is restricted to sale on Statement Maker.
+- "Try it" page: a browser-only simulation of hosting a party end to end, using real Credits and invented members.
