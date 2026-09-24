@@ -64,17 +64,7 @@
   ],
   "redirects": [
     {
-      "source": "/sepolia.html",
-      "destination": "/",
-      "permanent": false
-    },
-    {
-      "source": "/sepolia",
-      "destination": "/",
-      "permanent": false
-    },
-    {
-      "source": "/sepolia.js",
+      "source": "/sepolia(.*)",
       "destination": "/",
       "permanent": false
     }
