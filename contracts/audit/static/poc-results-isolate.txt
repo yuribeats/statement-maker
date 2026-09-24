@@ -1,0 +1,27 @@
+No files changed, compilation skipped
+
+Ran 7 tests for test/Poc.t.sol:PocTest
+[PASS] test_gas_assemble_deposit() (gas: 21614754)
+Logs:
+  assemble gas deposit preset: 7079270
+
+[PASS] test_gas_assemble_rarity_and_ink() (gas: 35173411)
+Logs:
+  assemble gas rarity (local mock statement): 12218123
+
+[PASS] test_gas_redeem_worst() (gas: 20297048)
+Logs:
+  redeem gas, slot 0 of 79: 641780
+  redeem gas, 59 cards front-first: 6309945
+
+[PASS] test_poc_cancelRacesBuy() (gas: 22068833)
+[PASS] test_poc_floorKeySetsLowAsk() (gas: 19655392)
+[PASS] test_poc_proposalCapExhaustion_oneCard() (gas: 200164220)
+Logs:
+  attacker addresses: 86
+  total propose gas for 256: 168722961
+
+[PASS] test_poc_selfBlockDeadlock() (gas: 18423681)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 507.33ms (659.41ms CPU time)
+
+Ran 1 test suite in 510.11ms (507.33ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

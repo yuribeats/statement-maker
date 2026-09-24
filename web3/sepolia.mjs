@@ -4,12 +4,8 @@ import { createPublicClient, createWalletClient, custom, http, parseEther, forma
 import { sepolia } from 'viem/chains';
 import ABIS from './abis.json';
 
-const ADDR = {
-  credits: '0x1EA1a6f2f4428b646DE596498407d41613c75381',
-  factory: '0xC42EECC0BC4c6122902752f8f286d64f3Ab3777C',
-  cards: '0xD00863d45418F8F62412dF05291C898794525F8b',
-  probe: '0x764c1bE51B6E0Ea6C870c9F57075C68E5Bbaf260',
-};
+import ADDR from './sepolia-addresses.json';
+const STMT_ABI = parseAbi(['function ownerOf(uint256) view returns (address)', 'function next() view returns (uint256)', 'function setApprovalForAll(address,bool)', 'function isApprovedForAll(address,address) view returns (bool)']);
 const CREDITS_ABI = parseAbi([
   'function tokensOf(address) view returns (uint256[])',
   'function tokenURI(uint256) view returns (string)',
@@ -41,7 +37,7 @@ const provider = FORK
 // Reads go through the wallet's own connection (the site's security policy allows no outside connections).
 const pub = createPublicClient({ chain: sepolia, transport: FORK ? http(FORK) : custom(window.ethereum || { request: async () => { throw new Error('no wallet'); } }) });
 let wallet = null, me = null;
-const S = { parties: [], sel: null, party: null, credits: [], picks: new Set(), cardPicks: new Set(), log: [], busy: false };
+const S = { parties: [], sel: null, party: null, credits: [], picks: new Set(), cardPicks: new Set(), log: [], busy: false, stmts: [], listings: [] };
 
 function log(t, hash) { S.log.unshift({ t, hash, at: new Date().toLocaleTimeString() }); draw(); }
 
@@ -82,14 +78,24 @@ async function refresh() {
   const addrs = await Promise.all([...Array(n).keys()].map(i => read({ address: ADDR.factory, abi: ABIS.Factory }, 'parties', [BigInt(i)])));
   S.parties = await Promise.all(addrs.map(async a => ({ addr: a, name: (await read(P(a), 'params')).name, status: STATUS[await read(P(a), 'status')], count: Number(await read(P(a), 'count')) })));
   S.credits = (await read({ address: ADDR.credits, abi: CREDITS_ABI }, 'tokensOf', [me])).map(Number);
+  // Statements (stand-in contract): which ones you own, and which are listed on the Statement Market.
+  const nextS = Number(await read({ address: ADDR.statement, abi: STMT_ABI }, 'next'));
+  const ids = [...Array(Math.max(0, nextS - 1)).keys()].map(i => BigInt(i + 1));
+  const owners = await Promise.all(ids.map(id => read({ address: ADDR.statement, abi: STMT_ABI }, 'ownerOf', [id]).catch(() => null)));
+  S.stmts = ids.map((id, i) => ({ id, owner: owners[i] }));
+  S.listings = ADDR.market ? (await Promise.all(ids.map(async id => {
+    const [seller, price] = await read({ address: ADDR.market, abi: ABIS.Market }, 'listings', [id]);
+    const live = await read({ address: ADDR.market, abi: ABIS.Market }, 'isLive', [id]);
+    return live ? { id, seller, price } : null;
+  }))).filter(Boolean) : [];
   if (S.sel) await loadParty(S.sel);
   draw();
 }
 
 async function loadParty(a) {
   const c = P(a);
-  const [params, status, count, deadline, ask, askLiveAt, perCard, nProps, host, timeUnit, order, owed, epoch] = await Promise.all(
-    ['params', 'status', 'count', 'deadline', 'ask', 'askLiveAt', 'perCard', 'proposalCount', 'host', 'timeUnit', 'depositOrder', 'owed', 'priceEpoch']
+  const [params, status, count, deadline, ask, buyableAt, perCard, nProps, host, timeUnit, order, owed, epoch] = await Promise.all(
+    ['params', 'status', 'count', 'deadline', 'ask', 'buyableAt', 'perCard', 'proposalCount', 'host', 'timeUnit', 'depositOrder', 'owed', 'priceEpoch']
       .map(f => read(c, f, f === 'owed' ? [me] : [])));
   const cards = await Promise.all(order.map(id => read(c, 'cardOfCredit', [id])));
   const holders = await Promise.all(cards.map(cd => read({ address: ADDR.cards, abi: ABIS.Cards }, 'ownerOf', [cd]).catch(() => null)));
@@ -104,7 +110,7 @@ async function loadParty(a) {
     myCards = mine.filter((id, i) => own[i] === me);
   }
   const props = await Promise.all([...Array(Number(nProps)).keys()].map(async i => ({ i, ...(await read(c, 'proposal', [BigInt(i)])), my: Number(await read(c, 'voteOf', [BigInt(i), me])) })));
-  S.party = { a, params, status: STATUS[status], count: Number(count), deadline: Number(deadline), ask, askLiveAt: Number(askLiveAt), perCard, props, host, timeUnit: Number(timeUnit), order, myCards, owed, epoch: Number(epoch) };
+  S.party = { a, params, status: STATUS[status], count: Number(count), deadline: Number(deadline), ask, buyAt: Number(buyableAt), perCard, props, host, timeUnit: Number(timeUnit), order, myCards, owed, epoch: Number(epoch) };
 }
 
 // Chain time, not the computer's clock: rules are judged by block timestamps.
@@ -140,7 +146,7 @@ function draw() {
   }
   const p = S.party;
   render(app, `
-  <div class="intro"><div><h1>Statement Maker · Sepolia</h1><p class="muted">Test contracts · ${short(me)} · ${S.credits.length} test Credits · 1 minute = 1 hour</p></div><button type="button" id="reload" class="muted">Refresh</button></div>
+  <div class="intro"><div><h1>Statement Maker · Sepolia</h1><p class="muted">Test contracts ${esc(ADDR.version || '')} · ${short(me)} · ${S.credits.length} test Credits · 1 minute = 1 hour</p></div><button type="button" id="reload" class="muted">Refresh</button></div>
   <div class="store-only"><strong>Sold only on Statement Maker.</strong> A party's Statement can only be sold through its own contract at the party's price. Credit Cards can be traded anywhere.</div>
   <div class="works">
    <section>
@@ -155,13 +161,20 @@ function draw() {
      <div class="field"><label>Minimum deposit</label><input id="md" type="number" value="1" min="1" max="80"></div>
      <div class="field"><label>Deadline, days</label><div><input id="dd" type="number" value="3" min="1" max="60"><div class="hint">1 day here = 24 minutes</div></div></div>
      <div class="field"><label>Default price, ETH</label><input id="dp" type="number" step="0.001" value="0.01"></div>
-     <p class="note">Your connected wallet then deposits the Credits you select below: at least the minimum.</p>
-     <button class="cta" id="create" ${S.busy ? 'disabled' : ''}>Open party</button>
+     <div class="field"><label>Buy wait, hours</label><div><input id="bw" type="number" min="0" max="72" value="1"><div class="hint">0–72 · here 1 hour = 1 minute</div></div></div>
+     <p class="alert-k">Your connected wallet opens the party by depositing the Credits you select below: at least the minimum, all meeting the criteria.</p>
+     <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1%; each of the 80 Credit Cards receives 1/80 of the other 99%.</div>
+     <button class="cta" id="create" ${S.busy || !S.picks.size ? 'disabled' : ''}>Open party and deposit ${S.picks.size}</button>
     </div>
     <div class="panel"><h2>Your test Credits · ${S.credits.length}</h2>
      <p class="muted">Select Credits to deposit into the selected party.</p>
      <div class="actions"><button type="button" id="pick80">Select all</button><button type="button" id="pick0">Clear</button><span>${S.picks.size} selected</span></div>
      <div class="rows" style="max-height:220px;overflow:auto">${S.credits.map(id => `<div><span><label class="check"><input type="checkbox" data-pick="${id}" ${S.picks.has(id) ? 'checked' : ''}> Credit #${id}</label></span><strong></strong></div>`).join('')}</div>
+    </div>
+    <div class="panel"><h2>Statement market</h2>
+     ${!ADDR.market ? '<p class="muted">Not deployed in this version.</p>' : `
+     ${S.listings.length ? `<div class="rows">${S.listings.map(l => `<div><span>Statement #${l.id} · ${short(l.seller)}</span><strong>${eth(l.price)} ${l.seller === me ? `<button type="button" data-unlist="${l.id}">Cancel</button>` : `<button type="button" class="cta" data-mbuy="${l.id}" data-price="${l.price}">Buy</button>`}</strong></div>`).join('')}</div>` : '<p class="muted">Nothing listed.</p>'}
+     ${S.stmts.filter(x => x.owner === me && !S.listings.some(l => l.id === x.id)).map(x => `<div class="actions"><span>You own Statement #${x.id}</span><input id="lp${x.id}" type="number" step="0.001" value="0.05" style="width:80px"> ETH <button type="button" data-list="${x.id}">List (1% fee on sale)</button></div>`).join('')}`}
     </div>
     <div class="panel"><h2>Transactions</h2><div class="rows">${S.log.slice(0, 20).map(l => `<div><span>${l.at}</span><strong style="text-transform:none;text-align:left">${esc(l.t)} ${l.hash ? `<a href="https://sepolia.etherscan.io/tx/${l.hash}" target="_blank" rel="noopener noreferrer">↗</a>` : ''}</strong></div>`).join('') || '<p class="muted">None yet.</p>'}</div></div>
    </section>
@@ -172,7 +185,7 @@ function draw() {
 function partyView(p) {
   const t = now();
   const isHost = p.host === me;
-  const buyAt = p.askLiveAt + 24 * p.timeUnit;
+  const buyAt = p.buyAt;
   return `<div class="panel"><h2>${esc(p.params.name)} · ${p.status}</h2>
     <div class="rows">
      <div><span>Contract</span><strong><a href="https://sepolia.etherscan.io/address/${p.a}" target="_blank" rel="noopener noreferrer">${short(p.a)} ↗</a></strong></div>
@@ -196,6 +209,7 @@ function partyView(p) {
     <h2 style="margin:24px 0 8px">Price votes</h2>
     <div class="actions"><span class="muted">Propose</span><input id="pp" type="number" step="0.001" value="0.02" style="width:90px"> ETH
      <select id="ph">${[24, 48, 72, 168].map(h => `<option value="${h}">${h} min</option>`).join('')}</select>
+     <span class="muted">buy wait</span><input id="pbw" type="number" min="0" max="72" value="${Number(p.params.buyDelayHours)}" style="width:50px">
      <button type="button" id="propose">Propose price</button>${p.status === 'ASSEMBLED' && p.ask ? '<button type="button" id="cancel">Propose cancel</button>' : ''}</div>
     ${p.props.slice().reverse().map(q => {
       const open = t < Number(q.endsAt), lapsed = t > Number(q.endsAt) + 168 * p.timeUnit;
@@ -213,14 +227,19 @@ function bind() {
   $('#pick80')?.addEventListener('click', () => { S.credits.slice(0, 80).forEach(id => S.picks.add(id)); draw(); });
   $('#pick0')?.addEventListener('click', () => { S.picks.clear(); draw(); });
   $('#create')?.addEventListener('click', async () => {
+    const ids = [...S.picks].map(BigInt);
+    // The party's address is known before it exists: approve it, create + deposit in one transaction, then revoke.
+    const predicted = await read({ address: ADDR.factory, abi: ABIS.Factory }, 'predictParty', [me]);
+    if (!(await tx('Approve the new party to move your Credits', { address: ADDR.credits, abi: CREDITS_ABI, functionName: 'setApprovalForAll', args: [predicted, true] }))) return;
     const params = {
       name: $('#n').value, description: 'Sepolia test party', filters: 'any', eligibleRoot: '0x' + '00'.repeat(32),
       minDeposit: Number($('#md').value), durationDays: Number($('#dd').value), voteHours: 48, arrangement: Number($('#pre').value),
       seed: BigInt(Math.floor(Math.random() * 1e9)), defaultPrice: { mode: 0, value: parseEther(String($('#dp').value)) }, floorMode: 0,
+      minAskWei: 0n, buyDelayHours: Number($('#bw').value),
     };
     const before = S.parties.length;
-    if (await tx('Open party', { address: ADDR.factory, abi: ABIS.Factory, functionName: 'createParty', args: [params] })) S.sel = S.parties[before]?.addr || S.sel;
-    await refresh();
+    if (await tx(`Open party + deposit ${ids.length}`, { address: ADDR.factory, abi: ABIS.Factory, functionName: 'createParty', args: [params, ids, []], gas: 25_000_000n })) { S.picks.clear(); S.sel = predicted; }
+    await tx('Revoke approval', { address: ADDR.credits, abi: CREDITS_ABI, functionName: 'setApprovalForAll', args: [predicted, false] });
   });
   $('#deposit')?.addEventListener('click', async () => {
     const ids = [...S.picks].map(BigInt);
@@ -237,14 +256,23 @@ function bind() {
     const order = await buildOrder();
     tx('Burn the 80', { ...P(S.party.a), functionName: 'assemble', args: [order, noFloor], gas: 20_000_000n });
   });
-  $('#propose')?.addEventListener('click', () => tx('Propose price', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: parseEther(String($('#pp').value)) }, false, Number($('#ph').value)] }));
-  $('#cancel')?.addEventListener('click', () => tx('Propose cancel', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: 0n }, true, 24] }));
+  $('#propose')?.addEventListener('click', () => tx('Propose price', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: parseEther(String($('#pp').value)) }, false, Number($('#ph').value), Number($('#pbw').value)] }));
+  $('#cancel')?.addEventListener('click', () => tx('Propose cancel', { ...P(S.party.a), functionName: 'propose', args: [{ mode: 0, value: 0n }, true, 24, 0] }));
   document.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => tx(`Vote ${b.dataset.yes === '1' ? 'yes' : 'no'} on #${b.dataset.vote}`, { ...P(S.party.a), functionName: 'vote', args: [BigInt(b.dataset.vote), b.dataset.yes === '1'] }));
   document.querySelectorAll('[data-exec]').forEach(b => b.onclick = async () => {
     let f = noFloor;
     try { f = await floorSig(S.party.params.floorMode); } catch (e) { return log('Floor reading unavailable: ' + e.message); }
     tx(`Execute #${b.dataset.exec}`, { ...P(S.party.a), functionName: 'execute', args: [BigInt(b.dataset.exec), f] });
   });
+  document.querySelectorAll('[data-list]').forEach(b => b.onclick = async () => {
+    const id = BigInt(b.dataset.list), price = parseEther(String($('#lp' + b.dataset.list).value));
+    if (!(await read({ address: ADDR.statement, abi: STMT_ABI }, 'isApprovedForAll', [me, ADDR.market]))) {
+      if (!(await tx('Approve the market for your Statements', { address: ADDR.statement, abi: STMT_ABI, functionName: 'setApprovalForAll', args: [ADDR.market, true] }))) return;
+    }
+    tx(`List Statement #${id}`, { address: ADDR.market, abi: ABIS.Market, functionName: 'list', args: [id, price] });
+  });
+  document.querySelectorAll('[data-unlist]').forEach(b => b.onclick = () => tx(`Cancel listing #${b.dataset.unlist}`, { address: ADDR.market, abi: ABIS.Market, functionName: 'cancel', args: [BigInt(b.dataset.unlist)] }));
+  document.querySelectorAll('[data-mbuy]').forEach(b => b.onclick = () => tx(`Buy Statement #${b.dataset.mbuy}`, { address: ADDR.market, abi: ABIS.Market, functionName: 'buy', args: [BigInt(b.dataset.mbuy), BigInt(b.dataset.price)], value: BigInt(b.dataset.price) }));
   $('#buy')?.addEventListener('click', () => tx('Buy the Statement', { ...P(S.party.a), functionName: 'buy', args: [S.party.ask], value: S.party.ask }));
   $('#claim')?.addEventListener('click', () => tx(`Claim ${S.party.myCards.length} cards`, { ...P(S.party.a), functionName: 'claim', args: [S.party.myCards] }));
   $('#withdraw')?.addEventListener('click', () => tx('Withdraw', { ...P(S.party.a), functionName: 'withdraw', args: [] }));
