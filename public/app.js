@@ -47,6 +47,8 @@ const svg = id => `/api/svg/${Number(id)}`;
 const hrs = ms => ms <= 0 ? '0h' : ms < 36e5 ? Math.ceil(ms / 6e4) + 'm' : Math.ceil(ms / 36e5) + 'h';
 const ago = t => { const s = (Date.now() - t) / 1e3; return s < 3600 ? Math.max(1, Math.round(s / 60)) + 'm' : s < 86400 ? Math.round(s / 3600) + 'h' : Math.round(s / 86400) + 'd'; };
 const SLOTS = 80;
+// One deposit transaction moves at most 40 Credits (opening with 80 in one measured 14.92M gas, near the 16.7M cap).
+const MAX_DEP = 40, DEP_CAP_NOTE = 'Up to 40 per transaction; deposit the rest in a second step.';
 let launchBust = 0; // set by any write from this tab, so the next GET /api/launch skips the 30 s CDN copy
 const api = async (path, body) => {
   if (body) launchBust = Date.now();
@@ -154,7 +156,7 @@ const WEIGHT_ORDER = ['sparse', 'lean', 'even', 'extreme'];
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const PRESETS = {
   Number: cs => [...cs].sort((a, b) => a.id - b.id),
-  Time: cs => [...cs].sort((a, b) => a.paidAt - b.paidAt),
+  Time: cs => [...cs].sort((a, b) => a.id - b.id), // Party: Time == ascending token id (payment times never decrease with id)
   Rarity: cs => [...cs].sort((a, b) => a.rank - b.rank),
   Colors: cs => [...cs].sort((a, b) => COLOR_ORDER.indexOf(a.colors) - COLOR_ORDER.indexOf(b.colors) || a.id - b.id),
   Print: cs => [...cs].sort((a, b) => PRINT_ORDER.indexOf(b.print) - PRINT_ORDER.indexOf(a.print) || a.id - b.id),
@@ -203,7 +205,7 @@ const priceOf = (t, floorEth) => {
   if (t.mode === 'fixed') return v > 0n ? weiToEth(v) : null;
   if (!Number.isFinite(floorEth) || floorEth <= 0) return null;
   const f = BigInt(Math.round(floorEth * 1e6)) * 10n ** 12n, r = t.mode === 'floorPct' ? f * (10000n + v) / 10000n : f + v;
-  return r > 0n ? weiToEth(r) : null;
+  return r > 0n ? weiToEth(r) : weiToEth(1n); // Pashov M3: <= 0 goes live at the minimum ask (1 wei on the site)
 };
 const priceLabel = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : `Floor ${t.value < 0 ? '−' : '+'} ${Math.abs(t.value)}${t.mode === 'floorPct' ? '%' : ' ETH'}`);
 const vsFloor = (eth, floorEth) => { if (eth == null || !floorEth) return ''; const d = (eth / floorEth - 1) * 100; return `<span class="${d < 0 ? 'blocked' : 'muted'}">${Math.abs(d).toFixed(0)}% ${d < 0 ? 'below' : 'above'} floor</span>`; };
@@ -226,12 +228,16 @@ const cost = (key, each = '') => {
   const est = (gasInfo?.estimated || []).includes(key) ? 'est.' : 'about';
   return `<span class="faint">${est} ${gasSpan(lo, hi)} gas${each} on-chain${gasMoney(lo, hi)} · nothing is charged in preview</span>`;
 };
-// Burning is the one heavy call: measured 7.37M–12.8M gas by preset (Rarity the most) before the Statement mint itself.
-// With a measured preset, its own figure; otherwise the range.
+// Burning is the one heavy call: measured about 3.95M–4.16M paid gas by preset (Rarity the most), plus the Statement mint
+// itself (unknown until Jack's contract is published). With a measured preset, its own figure (or range); otherwise the range.
+// The price the burn would put live now (server burnPrice, Party.assemble / Pashov H2).
+const burnPriceText = b => !b ? 'The default price then goes live.' : b.error ? `The burn is blocked for now: ${esc(b.error)}.`
+  : `Price that goes live: ${b.priceEth === weiToEth(1n) ? 'the minimum ask (1 wei)' : eth(b.priceEth)}${b.below ? ' (below floor)' : ''} · ${b.source === 'vote' ? `proposal #${Number(b.proposal)}, which passed and is applied as if executed` : b.source === 'executed' ? 'the price voted while full' : 'the host’s default'} · buying opens ${Number(b.waitHours)} hour${b.waitHours === 1 ? '' : 's'} after the burn (never less than 1).`;
+const BURN_GAS_FALLBACK = { min: 3_950_000, max: 4_160_000, byPreset: { Deposit: [3_950_000, 3_970_000], Number: [3_950_000, 3_970_000], Time: [3_950_000, 3_970_000], Manual: 3_980_000, Random: 4_040_000, Print: [4_100_000, 4_120_000], Weight: [4_100_000, 4_120_000], Eights: [4_100_000, 4_120_000], Ink: [4_100_000, 4_120_000], Colors: 4_110_000, Rarity: 4_160_000 } };
 function burnAlert(preset) {
-  const a = gasInfo?.units?.assemble && typeof gasInfo.units.assemble === 'object' ? gasInfo.units.assemble : { min: 7_370_000, max: 12_800_000, byPreset: { Deposit: 7_370_000, Time: 7_610_000, Rarity: 12_800_000 } };
-  const one = preset && preset !== 'Manual' ? (a.byPreset?.[preset] ?? null) : null;
-  const [lo, hi] = one ? [one, one] : [a.min, a.max];
+  const a = gasInfo?.units?.assemble && typeof gasInfo.units.assemble === 'object' ? gasInfo.units.assemble : BURN_GAS_FALLBACK;
+  const one = preset ? (a.byPreset?.[preset] ?? null) : null;
+  const [lo, hi] = one == null ? [a.min, a.max] : Array.isArray(one) ? one : [one, one];
   return `<span class="alert-c burn-gas">Burning 80 Credits into a Statement is gas-intensive: about ${gasSpan(lo, hi)} gas on-chain${gasMoney(lo, hi)}, plus the Statement mint (unknown until Jack’s contract is published), paid entirely by whoever burns. Set your wallet’s gas limit high enough (the per-transaction cap is 16.7M). Nothing is charged in preview.</span>`;
 }
 const depGas = () => `<span class="faint">Preview · your Credits stay in your wallet · nothing moves on-chain ·</span> ${cost('deposit', ' each')}`;
@@ -315,7 +321,7 @@ function logLine(e) {
     propose: () => e.type === 'LIST' ? `Proposed #${Number(e.id)}: sell for ${priceLabel(e.args || {})} · ${eth(e.priceEth)} · ${Number(e.hours)}h vote${e.args?.buyDelayHours != null ? ` · buy wait ${Number(e.args.buyDelayHours)}h` : ''}${e.override ? ' · deadlock rule' : ''}` : `Proposed #${Number(e.id)}: cancel the listing`,
     vote: () => `Voted ${e.yes ? 'yes' : 'no'} on #${Number(e.id)} · ${plural(e.weight, 'card')}${e.timeUnknown ? ' <span class="faint">· time not recorded</span>' : ''}`,
     count: () => `Counted #${Number(e.id)} as blocked`,
-    execute: () => `Executed #${Number(e.id)}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
+    execute: () => `${e.atBurn ? `Applied #${Number(e.id)} at the burn (passed, not yet executed)` : `Executed #${Number(e.id)}`}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
     assemble: () => `Burned the 80 · Statement ${Number(e.number)}${e.arrangement ? ' · ' + esc(e.arrangement === 'Manual' ? 'host’s order' : e.fallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: e.arrangement })) : ''}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}${e.reserveEth != null ? ' · auction opening bid ' + ethx(e.reserveEth) : ''}`,
     raise: () => `Raised the ask to ${eth(e.askEth)}`,
     bid: () => `Bid ${ethx(e.eth)}${e.endsAt ? ' · first bid: the 24-hour timer started' : ''}`,
@@ -478,6 +484,7 @@ async function pageParty(id, opts = {}) {
        <div class="picker">${pickList.slice(0, partyUI.pickShown || 80).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        ${pickList.length > (partyUI.pickShown || 80) ? `<div class="actions"><button type="button" id="pick-more">Show more · ${pickList.length - (partyUI.pickShown || 80)} left</button></div>` : ''}
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
+       <p class="hint">${DEP_CAP_NOTE}</p>
        ${FEE_BOX}
        <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>${p.house ? HOUSE_ACK : PARTY_ACK}</span></label>
        <button class="cta" id="deposit" disabled>Deposit</button> ${depGas()} <span class="hint" id="dep-hint"></span>
@@ -505,8 +512,8 @@ async function pageParty(id, opts = {}) {
        const canBurn = p.manual ? hostBurn || fbBurn : holder;
        return `<div class="prop"><div class="prop-head"><strong>Burn</strong><span class="chip ${!p.manual || fallbackOpen ? 'pass' : 'open'}">${p.house || !p.manual ? 'Any card holder' : fallbackOpen ? 'Any card holder · Time order' : 'Host arranges by hand'}</span></div>
       <p class="muted">${p.house ? 'Arranged in purchase order, earliest first. Any card holder can burn the 80 into the Statement in one step.' : !p.manual ? `Arrangement is locked as ${esc(arrLabel(p.params.arrangement))} (${esc(arrDesc(p.params.arrangement))}). Any card holder can burn the 80 into the Statement in one step.`
-        : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} ${p.house ? `The auction then opens at ${OPENING_BASIS}; its 24-hour timer starts at the first bid.` : 'The default price then goes live.'} Preview: nothing is burned on-chain.</p>
-      ${burnAlert(p.manual ? (fallbackOpen ? 'Time' : null) : p.params.arrangement?.preset)}
+        : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} ${p.house ? `The auction then opens at ${OPENING_BASIS}; its 24-hour timer starts at the first bid.` : burnPriceText(p.burnPrice)} Preview: nothing is burned on-chain.</p>
+      ${burnAlert(p.manual ? (fallbackOpen ? 'Time' : 'Manual') : p.params.arrangement?.preset)}
       ${canBurn ? (partyUI.confirmBurn
         ? `<div class="actions"><span class="blocked">Burning is permanent. The 80 Credits become one Statement.</span><button type="button" class="cta" id="assemble">Confirm burn</button><button type="button" id="burn-x">Cancel</button></div>`
         : `<div class="actions"><button type="button" class="cta" id="burn-ask">${hostBurn ? 'Burn with this order' : fbBurn ? 'Burn in Time order' : 'Burn'}</button></div>`)
@@ -592,15 +599,15 @@ async function pageParty(id, opts = {}) {
   $('#submit-order-legacy')?.addEventListener('click', () => act('arrange', { order: partyUI.order.map(c => c.id), preset: partyUI.preset || 'Deposit order', hours: $('#win')?.value }, 'arr-err'));
   root.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const id = Number(b.dataset.pick); partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); depState(); });
   $('#pick-more')?.addEventListener('click', () => { partyUI.pickShown = (partyUI.pickShown || 80) + 80; route(); });
-  $('#pick-all')?.addEventListener('click', () => { partyUI.picks = new Set(eligibleMine.slice(0, remaining).map(c => c.id)); route(); });
+  $('#pick-all')?.addEventListener('click', () => { partyUI.picks = new Set(eligibleMine.slice(0, Math.min(remaining, MAX_DEP)).map(c => c.id)); route(); });
   $('#pick-none')?.addEventListener('click', () => { partyUI.picks.clear(); route(); });
   // Deposit exactly the Credits picked: at least the party minimum, at most the slots left.
   function depState() {
     const b = $('#deposit'); if (!b) return;
     const k = partyUI.picks.size;
     b.textContent = `Deposit ${k} Credit${k === 1 ? '' : 's'}`;
-    b.disabled = !($('#dep-ack').checked && k >= minDep && k <= remaining);
-    $('#dep-hint').textContent = k < minDep ? `Pick at least ${minDep}` : k > remaining ? `Only ${remaining} slots left` : '';
+    b.disabled = !($('#dep-ack').checked && k >= minDep && k <= remaining && k <= MAX_DEP);
+    $('#dep-hint').textContent = k < minDep ? `Pick at least ${minDep}` : k > remaining ? `Only ${remaining} slots left` : k > MAX_DEP ? `${k} picked. ${DEP_CAP_NOTE}` : '';
   }
   depState();
   $('#dep-ack')?.addEventListener('change', depState);
@@ -610,8 +617,9 @@ async function pageParty(id, opts = {}) {
   root.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { const q = p.proposals.find(x => x.id === Number(b.dataset.preview)); const m = new Map(p.credits.map(c => [c.id, c])); partyUI.mode = 'arrange'; partyUI.order = q.args.order.map(id => m.get(id)); partyUI.preset = 'Proposal ' + q.id; route(); });
   const pricePreview = () => {
     const t = { mode: $('#pm').value, value: +$('#pv').value }; const e = priceOf({ mode: t.mode, value: $('#pv').value }, p.floorEth);
-    render($('#pp'), `= ${eth(e)} ${vsFloor(e, p.floorEth)}`);
-    $('#ph').textContent = t.mode === 'fixed' ? 'Range: above 0 ETH' : t.mode === 'floorPct' ? 'Range: above −100% (floor ' + eth(p.floorEth) + ')' : 'Range: above −' + eth(p.floorEth) + ' (floor ' + eth(p.floorEth) + ')';
+    const minAsk = t.mode !== 'fixed' && e === weiToEth(1n);
+    render($('#pp'), minAsk ? `= the minimum ask (1 wei) <span class="blocked">below floor · needs 60</span>` : `= ${eth(e)} ${vsFloor(e, p.floorEth)}`);
+    $('#ph').textContent = t.mode === 'fixed' ? 'Range: above 0 ETH' : t.mode === 'floorPct' ? 'Range: above −100% (floor ' + eth(p.floorEth) + ')' : 'Floor ' + eth(p.floorEth) + ' · a price at or under 0 goes live at the minimum ask and counts as below the floor';
   };
   if ($('#pm')) { $('#pm').onchange = pricePreview; $('#pv').oninput = pricePreview; pricePreview(); }
   $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', hours: $('#win')?.value, buyDelayHours: Number($('#bw2')?.value ?? 1), args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
@@ -695,7 +703,7 @@ async function pageNew() {
    <div>
     <div class="field"><label for="n">Name</label><div><input id="n" value="${val(draft.name)}" placeholder="Two eights or more" maxlength="60">${hint('Up to 60 characters')}</div></div>
     <div class="field"><label for="ds">Description</label><div><textarea id="ds" rows="3" maxlength="1000" placeholder="What this Statement is about">${val(draft.description)}</textarea>${hint('Up to 1,000 characters')}</div></div>
-    <div class="field"><label for="md">Minimum deposit</label><div><input id="md" type="number" min="1" max="80" value="${val(draft.minDeposit)}">${hint('Range: 1–80 Credits per depositor')}</div></div>
+    <div class="field"><label for="md">Minimum deposit</label><div><input id="md" type="number" min="1" max="${MAX_DEP}" value="${val(draft.minDeposit)}">${hint(`Range: 1–${MAX_DEP} Credits per deposit (one transaction moves up to ${MAX_DEP})`)}</div></div>
     <div class="field"><label for="dd">Deadline, days</label><div><input id="dd" type="number" min="1" max="60" value="${val(draft.days)}">${hint('Range: 1–60 days')}</div></div>
     <div class="field"><label for="vh">Vote window</label><div><select id="vh">${[1, 24, 48, 72, 168].map(h => `<option value="${h}" ${h === (draft.voteHours || 48) ? 'selected' : ''}>${h === 1 ? '1 hour' : h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select>${hint('Range: 1 hour – 7 days · default for this party’s proposals')}</div></div>
     <div class="field"><label>Default arrangement</label><div><div class="chips">${['Time', ...Object.keys(PRESETS).filter(k => k !== 'Time'), 'Deposit', 'Manual'].map(k => `<button type="button" data-arr="${k}" aria-pressed="${(draft.arrangement?.preset || 'Time') === k}">${k === 'Deposit' ? 'Deposit order' : k}</button>`).join('')}</div>
@@ -718,7 +726,7 @@ async function pageNew() {
     <div class="field"><label>Token number</label><div><div style="display:flex;gap:12px"><input id="id0" type="number" min="1" max="${rg.id[1]}" placeholder="From" value="${val(draft.filters.idMin)}"><input id="id1" type="number" min="1" max="${rg.id[1]}" placeholder="To" value="${val(draft.filters.idMax)}"></div>${hint(`Range: ${n(rg.id[0])}–${n(rg.id[1])} · lower numbers paid earlier`)}</div></div>
     <div class="panel" style="margin-top:32px">
      <h2>Your opening deposit</h2>
-     <p class="alert-k">Your connected wallet must deposit at least the minimum number of Credits, and every one must meet the criteria selected above. The party opens with your deposit.</p>
+     <p class="alert-k">Your connected wallet must deposit at least the minimum number of Credits, and every one must meet the criteria selected above. The party opens with your deposit. ${DEP_CAP_NOTE}</p>
      <p class="muted" id="own-note">…</p>
      <div class="picker" id="own-picker"></div>
      <div class="actions"><button type="button" id="own-all">Select the minimum</button><button type="button" id="own-none">Clear</button></div>
@@ -769,7 +777,8 @@ async function pageNew() {
       $('#own-more')?.addEventListener('click', () => { ownShown += 80; drawOwn(); });
     }
     app.querySelectorAll('[data-own]').forEach(b => b.onclick = () => { const id = Number(b.dataset.own); picks.has(id) ? picks.delete(id) : picks.add(id); drawOwn(); });
-    $('#create').disabled = !($('#new-ack').checked && picks.size >= min && picks.size <= SLOTS);
+    $('#create').disabled = !($('#new-ack').checked && picks.size >= min && picks.size <= MAX_DEP);
+    if (picks.size > MAX_DEP) note.textContent += ` ${DEP_CAP_NOTE}`;
     $('#create').textContent = `Open party and deposit ${picks.size} Credit${picks.size === 1 ? '' : 's'}`;
   }
   $('#own-all').onclick = () => { own.filter(c => !c.deposited && matchesClient(c, draft.filters)).slice(0, draft.minDeposit || 1).forEach(c => picks.add(c.id)); drawOwn(); };
@@ -909,7 +918,7 @@ async function pageUser(addr) {
 // Signed in, the server's record is what counts (it rejects every party action without it); the browser flag only
 // carries an agreement made before connecting, and is copied to the wallet's record at sign-in.
 // Launch and full launch have separate rules (and versions); the flag is kept per version.
-const RULES_V = { launch: '2026-09-24.L9', full: '2026-09-24.7' }, TERMS_V = { launch: '2026-09-24.L8', full: '2026-09-24.8' };
+const RULES_V = { launch: '2026-09-24.L10', full: '2026-09-24.8' }, TERMS_V = { launch: '2026-09-24.L9', full: '2026-09-24.8' };
 const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? RULES_V.launch : RULES_V.full);
 const localRules = () => { try { return localStorage.getItem(rulesKey()) === '1'; } catch { return false; } };
 const rulesAgreed = () => (me ? !!access.rules : localRules());
@@ -929,10 +938,10 @@ function launchRuleRows() {
   const dl = stats?.launchDeadline ? new Date(stats.launchDeadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
   return [
    ['01 Four parties', 'In four minutes of the Credits mint, exactly 80 Credits were bought in each: 13:49, 15:05, 15:28 and 16:22 UTC on September 21, 2026. Each minute is one party. Only its 80 Credits can be deposited per party.'],
-   ['02 Deposit', 'Holders deposit any number of their Credits from that minute. Each deposited Credit returns one Credit Card.'],
+   ['02 Deposit', 'Holders deposit any number of their Credits from that minute, up to 40 per transaction; deposit the rest in a second step. Each deposited Credit returns one Credit Card.'],
    ['03 The card', 'Whoever holds a Credit Card can redeem it for its Credit until the party reaches 80, and receives 1/80 of the sale after the 1% fee. Cards can be transferred.'],
    ['04 Order', 'The 80 are arranged in purchase order, earliest first. The order cannot be changed.'],
-   ['05 Burn', 'Once all 80 are deposited, any card holder can burn them into one Statement. Burning is permanent. Whoever burns pays the gas: about 7.6M gas plus the Statement mint.'],
+   ['05 Burn', 'Once all 80 are deposited, any card holder can burn them into one Statement. Burning is permanent. Whoever burns pays the gas: about 4M gas plus the Statement mint.'],
    ['06 Auction', `The Statement is sold by auction on Statement Maker. Opening bid: ${OPENING_BASIS}. Each bid must be at least 0.1 ETH above the last. The 24-hour clock starts with the first bid. A bid in the last 5 minutes moves the end to 5 minutes after that bid. An outbid bid is returned right away, while the auction is still running. The auction ends only after bidding starts.`],
    ['07 Sold only here', 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. The buyer owns it and may resell it anywhere.'],
    ['08 The split', '1% of the sale goes to Statement Maker. The rest goes to card holders, 1/80 per card.'],
@@ -961,15 +970,15 @@ function pageRulesFull() {
   <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div></div>
   <div class="works no-defs"><div class="rows terms">
    <div><span>01 Open</span><strong>A host opens a party and sets its defaults: which Credits qualify, minimum deposit, default arrangement, default price, voting window, deadline.</strong></div>
-   <div><span>02 Deposit</span><strong>Users deposit Credits that match the party’s criteria. Each deposited Credit returns one Credit Card (ERC-721) to the depositor. Depositing accepts the party’s defaults.</strong></div>
+   <div><span>02 Deposit</span><strong>Users deposit Credits that match the party’s criteria. Each deposited Credit returns one Credit Card (ERC-721) to the depositor. Up to 40 per transaction; deposit the rest in a second step. Depositing accepts the party’s defaults.</strong></div>
    <div><span>03 The card</span><strong>Whoever holds a Credit Card has its vote, can redeem its Credit until the party fills or if it expires, and gets 1/80 of the sale. Credit Cards are ERC-721s and can be transferred. The Statement itself sells only here.</strong></div>
-   <div><span>04 Full</span><strong>At 80, redemption closes, and the deadline moves to at least 2 days later so there is time to burn.</strong></div>
+   <div><span>04 Full</span><strong>At 80, redemption closes, and the deadline moves to at least 2 days later so there is time to burn. Price proposals open from the block after the one that filled the party.</strong></div>
    <div><span>05 Arrange</span><strong>The arrangement is a party setting, Time (mint order) by default. The host picks a preset, each ordering by one stated metric, or Manual, where the host states at creation the metric they will order the 80 by. There is no vote on arrangement.</strong></div>
-   <div><span>06 Assemble</span><strong>Arranging and burning are one step. With a preset, any card holder can burn once all 80 are deposited. With Manual, the host burns with their order; if the host has not burned within 1 day of the party filling, the host has no more say and any card holder can burn in Time order. The Statement is held by the party and the default price goes live.</strong></div>
+   <div><span>06 Assemble</span><strong>Arranging and burning are one step. With a preset, any card holder can burn once all 80 are deposited. With Manual, the host burns with their order; if the host has not burned within 1 day of the party filling, the host has no more say and any card holder can burn in Time order. The Statement is held by the party and its price goes live: the most recent price that passed while the party was full, even if nobody executed it (it counts as executed); else a price executed while full; else the host’s default. Buying opens at least 1 hour after the burn.</strong></div>
    <div><span>07 Host</span><strong>The host can change settings until someone else deposits, order and burn a Manual party, and hand hosting to another address. Nothing else: a host without Credit Cards cannot vote, chat or burn a preset party.</strong></div>
    <div><span>08 Sold only here</span><strong>A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s own price; the party contract has no other way to release it. No offers. Each price carries its own wait before buying opens (0–72 hours, at least 1 for a floor-based price), voted with the price (the host sets the default, 1 hour unless changed). After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
    <div><span>09 Split</span><strong>1% to Statement Maker; the rest split across the 80 Credit Cards.</strong></div>
-   <div><span>10 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. Deadlock: only price proposals count toward it, and only once someone records each one with “Count as blocked” (a closed price proposal with 41 or more yes stopped by a no). After 3 counted blocks, or 30 days without a price decision executing, 54 yes passes a proposal and no is ignored.</strong></div>
+   <div><span>10 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60; a floor-based price that works out to 0 or less goes live at the minimum ask and counts as below the floor. Deadlock: only price proposals count toward it, and only once someone records each one with “Count as blocked” (a closed price proposal with 41 or more yes stopped by a no). After 3 counted blocks, or 30 days without a price decision executing, 54 yes passes a proposal and no is ignored.</strong></div>
    <div><span>11 Time</span><strong>Votes run 1 hour to 7 days, chosen by the proposer; a vote to cancel the listing always runs 24 hours. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
    <div><span>12 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
    <div><span>13 The four</span><strong>The four launch Statements (the Minute parties) sell by auction. Opening bid: ${OPENING_BASIS}. There is no timer before the first bid and no fallback: the Statement leaves only through the auction. The 24-hour timer starts at the first bid; each bid at least 0.1 ETH over the last; a bid in the last 5 minutes moves the end to 5 minutes after it. An outbid bid is returned right away, while the auction is still running.</strong></div>
@@ -1033,7 +1042,7 @@ const TERMS_LAUNCH = {
  'Credit Cards': 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of the sale after the 1% fee. Credit Cards can be transferred by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.',
  'Voting': 'There are no price votes. The Statement is sold only by auction. Each Credit Card receives 1/80 of the winning bid after the 1% Statement Maker fee.',
  'Selling': 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker, by auction: the opening bid is 100 × the Credits floor at the burn (24-hour average of OpenSea readings), each bid must be at least 0.1 ETH above the last, the 24-hour clock starts with the first bid, and a bid in the last 5 minutes moves the end to 5 minutes after that bid. An outbid bid is returned right away, while the auction is still running. There is no timer before the first bid and no fallback: the Statement leaves only through the auction. After the sale, the buyer owns it and may resell it anywhere.',
- 'Fees and gas': 'Each sale pays a 1% Statement Maker fee; the rest goes to Credit Card holders, 1/80 per card. Once the contracts are live, every on-chain action (depositing, burning, bidding, settling, claiming) costs gas, paid by whoever calls it; the burn costs about 7.6M gas plus the Statement mint. Statement Maker does not refund gas. In preview nothing costs gas.',
+ 'Fees and gas': 'Each sale pays a 1% Statement Maker fee; the rest goes to Credit Card holders, 1/80 per card. Once the contracts are live, every on-chain action (depositing, burning, bidding, settling, claiming) costs gas, paid by whoever calls it; the burn costs about 4M gas plus the Statement mint. Statement Maker does not refund gas. In preview nothing costs gas.',
  'Your responsibilities': 'You confirm you are of legal age and legally allowed to use this service where you live; that you are not in a sanctioned or embargoed country or on any sanctions list, and do not act for anyone who is; and that you will handle your own taxes and legal obligations. If you use Statement Maker for a company, DAO or other wallet, you confirm you may bind it to these terms. You will not use Statement Maker to manipulate bids, prices, or other members, and you will not use what you know before it is public on-chain (such as a coming deposit, burn or bid) to trade ahead of others. Do not promote Credit Cards or Statements as investments.',
  'Preview': 'Statement Maker is in preview. Nothing here moves Credits or ETH. Deposits, cards, bids and sales are records kept by Statement Maker only. Two things must exist first: Jack’s Statement contract, and Statement Maker’s contracts for the four parties and the auction, which are not deployed yet.',
  'The code controls': 'Statement Maker’s contracts are non-custodial and run on their own once deployed. The auction and the four-party rules are not yet in any deployed contract. Statement Maker never holds your Credits, Credit Cards, Statements, ETH or keys, and does not broker, match, route, clear or settle anything: every transaction is between your wallet and the contracts. Statement Maker is not an exchange, broker, money transmitter or fiduciary. Where the contracts and these terms differ, the deployed contract code controls. Your wallet shows each transaction before you sign it; by signing you confirm you reviewed and understood it. You can use the contracts without this site.',
@@ -1378,9 +1387,10 @@ async function pageMinute(key) {
        : !free.length ? `<p class="alert-k">${meName()} holds ${mineAll.length ? 'no undeposited Credits' : 'none of these 80'}.</p><div class="actions">${switchBtn}</div>`
        : `<p class="muted">${meName()} holds ${free.length} of these 80 not yet deposited. Tap yours on the grid (marked yellow) to pick.</p>
        <div class="actions"><button type="button" id="m-all">Select all mine</button><button type="button" id="m-none">Clear</button></div>
+       <p class="hint">${DEP_CAP_NOTE}</p>
        ${FEE_BOX}
        <label class="check" style="margin:12px 0"><input type="checkbox" id="m-ack"> <span>${HOUSE_ACK}</span></label>
-       <button class="cta" id="m-deposit" disabled>Deposit</button> ${depGas()}`}
+       <button class="cta" id="m-deposit" disabled>Deposit</button> ${depGas()} <span class="hint" id="m-hint"></span>`}
      <div class="error" id="m-err"></div>
      <p class="note">Each Credit deposited returns one Credit Card. Until all 80 are in, the card’s holder can redeem it for that Credit. At 80, any card holder can burn them into the Statement, in purchase order. ${PREVIEW_NOTE}</p>
     </div>` : ''}
@@ -1407,7 +1417,8 @@ async function pageMinute(key) {
     const b = $('#m-deposit'); if (!b) return;
     const k = partyUI.picks.size;
     b.textContent = `Deposit ${k} Credit${k === 1 ? '' : 's'}`;
-    b.disabled = !($('#m-ack').checked && k >= 1 && k <= remaining);
+    b.disabled = !($('#m-ack').checked && k >= 1 && k <= remaining && k <= MAX_DEP);
+    $('#m-hint').textContent = k > MAX_DEP ? `${k} picked. ${DEP_CAP_NOTE}` : '';
   };
   $('#mgrid').addEventListener('click', e => {
     const b = e.target.closest('[data-cell]'); if (!b) return;
@@ -1416,7 +1427,7 @@ async function pageMinute(key) {
     else { $('#mgrid').querySelectorAll('[aria-pressed=true]').forEach(x => { if (!freeIds.has(Number(x.dataset.cell))) x.setAttribute('aria-pressed', 'false'); }); b.setAttribute('aria-pressed', 'true'); }
     detail(c);
   });
-  $('#m-all')?.addEventListener('click', () => { partyUI.picks = new Set(free.slice(0, remaining).map(c => c.id)); route(); });
+  $('#m-all')?.addEventListener('click', () => { partyUI.picks = new Set(free.slice(0, Math.min(remaining, MAX_DEP)).map(c => c.id)); route(); });
   $('#m-none')?.addEventListener('click', () => { partyUI.picks.clear(); route(); });
   $('#m-ack')?.addEventListener('change', depState);
   $('#m-deposit')?.addEventListener('click', async () => {
