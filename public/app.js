@@ -655,7 +655,7 @@ async function pageStatements() {
   const mine = me ? list.filter(p => p.owner === me || p.members.some(m => m.address === me)) : [];
   const grid = arr => `<div class="parties" style="margin-bottom:64px">${arr.join('')}</div>`;
   render(app, `
-  <div class="intro"><div><h1>Statements</h1><p class="muted">Everything for sale in one place: party sales, holder listings, and OpenSea listings, side by side.</p></div><p class="muted">${list.length} made · ${items.length} for sale</p></div>
+  <div class="intro"><div><h1>Statements</h1><p class="muted">Everything for sale in one place: party sales, holder listings, and OpenSea listings, side by side.</p></div><p class="muted">${list.length} made · ${items.length} for sale${(() => { const own = items.filter(i => i.source !== 'opensea' && !(i.opensAt > Date.now())); const os = items.filter(i => i.source === 'opensea'); return (own.length ? ` · <strong>Statement Maker floor ${eth(Math.min(...own.map(i => i.priceEth)))}</strong>` : '') + (os.length ? ` · OpenSea floor ${eth(Math.min(...os.map(i => i.priceEth)))}` : ''); })()}</p></div>
   <div class="caption"><h2>For sale · ${items.length}</h2><div class="modes">${[['price', 'Price ↑'], ['high', 'Price ↓'], ['new', 'Newest']].map(([k, l]) => `<button type="button" data-gsort="${k}" aria-pressed="${sort === k}">${l}</button>`).join('')}</div></div>
   ${items.length ? grid(items.map(i => listingCard(i, byId))) : '<p class="muted" style="margin-bottom:64px">Nothing for sale right now.</p>'}
   ${stats?.dev && market.sources.opensea !== 'ok' ? `<p class="note" style="margin:-48px 0 48px">Dev · OpenSea listings: ${esc(market.sources.opensea)}.</p>` : ''}
