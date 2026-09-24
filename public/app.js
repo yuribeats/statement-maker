@@ -59,6 +59,12 @@ let stats = null;
 let me = ''; // set from the server session (GET /api/auth/me), never from local state
 let access = { canParty: false, storeOnly: '' };
 const STORE_ONLY_TEXT = 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. After the sale, the buyer owns it and may resell it anywhere.';
+// Fee box: royalty first, then the 1% fee, the rest in 80 equal shares; the 3 ETH example both ways.
+const FEE_BOX = '<div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, any creator royalty the Statement contract declares (up to 1%) is paid first, then Statement Maker keeps 1% of the price. The 80 Credit Cards split the rest equally. Example, a 3 ETH sale: with no royalty, 0.03 ETH to Statement Maker and 0.037125 ETH per card; with a 1% royalty, 0.03 ETH royalty, 0.03 ETH to Statement Maker and 0.03675 ETH per card.</div>';
+const HOUSE_ACK = 'I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker, by auction. From the winning bid, any creator royalty (up to 1%) is paid first, then <strong>Statement Maker takes a 1% fee</strong>, and the rest is split equally across the 80 Credit Cards.';
+const PARTY_ACK = 'I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s price. Any creator royalty (up to 1%) is paid first, then <strong>Statement Maker takes a 1% fee on that sale</strong>, and the rest is split equally across the 80 Credit Cards.';
+const PREVIEW_NOTE = 'In preview, depositing records your Credits here only; they stay in your wallet. Credit Cards become real once the contracts are live.';
+const OPENING_BASIS = '100 × the Credits floor at the burn (24-hour average of OpenSea readings)';
 const storeBanner = () => `<div class="store-only"><strong>Sold only on Statement Maker.</strong> ${STORE_ONLY_TEXT} Credit Cards can be traded anywhere; the Statement cannot.</div>`;
 
 // ---------- wallet: sign-in with a wallet the user picks (EIP-6963 or WalletConnect); simulated wallets only in dev builds ----------
@@ -202,18 +208,33 @@ const priceOf = (t, floorEth) => {
 const priceLabel = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : `Floor ${t.value < 0 ? '−' : '+'} ${Math.abs(t.value)}${t.mode === 'floorPct' ? '%' : ' ETH'}`);
 const vsFloor = (eth, floorEth) => { if (eth == null || !floorEth) return ''; const d = (eth / floorEth - 1) * 100; return `<span class="${d < 0 ? 'blocked' : 'muted'}">${Math.abs(d).toFixed(0)}% ${d < 0 ? 'below' : 'above'} floor</span>`; };
 let gasInfo = null;
-const cost = key => { if (!gasInfo?.gwei || !gasInfo.units[key]) return ''; const e = gasInfo.units[key] * gasInfo.gwei / 1e9; return `<span class="faint">~${(gasInfo.units[key] / 1e6 >= 1 ? (gasInfo.units[key] / 1e6).toFixed(1) + 'M' : Math.round(gasInfo.units[key] / 1e3) + 'k')} gas · $${(e * gasInfo.ethUsd).toFixed(2)}</span>`; };
+// Gas on every action: units, plus dollars at the live gas price and ETH/USD (/api/gas) when both are known (units
+// only otherwise). Figures the server marks as estimates read "est."; measured ones read "about".
+const GAS_FALLBACK = { deposit: { min: 190000, max: 220000 } };
+const gasK = u => (u >= 1e6 ? (u / 1e6).toFixed(1) + 'M' : Math.round(u / 1e3) + 'k');
+const gasSpan = (lo, hi) => { const a = gasK(lo), b = gasK(hi); return a === b ? a : a.slice(-1) === b.slice(-1) ? a.slice(0, -1) + '–' + b : a + '–' + b; };
+const usd = v => '$' + (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString());
+const gasMoney = (lo, hi) => {
+  const g = gasInfo?.gwei, e = gasInfo?.ethUsd;
+  if (!(g > 0 && e > 0)) return '';
+  const [x, y] = [lo, hi].map(v => usd(v * g / 1e9 * e));
+  return ` · ~${x === y ? x : x + '–' + y} at ${g.toFixed(g < 1 ? 3 : g < 10 ? 1 : 0)} gwei`;
+};
+const cost = (key, each = '') => {
+  const u = gasInfo?.units?.[key] ?? GAS_FALLBACK[key]; if (!u) return '';
+  const [lo, hi] = typeof u === 'object' ? [u.min, u.max] : [u, u];
+  const est = (gasInfo?.estimated || []).includes(key) ? 'est.' : 'about';
+  return `<span class="faint">${est} ${gasSpan(lo, hi)} gas${each} on-chain${gasMoney(lo, hi)} · nothing is charged in preview</span>`;
+};
 // Burning is the one heavy call: measured 5.8M–10.5M gas by preset (Rarity the most) before the Statement mint itself.
-// With a preset known, its own figure; otherwise the range. Dollars from live gwei and ETH/USD (/api/gas) when available.
+// With a preset known, its own figure; otherwise the range.
 function burnAlert(preset) {
   const a = gasInfo?.units?.assemble && typeof gasInfo.units.assemble === 'object' ? gasInfo.units.assemble : { min: 5_800_000, max: 10_510_000, byPreset: { Rarity: 10_510_000, default: 6_080_000 } };
   const one = preset && preset !== 'Manual' ? (a.byPreset[preset] ?? a.byPreset.default) : null;
-  const g = one ? [one, one] : [a.min, a.max];
-  const units = one ? `about ${(one / 1e6).toFixed(1)}M gas` : `about ${Math.round(a.min / 1e6)}–${Math.round(a.max / 1e6)}M gas`;
-  const usd = gw => { const [x, y] = g.map(v => '$' + Math.round(v * gw / 1e9 * gasInfo.ethUsd).toLocaleString()); return x === y ? x : `${x}–${y}`; };
-  const money = gasInfo?.gwei && gasInfo?.ethUsd ? ` At today’s gas (${gasInfo.gwei.toFixed(1)} gwei) that is about ${usd(gasInfo.gwei)}; at 20 gwei, about ${usd(20)}.` : '';
-  return `<span class="alert-c burn-gas">Burning 80 Credits into a Statement is gas-intensive: ${units} plus the Statement mint, paid entirely by whoever burns.${money} Set your wallet’s gas limit high enough (the per-transaction cap is 16.7M).</span>`;
+  const [lo, hi] = one ? [one, one] : [a.min, a.max];
+  return `<span class="alert-c burn-gas">Burning 80 Credits into a Statement is gas-intensive: about ${gasSpan(lo, hi)} gas on-chain${gasMoney(lo, hi)}, plus the Statement mint (unknown until Jack’s contract is published), paid entirely by whoever burns. Set your wallet’s gas limit high enough (the per-transaction cap is 16.7M). Nothing is charged in preview.</span>`;
 }
+const depGas = () => `<span class="faint">Preview · your Credits stay in your wallet · nothing moves on-chain ·</span> ${cost('deposit', ' each')}`;
 const hint = t => `<div class="hint">${esc(t)}</div>`;
 const n = x => Number(x).toLocaleString();
 const floorNote = f => { if (!f || f.eth == null) return 'no reading yet'; const what = f.source === 'statements' ? 'Statement collection floor' : '80 × Credits floor (until Statements trade)'; return f.mode === 'latest' ? `${what}, latest` : `${what}, averaged over ${f.hours < 23.9 ? f.hours + 'h (building up to 24h)' : '24h'}`; };
@@ -286,7 +307,7 @@ const idList = ids => { const l = (ids || []).map(Number); return l.slice(0, 10)
 const plural = (k, w) => `${Number(k)} ${w}${Number(k) === 1 ? '' : 's'}`;
 function logLine(e) {
   const d = {
-    open: () => e.house ? 'House party opened by Statement Maker' : 'Opened the party',
+    open: () => 'Opened the party',
     deposit: () => `Deposited ${plural(e.ids?.length, 'Credit')} · ${idList(e.ids)}`,
     redeem: () => `Redeemed ${plural(e.ids?.length, 'Credit')} · ${idList(e.ids)}`,
     return: () => `Returned ${e.items ? e.items.length : Number(e.count)} Credits to their card holders`,
@@ -386,17 +407,18 @@ async function pageParty(id, opts = {}) {
       <div style="border:0;padding:0">${filled(p)}</div>
       <div><span>Hosts</span><strong>${p.hosts.length ? p.hosts.map(h => userLink(h)).join(', ') : (p.house ? 'None: settings fixed' : 'None yet: the first depositor hosts')}</strong></div>
       <div><span>Eligible Credits</span><strong>${filterText(p.params.filters)} · ${p.eligible.toLocaleString()}</strong></div>
-      <div><span>Vote window</span><strong>${Number(p.params.voteHours || 48)} hours default</strong></div>
-      <div><span>Buy wait</span><strong>${Number(p.params.buyDelayHours ?? 1)} hour${(p.params.buyDelayHours ?? 1) === 1 ? '' : 's'} default</strong></div>
+      ${p.house ? '' : `<div><span>Vote window</span><strong>${Number(p.params.voteHours || 48)} hours default</strong></div>
+      <div><span>Buy wait</span><strong>${Number(p.params.buyDelayHours ?? 1)} hour${(p.params.buyDelayHours ?? 1) === 1 ? '' : 's'} default</strong></div>`}
       <div><span>Minimum deposit</span><strong>${Number(p.params.minDeposit)}</strong></div>
-      ${p.house ? `<div><span>Sale</span><strong>Auction · opening bid 100 × the Credits floor at the burn · 24 hours from the first bid</strong></div>` : ''}
+      ${p.house ? `<div><span>Sale</span><strong>Auction · opening bid ${OPENING_BASIS} · 24 hours from the first bid</strong></div>` : ''}
       <div${p.house ? ' style="display:none"' : ''}><span>Default price</span><strong>${targetText(p.params.target)}${p.params.target.mode !== 'fixed' ? ' · now ' + eth(p.targetEth) : ''}${p.defaultBelowFloor ? ' · <span class="blocked">below floor</span>' : ''}</strong></div>
       <div><span>Arranged by</span><strong${p.manual ? ' class="alert-c"' : ''}>${p.manual ? 'Manual · the host’s metric below' : esc(arrLabel(p.params.arrangement)) + ' — ' + esc(arrDesc(p.params.arrangement))}${p.assembled && p.orderSource ? ' · burned with ' + esc(p.orderSource === 'Manual' ? 'the host’s order' : p.orderFallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: p.orderSource })) : ''}</strong></div>
       ${p.manual ? `<div class="rule-strong"><span class="alert-c">Host’s metric</span><strong class="alert-c">${esc(arrDesc(p.params.arrangement))}</strong></div>` : ''}
       <div><span>Defaults</span><strong class="muted">Set by the host and applied automatically. Card holders can vote a different price. The host can change settings only until someone else deposits${p.manual ? ', orders and burns this Manual party,' : ''} and can hand hosting on; without Credit Cards a host cannot vote, chat or burn${p.manual ? ' (except the Manual burn)' : ''}.</strong></div>
-      <div><span>Floor · ${p.params.floorMode === 'latest' ? 'latest reading' : '24-hour average'}</span><strong>${eth(p.floorEth)} <span class="faint">${floorNote(p.floor)}</span></strong></div>
+      ${p.house ? `<div><span>Credits floor · 24-hour average</span><strong>${ethx(p.floor?.credit)}${p.assembled ? '' : ` · opening bid if burned now: ${ethx(p.floor?.credit != null ? +(p.floor.credit * 100).toFixed(6) : null)}`}</strong></div>`
+        : `<div><span>Floor · ${p.params.floorMode === 'latest' ? 'latest reading' : '24-hour average'}</span><strong>${eth(p.floorEth)} <span class="faint">${floorNote(p.floor)}</span></strong></div>`}
       ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}${p.raiseAskEth != null && me ? ` <button type="button" id="raise-ask" style="margin:0" title="A floor-relative ask can only rise, never fall">Raise to ${eth(p.raiseAskEth)}</button>` : ''}</strong></div>` : ''}
-      <div><span>Sale split</span><strong>1% Statement Maker · the rest to the 80 Credit Cards</strong></div>
+      <div><span>Sale split</span><strong>Creator royalty up to 1%, then 1% Statement Maker, the rest to the 80 Credit Cards</strong></div>
       ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 Credit Cards</strong></div>` : ''}
       ${isHost ? `<div><span>Hand off hosting</span><strong><span class="actions" style="margin:0;justify-content:flex-end"><input id="host-to" placeholder="0x…" style="width:220px;border:0;border-bottom:1px solid var(--line)"><button type="button" id="host-go">Hand off</button></span></strong></div>` : ''}
      </div>
@@ -410,31 +432,31 @@ async function pageParty(id, opts = {}) {
       <div class="cards" id="cards-list"></div>
       <div class="actions"><button type="button" id="cards-more" hidden></button></div>
      </details>
-     ${liveCards.length && (p.status === 'OPEN' || p.status === 'EXPIRED') ? `<div class="actions"><button type="button" id="redeem-all">Redeem all my cards · ${liveCards.length}</button></div>` : ''}
+     ${liveCards.length && (p.status === 'OPEN' || p.status === 'EXPIRED') ? `<div class="actions"><button type="button" id="redeem-all">Redeem all my cards · ${liveCards.length}</button> ${cost('withdraw', ' per Credit')}</div>` : ''}
      <div class="actions" id="send-row" hidden><span class="muted">Send card <span id="send-no"></span> to</span><input id="send-to" placeholder="0x…" style="width:340px;border:0;border-bottom:1px solid var(--line)"><button type="button" id="send-go">Send</button><button type="button" id="send-x">Cancel</button></div>
-     ${p.status === 'SOLD' && myCards.some(c => !c.claimed) ? `<div class="actions"><button type="button" class="cta" id="claim-all">Claim all · ${eth(p.perCard * myCards.filter(c => !c.claimed).length)}</button></div>` : ''}
+     ${p.status === 'SOLD' && myCards.some(c => !c.claimed) ? `<div class="actions"><button type="button" class="cta" id="claim-all">Claim all · ${eth(p.perCard * myCards.filter(c => !c.claimed).length)}</button> ${cost('claim')}</div>` : ''}
      <div class="error" id="card-err"></div>
     </div>` : ''}
 
     ${au ? `
     <div class="panel" id="auction"><h2>Auction</h2>
      <div class="rows">
-      <div><span>Opening bid</span><strong>${ethx(au.reserveEth)} <span class="faint">100 × Credits floor ${ethx(au.creditFloorEth)} at the burn</span></strong></div>
+      <div><span>Opening bid</span><strong>${ethx(au.reserveEth)} <span class="faint">${OPENING_BASIS}: ${ethx(au.creditFloorEth)}</span></strong></div>
       <div><span>High bid</span><strong>${au.high ? `${ethx(au.high.eth)} · ${userLink(au.high.bidder)}` : 'None yet'}</strong></div>
       ${!au.settled && !au.ended ? `<div><span>Minimum next bid</span><strong>${ethx(au.minNextEth)} <span class="faint">${au.high ? 'high bid + 0.1 ETH' : 'the opening bid'}</span></strong></div>` : ''}
       <div><span>Time</span><strong id="au-clock">${au.settled ? 'Settled ' + esc(new Date(au.settled.at).toLocaleString()) : au.ended ? 'Ended' : au.endsAt == null ? `Opening bid: ${ethx(au.reserveEth)} · no timer until the first bid` : clock(au.endsAt - p.now) + ' left'}</strong></div>
       ${!au.settled && au.endsAt != null ? `<div><span>Ends</span><strong>${esc(new Date(au.endsAt).toLocaleString())} <span class="faint">a bid in the last 5 minutes moves it to 5 minutes after that bid</span></strong></div>` : ''}
      </div>
-     ${au.settled ? '' : !au.ended ? (me ? `<div class="actions" style="align-items:center;margin-top:14px"><input id="bid-amt" inputmode="decimal" value="${esc(weiDec(au.minNextWei))}" style="width:140px;border:0;border-bottom:1px solid var(--line)" aria-label="Bid, ETH"><span class="muted">ETH</span><button type="button" class="cta" id="bid">Bid</button><span class="faint">Preview · no ETH moves</span></div>`
+     ${au.settled ? '' : !au.ended ? (me ? `<div class="actions" style="align-items:center;margin-top:14px"><input id="bid-amt" inputmode="decimal" value="${esc(weiDec(au.minNextWei))}" style="width:140px;border:0;border-bottom:1px solid var(--line)" aria-label="Bid, ETH"><span class="muted">ETH</span><button type="button" class="cta" id="bid">Bid</button><span class="faint">Preview · no ETH moves</span> ${cost('bid')}</div>`
        : connectAct)
-       : me ? `<div class="actions" style="margin-top:14px"><button type="button" class="cta" id="settle">${au.high ? 'Settle · Statement to the high bidder' : 'Close with no bids'}</button></div>` : connectAct}
+       : me ? `<div class="actions" style="margin-top:14px"><button type="button" class="cta" id="settle">${au.high ? 'Settle · Statement to the high bidder' : 'Close with no bids'}</button> ${cost('settle')}</div>` : connectAct}
      <div class="error" id="bid-err"></div>
      ${au.bids.length ? `<h2 style="margin:18px 0 8px">Bids · ${au.bids.length}</h2><div class="rows">${au.bids.map(b => `<div><span>${ago(b.at)} ago · ${userLink(b.bidder)}</span><strong>${ethx(b.eth)}${b.refunded ? ' <span class="faint">· outbid, refunded</span>' : ''}${b.extended ? ' <span class="faint">· extended</span>' : ''}</strong></div>`).join('')}</div>` : ''}
     </div>` : ''}
     ${p.status === 'ASSEMBLED' && p.listing ? `
     <div class="panel"><h2>Buy</h2>
      <div class="rows"><div><span>Price</span><strong>${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div><div><span>Split</span><strong>1% Statement Maker · ${eth(p.listingEth ? p.listingEth * 0.99 / SLOTS : null)} per Credit Card</strong></div></div>
-     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
+     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span> ${cost('buy')}` : connectAct}
      <div class="error" id="buy-err"></div></div>` : ''}
     ${p.status === 'SOLD' ? `
     <div class="panel"><h2>Sold</h2><div class="rows">
@@ -452,22 +474,22 @@ async function pageParty(id, opts = {}) {
        <div class="picker">${pickList.slice(0, partyUI.pickShown || 80).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        ${pickList.length > (partyUI.pickShown || 80) ? `<div class="actions"><button type="button" id="pick-more">Show more · ${pickList.length - (partyUI.pickShown || 80)} left</button></div>` : ''}
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
-       <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
-       <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s price, and <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
-       <button class="cta" id="deposit" disabled>Deposit</button> ${cost('deposit')} each <span class="hint" id="dep-hint"></span>
+       ${FEE_BOX}
+       <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>${p.house ? HOUSE_ACK : PARTY_ACK}</span></label>
+       <button class="cta" id="deposit" disabled>Deposit</button> ${depGas()} <span class="hint" id="dep-hint"></span>
        ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Redeem all my cards</button>` : ''}`}
      <div class="error" id="dep-err"></div>
-     <p class="note">Depositing accepts this party's defaults: arranged by ${esc(p.manual ? 'the host’s metric (' + arrDesc(p.params.arrangement) + ')' : arrLabel(p.params.arrangement) + ', ' + arrDesc(p.params.arrangement))}, ${targetText(p.params.target)} price. Each Credit you deposit returns one Credit Card. Until the party fills, the card's holder can redeem it for that Credit.</p>
+     <p class="note">Depositing accepts this party's defaults: arranged by ${esc(p.manual ? 'the host’s metric (' + arrDesc(p.params.arrangement) + ')' : arrLabel(p.params.arrangement) + ', ' + arrDesc(p.params.arrangement))}, ${targetText(p.params.target)} price. Each Credit you deposit returns one Credit Card. Until the party fills, the card's holder can redeem it for that Credit. ${PREVIEW_NOTE}</p>
     </div>` : ''}
 
     ${p.status === 'EXPIRED' ? `
     <div class="panel"><h2>Expired</h2>
-     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their card holders by ${userLink(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Each Credit goes to whoever holds its card. Any member can send them all.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit')} per Credit</div>` : ''}`}
+     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their card holders by ${userLink(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Each Credit goes to whoever holds its card. Any member can send them all.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit', ' per Credit')}</div>` : ''}`}
      <div class="error" id="ret-err"></div></div>` : ''}
     ${p.status !== 'OPEN' && p.status !== 'EXPIRED' ? `
     <div class="panel" id="proposals">
-     <div class="caption" style="min-height:0;margin-bottom:10px"><h2>Proposals</h2><button type="button" id="rules-t" class="muted">${partyUI.rules ? 'Hide rules' : 'How votes work'}</button></div>
-     ${partyUI.rules ? `<div class="rules-box">
+     <div class="caption" style="min-height:0;margin-bottom:10px"><h2>${p.house ? 'Burn' : 'Proposals'}</h2>${p.house ? '' : `<button type="button" id="rules-t" class="muted">${partyUI.rules ? 'Hide rules' : 'How votes work'}</button>`}</div>
+     ${partyUI.rules && !p.house ? `<div class="rules-box">
       <div><span>Weight</span><strong>1 Credit Card = 1 vote, counted as held when the proposal opened</strong></div>
       <div><span>Passes</span><strong>41 of 80 yes and zero no</strong></div>
       <div><span>Below floor</span><strong>60 of 80 yes and zero no</strong></div>
@@ -478,8 +500,8 @@ async function pageParty(id, opts = {}) {
        const hostBurn = p.manual && canHandArrange && partyUI.mode === 'arrange', fbBurn = p.manual && !isHost && fallbackOpen && holder;
        const canBurn = p.manual ? hostBurn || fbBurn : holder;
        return `<div class="prop"><div class="prop-head"><strong>Burn</strong><span class="chip ${!p.manual || fallbackOpen ? 'pass' : 'open'}">${p.house || !p.manual ? 'Any card holder' : fallbackOpen ? 'Any card holder · Time order' : 'Host arranges by hand'}</span></div>
-      <p class="muted">${p.house ? 'Arranged in mint order, earliest first. Any card holder can burn the 80 into the Statement in one step.' : !p.manual ? `Arrangement is locked as ${esc(arrLabel(p.params.arrangement))} (${esc(arrDesc(p.params.arrangement))}). Any card holder can burn the 80 into the Statement in one step.`
-        : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} ${p.house ? 'The auction then opens at 100 × the Credits floor; its 24-hour timer starts at the first bid.' : 'The default price then goes live.'} Preview until the Statement contract is public.</p>
+      <p class="muted">${p.house ? 'Arranged in purchase order, earliest first. Any card holder can burn the 80 into the Statement in one step.' : !p.manual ? `Arrangement is locked as ${esc(arrLabel(p.params.arrangement))} (${esc(arrDesc(p.params.arrangement))}). Any card holder can burn the 80 into the Statement in one step.`
+        : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} ${p.house ? `The auction then opens at ${OPENING_BASIS}; its 24-hour timer starts at the first bid.` : 'The default price then goes live.'} Preview: nothing is burned on-chain.</p>
       ${burnAlert(p.manual ? (fallbackOpen && !isHost ? 'Time' : null) : p.params.arrangement?.preset)}
       ${canBurn ? (partyUI.confirmBurn
         ? `<div class="actions"><span class="blocked">Burning is permanent. The 80 Credits become one Statement.</span><button type="button" class="cta" id="assemble">Confirm burn</button><button type="button" id="burn-x">Cancel</button></div>`
@@ -487,7 +509,7 @@ async function pageParty(id, opts = {}) {
         : canHandArrange ? '<p class="note">Open Arrange to set the order, then burn.</p>' : !me ? connectAct : !p.manual && !holder ? '<p class="note">Any Credit Card holder can burn.</p>' : ''}
      </div>`; })() : ''}
      ${p.assembled ? `<div class="prop"><div class="prop-head"><strong>Statement ${Number(p.assembled.number)}</strong><a href="#/statement/${esc(p.id)}">View →</a></div><p class="muted">Assembled by ${userLink(p.assembled.by)}</p></div>` : ''}
-     ${[...p.proposals].reverse().map(q => {
+     ${p.house ? '' : [...p.proposals].reverse().map(q => {
        const mine = q.votes?.[me];
        const canVote = isMember && !q.executed && !q.closed && !q.superseded && (q.snapshot ? q.snapshot[me] > 0 : true);
        const state = q.executed ? ['Executed', 'done'] : q.superseded ? ['Superseded', 'muted'] : q.lapsed ? ['Lapsed', 'muted'] : q.executable ? ['Passed · execute', 'pass'] : q.no && !q.override ? ['Blocked by no', 'blocked'] : q.closed ? ['Failed', 'muted'] : q.passing ? ['Passing', 'pass'] : ['Voting', 'open'];
@@ -512,7 +534,7 @@ async function pageParty(id, opts = {}) {
        </div>
       </div>`; }).join('') || '<p class="muted">No proposals yet.</p>'}
 
-     ${auctionOn ? '<p class="note">This party sells by auction: no price votes.</p>' : isMember ? `
+     ${p.house ? '' : auctionOn ? '<p class="note">This party sells by auction: no price votes.</p>' : isMember ? `
      <div class="composer">
       <div class="caption" style="min-height:0"><h2>New proposal</h2></div>
        <div class="field"><label>Price</label><div><div style="display:flex;gap:12px;align-items:center"><select id="pm"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select><input id="pv" type="number" step="0.01" value="${p.floorEth ? (p.floorEth * 1.1).toFixed(2) : 1}" style="width:110px"><span id="pp" class="muted"></span></div><div class="hint" id="ph"></div></div></div>
@@ -647,7 +669,7 @@ async function pageParty(id, opts = {}) {
 let draft = { name: '', minDeposit: 1, days: 14, voteHours: 48, arrangement: { preset: 'Time' }, target: { mode: 'floorPct', value: 25 }, filters: {} };
 const arrLabel = a => !a ? 'Deposit order' : a.preset === 'Random' ? `Random #${a.seed}` : a.preset === 'Deposit' ? 'Deposit order' : a.preset;
 // The metric each arrangement orders by, in one plain line (must match PRESETS in lib/core.mjs). Manual: the host's own words.
-const ARR_DESC = { Time: 'mint order, earliest first', Number: 'token number, lowest first', Rarity: 'rarest first', Colors: 'by ink plates: C, M, Y, K, then combinations', Print: 'most misregistered first', Weight: 'lightest coverage first, sparse to extreme', Eights: 'most eights first', Ink: 'fewest inked squares first', Deposit: 'deposit order, first deposited first' };
+const ARR_DESC = { Time: 'purchase order, earliest first', Number: 'token number, lowest first', Rarity: 'rarest first', Colors: 'by ink plates: C, M, Y, K, then combinations', Print: 'most misregistered first', Weight: 'lightest coverage first, sparse to extreme', Eights: 'most eights first', Ink: 'fewest inked squares first', Deposit: 'deposit order, first deposited first' };
 const arrDesc = a => a?.preset === 'Manual' ? (a.metric || 'no metric stated') : a?.preset === 'Random' ? `shuffled with seed ${Number(a.seed)}` : ARR_DESC[a?.preset || 'Deposit'] || '';
 const ARR_HINT = { preset: a => `Arrangement is locked as ${arrLabel(a)}.`, manual: 'Manual: state the metric you will order the 80 by. Only you can burn, with your order. If you have not burned within 1 day of the party filling, any card holder can burn in Time order.' };
 async function pageNew() {
@@ -655,7 +677,7 @@ async function pageNew() {
   if (!stats.partiesUnlocked) {
     const mins = [['1349', '13:49'], ['1505', '15:05'], ['1528', '15:28'], ['1622', '16:22']];
     render(app, `
-    <div class="intro"><div><h1>Start a party</h1><p class="muted">Not open yet. At launch there are four parties: the four minutes of the Credits mint in which exactly 80 Credits were minted. Starting your own party opens once one of them has made its Statement.</p></div></div>
+    <div class="intro"><div><h1>Start a party</h1><p class="muted">Not open yet. At launch there are four parties: the four minutes of the Credits mint in which exactly 80 Credits were bought. Starting your own party opens once one of them has made its Statement.</p></div></div>
     <div class="panel" style="max-width:900px"><h2>The four parties</h2><div class="rows">${mins.map(([id, t]) => `<div><span><a href="#/party/minute-${id}">Minute ${t} UTC</a></span><strong><a href="#/party/minute-${id}">Open →</a></strong></div>`).join('')}</div></div>`);
     return;
   }
@@ -697,8 +719,8 @@ async function pageNew() {
      <div class="actions"><button type="button" id="own-all">Select the minimum</button><button type="button" id="own-none">Clear</button></div>
     </div>
     ${storeBanner()}
-    <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
-    <label class="check" style="margin:12px 0"><input type="checkbox" id="new-ack"> <span>I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s price, and <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
+    ${FEE_BOX}
+    <label class="check" style="margin:12px 0"><input type="checkbox" id="new-ack"> <span>${PARTY_ACK}</span></label>
     <button class="cta" id="create" type="button" disabled>Open party and deposit</button>
     <div class="error" id="new-err"></div>
    </div>
@@ -882,9 +904,12 @@ async function pageUser(addr) {
 // Signed in, the server's record is what counts (it rejects every party action without it); the browser flag only
 // carries an agreement made before connecting, and is copied to the wallet's record at sign-in.
 // Launch and full launch have separate rules (and versions); the flag is kept per version.
-const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? '2026-09-24.L5' : '2026-09-24.4');
+const RULES_V = { launch: '2026-09-24.L6', full: '2026-09-24.5' }, TERMS_V = { launch: '2026-09-24.L6', full: '2026-09-24.6' };
+const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? RULES_V.launch : RULES_V.full);
 const localRules = () => { try { return localStorage.getItem(rulesKey()) === '1'; } catch { return false; } };
 const rulesAgreed = () => (me ? !!access.rules : localRules());
+// The four Minute parties also accept the launch agreement after the site opens to all parties (auctions run across it).
+const houseAgreed = () => rulesAgreed() || (!!me && !!access.house);
 async function syncRules() {
   if (me && !access.rules && localRules()) try { await api('rules', { accept: true }); access.rules = true; } catch {}
 }
@@ -894,30 +919,34 @@ const toRules = () => { afterRules = location.hash; location.hash = '#/rules'; }
 function pageRules() { return launchPhase() ? pageRulesLaunch() : pageRulesFull(); }
 const agreeRow = () => `<div class="agree"><label class="check"><input type="checkbox" id="rules-ok" ${rulesAgreed() ? 'checked' : ''}> <span>I have read the rules and agree to the <a href="#/terms">terms and conditions</a>.</span></label>
     <button class="cta" id="rules-go" ${rulesAgreed() ? '' : 'disabled'}>${launchPhase() ? 'Continue to The Four →' : 'Continue to parties →'}</button><div class="error" id="rules-err"></div></div>`;
-function pageRulesLaunch() {
+// Launch Rules rows; also shown on the Minute pages after the site opens to all parties (the four keep these rules).
+function launchRuleRows() {
   const dl = stats?.launchDeadline ? new Date(stats.launchDeadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
-  const rows = [
-   ['01 Four parties', 'Four minutes of the Credits mint each produced exactly 80 Credits: 13:49, 15:05, 15:28 and 16:22 UTC on September 21, 2026. Each minute is one party. Only its 80 Credits can be deposited per party.'],
+  return [
+   ['01 Four parties', 'In four minutes of the Credits mint, exactly 80 Credits were bought in each: 13:49, 15:05, 15:28 and 16:22 UTC on September 21, 2026. Each minute is one party. Only its 80 Credits can be deposited per party.'],
    ['02 Deposit', 'Holders deposit any number of their Credits from that minute. Each deposited Credit returns one Credit Card.'],
-   ['03 The card', 'Whoever holds a Credit Card can redeem it for its Credit until the party reaches 80, and receives 1/80 of the sale. Cards can be transferred.'],
-   ['04 Order', 'The 80 are arranged in mint order, earliest first. The order cannot be changed.'],
-   ['05 Burn', 'Once all 80 are deposited, any card holder can burn them into one Statement. Burning is permanent. Whoever burns pays the gas: about 6–11M gas plus the Statement mint.'],
-   ['06 Auction', 'The Statement is sold by auction on Statement Maker. Opening bid: 100 × the Credits floor at the burn. Each bid must be at least 0.1 ETH above the last. The 24-hour clock starts with the first bid. A bid in the last 5 minutes moves the end to 5 minutes after that bid. An outbid bid is returned right away, while the auction is still running. The auction ends only after bidding starts.'],
+   ['03 The card', 'Whoever holds a Credit Card can redeem it for its Credit until the party reaches 80, and receives 1/80 of the sale after royalty and fee. Cards can be transferred.'],
+   ['04 Order', 'The 80 are arranged in purchase order, earliest first. The order cannot be changed.'],
+   ['05 Burn', 'Once all 80 are deposited, any card holder can burn them into one Statement. Burning is permanent. Whoever burns pays the gas: about 6.1M gas plus the Statement mint.'],
+   ['06 Auction', `The Statement is sold by auction on Statement Maker. Opening bid: ${OPENING_BASIS}. Each bid must be at least 0.1 ETH above the last. The 24-hour clock starts with the first bid. A bid in the last 5 minutes moves the end to 5 minutes after that bid. An outbid bid is returned right away, while the auction is still running. The auction ends only after bidding starts.`],
    ['07 Sold only here', 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. The buyer owns it and may resell it anywhere.'],
-   ['08 The split', '1% of the sale goes to Statement Maker. Any creator royalty the Statement contract declares, up to 1%, is paid first. The rest goes to card holders, 1/80 per card.'],
+   ['08 The split', 'Any creator royalty the Statement contract declares, up to 1%, is paid first. Then 1% of the sale goes to Statement Maker. The rest goes to card holders, 1/80 per card.'],
    ['09 Deadline', `If a party is not burned by ${dl ? dl : 'its deadline'}, every card can be redeemed for its Credit.`],
-   ['10 Preview', 'Until the Statement contract is published, deposits, bids and sales here are recorded by Statement Maker only. Nothing moves on-chain.'],
+   ['10 Preview', 'Nothing here moves Credits or ETH. Deposits, cards, bids and sales are records kept by Statement Maker only. Two things must exist first: Jack’s Statement contract, and Statement Maker’s contracts for the four parties and the auction, which are not deployed yet.'],
   ];
+}
+const launchRulesRows = () => launchRuleRows().map(([h, t]) => `<div><span>${esc(h)}</span><strong>${esc(t)}${h.endsWith(' Burn') ? burnAlert('Time') : ''}</strong></div>`).join('');
+function pageRulesLaunch() {
   render(app, `
   <div class="intro"><div><h1>Rules</h1><p class="muted">How the four parties work. Read these first.</p></div></div>
   <div class="works no-defs"><div class="rows terms">
-   ${rows.map(([h, t]) => `<div><span>${esc(h)}</span><strong>${esc(t)}${h.endsWith(' Burn') ? burnAlert(null) : ''}</strong></div>`).join('')}
+   ${launchRulesRows()}
    ${agreeRow()}
   </div>
   <div class="rows">
    <div><span>Contract</span><strong><a href="https://etherscan.io/address/0x97630aa70ab14ed9883b41dafccbc11349723043" target="_blank" rel="noopener noreferrer">Credits 0x9763…3043, Ethereum ↗</a></strong></div>
    <div><span>Source code</span><strong><a href="https://github.com/yuribeats/statement-maker" target="_blank" rel="noopener noreferrer">github.com/yuribeats/statement-maker ↗</a></strong></div>
-   <div><span>Status</span><strong><span class="demo">Preview</span> · the Statement contract is not published yet · nothing here moves Credits or ETH</strong></div>
+   <div><span>Status</span><strong><span class="demo">Preview</span> · no contracts deployed · the Statement contract is not published · nothing here moves Credits or ETH</strong></div>
   </div></div>`);
   bindRules();
 }
@@ -937,7 +966,7 @@ function pageRulesFull() {
    <div><span>10 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
    <div><span>11 Time</span><strong>Votes run 1 hour to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
    <div><span>12 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
-   <div><span>13 The four</span><strong>The four launch Statements (the Minute parties) sell by auction. Opening bid: 100 × the Credits floor at the burn. The 24-hour timer starts at the first bid; each bid at least 0.1 ETH over the last; a bid in the last 5 minutes moves the end to 5 minutes after it. An outbid bid is returned right away, while the auction is still running.</strong></div>
+   <div><span>13 The four</span><strong>The four launch Statements (the Minute parties) sell by auction. Opening bid: ${OPENING_BASIS}. There is no timer before the first bid and no fallback: the Statement leaves only through the auction. The 24-hour timer starts at the first bid; each bid at least 0.1 ETH over the last; a bid in the last 5 minutes moves the end to 5 minutes after it. An outbid bid is returned right away, while the auction is still running.</strong></div>
    <div><span>Gas</span><strong>${burnAlert(null)}</strong></div>
    <div class="agree"><label class="check"><input type="checkbox" id="rules-ok" ${rulesAgreed() ? 'checked' : ''}> <span>I have read the rules and agree to the <a href="#/terms">terms and conditions</a>.</span></label>
     <button class="cta" id="rules-go" ${rulesAgreed() ? '' : 'disabled'}>${launchPhase() ? 'Continue to The Four →' : 'Continue to parties →'}</button><div class="error" id="rules-err"></div></div>
@@ -954,6 +983,7 @@ function pageRulesFull() {
 function bindRules() {
   $('#rules-ok').onchange = async e => {
     const on = e.target.checked;
+    if (me && on && !access.terms) { e.target.checked = false; return openTermsModal(me, Wallets.wallet() ? 'wallet' : 'sim'); }
     try { localStorage.setItem(rulesKey(), on ? '1' : '0'); } catch {}
     $('#rules-go').disabled = true;
     if (me) try { await api('rules', { accept: on }); access.rules = on; $('#rules-err').textContent = ''; } catch (x) { $('#rules-err').textContent = x.message; e.target.checked = !!access.rules; }
@@ -964,7 +994,7 @@ function bindRules() {
 
 // ---------- terms ----------
 // Launch phase has its own terms version; only the rows describing party mechanics differ (TERMS_LAUNCH below).
-const termsVer = () => (launchPhase() ? '2026-09-24.L5' : '2026-09-24.5');
+const termsVer = () => (launchPhase() ? TERMS_V.launch : TERMS_V.full);
 const TERMS = [
  ['What Statement Maker is', 'Statement Maker is a tool that lets holders of Credits pool them in groups called parties. When a party collects 80 Credits, the party can burn them to create one Statement and then sell it. Statement Maker provides the website and the smart contracts. It does not hold your Credits or your money; the party contracts do.'],
  ['Not affiliated with Jack Butcher', 'Statement Maker is independent. It is not made, endorsed, or operated by Jack Butcher, jack.art, the Credits project, or X. Credits and Statements are Jack Butcher’s work. We only coordinate holders who choose to use the burn function his contracts provide.'],
@@ -972,7 +1002,7 @@ const TERMS = [
  ['Burning is permanent', 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party never fills, or never assembles before its deadline, every Credit goes back to its depositor.'],
  ['Credit Cards', 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has that Credit’s vote, the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of any sale. Credit Cards can be transferred or traded by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.'],
  ['Voting', 'Every Credit Card is one vote. A proposal passes when more than 40 Credit Cards vote yes and none vote no within its voting window, which lasts 1 hour to 7 days. Any member must then execute it within 7 days or it lapses. A single no vote blocks a proposal, so a party can stay deadlocked and its Statement can go unsold indefinitely.'],
- ['Selling', 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells only at the price its members approved, to the first buyer who pays it. There are no offers. After the sale, the buyer owns it and may resell it anywhere. Members may approve any price, including below the floor. A floor-based price can rise automatically but never falls without a new vote. The four launch Statements (the Minute parties) are sold instead by auction: opening bid 100 × the Credits floor at the burn, a 24-hour timer from the first bid, steps of at least 0.1 ETH, and a 5-minute extension for a bid in the last 5 minutes; with no bid within 7 days, the party sells at the opening bid.'],
+ ['Selling', 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells only at the price its members approved, to the first buyer who pays it. There are no offers. After the sale, the buyer owns it and may resell it anywhere. Members may approve any price, including below the floor. A floor-based price can rise automatically but never falls without a new vote. The four launch Statements (the Minute parties) are sold instead by auction: opening bid 100 × the Credits floor at the burn (24-hour average of OpenSea readings), a 24-hour timer from the first bid, steps of at least 0.1 ETH, and a 5-minute extension for a bid in the last 5 minutes. There is no timer before the first bid and no fallback: the Statement leaves only through the auction.'],
  ['Fees and gas', 'Each sale pays a 1% Statement Maker fee, and any creator royalty the Statement contract declares (up to 1%); the rest goes to Credit Card holders, 1/80 per card. Every action on-chain (depositing, voting, executing, assembling, claiming) costs gas, paid by whoever calls it. Statement Maker does not refund gas.'],
  ['Risks', 'The Statement contract has not been published; it may work differently from what this site assumes, or may not accept parties at all. Prices can fall. Transactions cannot be reversed. If you lose access to your wallet, nobody can recover your Credits, Credit Cards, or proceeds. Laws about tokens like Credit Cards may change or differ where you live.'],
  ['No advice', 'Nothing on this site is financial, investment, legal, or tax advice. You decide what to deposit, how to vote, and whether to sell.'],
@@ -991,12 +1021,19 @@ const TERMS = [
  ['Site access and changes', 'Statement Maker may change, suspend or restrict the site, or block access where the law requires or these terms are broken. That cannot touch your assets in the contracts. These terms may change; you will be asked to accept any new version before your next action. If one part of these terms is unenforceable, the rest still applies.'],
 ];
 const TERMS_LAUNCH = {
- 'How a party works': 'There are four parties, one for each of the four minutes of the Credits mint that produced exactly 80 Credits. Only a minute’s own 80 Credits can be deposited into its party. Each deposited Credit returns one Credit Card; whoever holds a card can redeem it for its Credit until the party reaches 80. The 80 are arranged in mint order, earliest first, and the order cannot be changed. Once all 80 are deposited, any card holder can burn them into one Statement.',
- 'Voting': 'There are no price votes. The Statement is sold only by auction, and each Credit Card receives 1/80 of the winning bid.',
- 'Credit Cards': 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of the sale. Credit Cards can be transferred by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.',
- 'Selling': 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker, by auction: the opening bid is 100 × the Credits floor at the burn, each bid must be at least 0.1 ETH above the last, the 24-hour clock starts with the first bid, and a bid in the last 5 minutes moves the end to 5 minutes after that bid. An outbid bid is returned right away, while the auction is still running. After the sale, the buyer owns it and may resell it anywhere.',
+ 'What Statement Maker is': 'Statement Maker is a tool that lets holders of Credits pool them in groups called parties. At launch there are four. When a party collects 80 Credits, any card holder can burn them to create one Statement, which is then sold by auction. Statement Maker provides the website and will provide the smart contracts. In preview no contract holds anything: your Credits stay in your wallet. Once deployed, the party contracts, not Statement Maker, hold deposited Credits and sale proceeds.',
+ 'How a party works': 'There are four parties, one for each of the four minutes of the Credits mint in which exactly 80 Credits were bought. Only a minute’s own 80 Credits can be deposited into its party. Each deposited Credit returns one Credit Card; whoever holds a card can redeem it for its Credit until the party reaches 80. The 80 are arranged in purchase order, earliest first, and the order cannot be changed. Once all 80 are deposited, any card holder can burn them into one Statement.',
+ 'Burning is permanent': 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party is not burned by its deadline, every card can be redeemed for its Credit.',
+ 'Credit Cards': 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of the sale after royalty and fee. Credit Cards can be transferred by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.',
+ 'Voting': 'There are no price votes. The Statement is sold only by auction. Each Credit Card receives 1/80 of the winning bid after any creator royalty (up to 1%) and the 1% Statement Maker fee.',
+ 'Selling': 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker, by auction: the opening bid is 100 × the Credits floor at the burn (24-hour average of OpenSea readings), each bid must be at least 0.1 ETH above the last, the 24-hour clock starts with the first bid, and a bid in the last 5 minutes moves the end to 5 minutes after that bid. An outbid bid is returned right away, while the auction is still running. There is no timer before the first bid and no fallback: the Statement leaves only through the auction. After the sale, the buyer owns it and may resell it anywhere.',
+ 'Fees and gas': 'Each sale pays any creator royalty the Statement contract declares (up to 1%) first, then a 1% Statement Maker fee; the rest goes to Credit Card holders, 1/80 per card. Once the contracts are live, every on-chain action (depositing, burning, bidding, settling, claiming) costs gas, paid by whoever calls it; the burn costs about 6.1M gas plus the Statement mint. Statement Maker does not refund gas. In preview nothing costs gas.',
+ 'Your responsibilities': 'You confirm you are of legal age and legally allowed to use this service where you live; that you are not in a sanctioned or embargoed country or on any sanctions list, and do not act for anyone who is; and that you will handle your own taxes and legal obligations. If you use Statement Maker for a company, DAO or other wallet, you confirm you may bind it to these terms. You will not use Statement Maker to manipulate bids, prices, or other members, and you will not use what you know before it is public on-chain (such as a coming deposit, burn or bid) to trade ahead of others. Do not promote Credit Cards or Statements as investments.',
+ 'Preview': 'Statement Maker is in preview. Nothing here moves Credits or ETH. Deposits, cards, bids and sales are records kept by Statement Maker only. Two things must exist first: Jack’s Statement contract, and Statement Maker’s contracts for the four parties and the auction, which are not deployed yet.',
+ 'The code controls': 'Statement Maker’s contracts are non-custodial and run on their own once deployed. The auction and the four-party rules are not yet in any deployed contract. Statement Maker never holds your Credits, Credit Cards, Statements, ETH or keys, and does not broker, match, route, clear or settle anything: every transaction is between your wallet and the contracts. Statement Maker is not an exchange, broker, money transmitter or fiduciary. Where the contracts and these terms differ, the deployed contract code controls. Your wallet shows each transaction before you sign it; by signing you confirm you reviewed and understood it. You can use the contracts without this site.',
+ 'Automatic outcomes': 'By depositing you consent to everything the contracts do by their rules, including actions others trigger: minting and burning Credit Cards, returning Credits, the burn of all 80 in purchase order, the auction and its settlement to the highest bidder, royalties, fees, and claims. Transactions are final. Statement Maker cannot stop, change or undo them.',
  'Members act for themselves': 'Members, card holders, bidders and buyers each act on their own behalf. A party is not a partnership, joint venture, company or fund, and joining one creates no duty of care or trust between members, or between any member and Statement Maker. Voting is a technical mechanism, not a management right.',
- 'Burning is permanent': 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party does not reach 80 by its deadline, every card can be redeemed for its Credit.',
+ 'Public by design': 'Your wallet address, holdings and every on-chain action are public and permanent. Statement Maker shows party activity, the holders of each party’s Credits, bids and ENS names publicly and cannot delete what is on-chain.',
 };
 const termsRows = () => (launchPhase() ? TERMS.map(([h, t]) => [h, TERMS_LAUNCH[h] || t]) : TERMS);
 const termsBody = () => `<div class="rows terms">${termsRows().map(([h, t], i) => `<div><span>${String(i + 1).padStart(2, '0')} ${esc(h)}</span><strong>${esc(t)}</strong></div>`).join('')}</div>`;
@@ -1019,7 +1056,7 @@ function openTermsModal(address, mode = 'sim') {
      ${termsBody()}
     </div>
     <div class="modal-foot">
-     <label class="check"><input type="checkbox" id="agree" disabled> <span>I have read these terms. I understand that deposits lock at 80, that assembly burns my Credits permanently, that a single no vote can block a sale, and that Credit Cards may be worth nothing. I accept these terms.</span></label>
+     <label class="check"><input type="checkbox" id="agree" disabled> <span>I have read these terms. ${launchPhase() ? 'I understand that deposits lock at 80, that the burn destroys my Credits permanently, that the Statement sells only by auction on Statement Maker, and that Credit Cards may be worth nothing.' : 'I understand that deposits lock at 80, that assembly burns my Credits permanently, that a single no vote can block a sale, and that Credit Cards may be worth nothing.'} I accept these terms.</span></label>
      <div class="actions" style="margin-top:14px;align-items:center"><button class="cta" id="accept" disabled style="margin-top:0">${mode === 'wallet' ? 'Sign and connect' : 'Accept and connect (simulated)'}</button><button type="button" id="decline">Cancel</button><span class="hint" id="scroll-hint">Scroll to the end to enable the checkbox</span></div>
      <div class="error" id="t-err"></div>
     </div>
@@ -1143,7 +1180,7 @@ async function pageStatement(id) {
    ${p.sold && p.resale ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy · holder listing</h2><strong class="big">${eth(p.resale.priceEth)}</strong></div>
      <p class="muted">Listed by ${userLink(p.resale.seller)}. 1% to Statement Maker, the rest to the seller.</p>
-     ${me === p.resale.seller ? `<button type="button" id="unlist">Cancel your listing</button>` : me ? `<button class="cta" id="buy-r">Buy Statement ${Number(p.assembled.number)} for ${eth(p.resale.priceEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
+     ${me === p.resale.seller ? `<button type="button" id="unlist">Cancel your listing</button>` : me ? `<button class="cta" id="buy-r">Buy Statement ${Number(p.assembled.number)} for ${eth(p.resale.priceEth)}</button> <span class="faint">Preview · no ETH moves</span> ${cost('buy')}` : connectAct}
      <div class="error" id="buy-r-err"></div></div>` : ''}
    ${p.sold && p.owner === me && !p.resale && !launchPhase() ? `<div class="buy-box">
      <h2 style="margin-bottom:10px">List it for sale</h2>
@@ -1153,7 +1190,7 @@ async function pageStatement(id) {
    ${!p.sold && p.listing ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy</h2><strong class="big">${eth(p.listingEth)}</strong></div>
      <p class="muted">1% to Statement Maker, then ${eth(p.listingEth * 0.99 / SLOTS)} to each of the 80 Credit Cards.</p>
-     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}.</p>` : me ? `<button class="cta" id="buy-s">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
+     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}.</p>` : me ? `<button class="cta" id="buy-s">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span> ${cost('buy')}` : connectAct}
      <div class="error" id="buy-s-err"></div></div>` : ''}
    <details class="cards-box" style="margin-top:48px"><summary><h2>Holders · ${p.members.length}</h2></summary>
    <table class="table"><tbody>${p.members.map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${userLink(m.address)}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table></details>
@@ -1192,7 +1229,8 @@ const DEFS = {
   'filled': 'Credits deposited so far, out of 80.',
   'hosts': 'Who runs the party. The host sets the defaults (until someone else deposits), orders and burns Manual parties, and can hand hosting on. Nothing else.',
   'eligible credits': 'Which Credits this party accepts, and how many exist in total.',
-  'sale split': 'Where the sale money goes: 1% to Statement Maker, the rest in 80 equal shares, one per Credit Card.',
+  'sale split': 'Creator royalty up to 1%, then 1% to Statement Maker, the rest in 80 equal shares.',
+  'credits floor': 'The Credits floor from OpenSea, averaged over 24 hours. The auction’s opening bid is 100 × this at the burn.',
   'defaults': 'Settings the host chose when opening the party. They apply automatically.',
   'you': 'How many of this party’s 80 Credit Cards your connected wallet holds.',
   'floor': 'The reference price for a Statement: the Statement collection floor once it exists, 80 × the Credits floor until then. Prices below it need 60 of 80 votes.',
@@ -1215,11 +1253,13 @@ const DEFS = {
   'deposit': 'Adding Credits to a party. Each one returns a Credit Card.',
   'approved price': 'The price in force now, set by the host default or by a vote.',
 };
+const DEFS_LAUNCH = { 'floor': DEFS['credits floor'] };
 function addDefs(root = app) {
   root.querySelectorAll('.field > label, .rows > div > span:first-child').forEach(el => {
     if (el.closest('.no-defs')) return; // the Rules page explains itself
     const k = el.textContent.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^\d\d /, '');
-    const d = DEFS[k] || DEFS[k.split(' · ')[0]];
+    const defs = launchPhase() ? { ...DEFS, ...DEFS_LAUNCH } : DEFS;
+    const d = defs[k] || defs[k.split(' · ')[0]];
     if (d) { el.dataset.def = d; el.tabIndex = 0; }
   });
 }
@@ -1249,7 +1289,7 @@ async function launchData() {
 const minuteKey = m => m.time.replace(':', '');
 const minuteTitle = m => `${esc(m.time)} UTC · #${Number(m.from)}–${Number(m.to)}`;
 const minuteState = m => ({ OPEN: 'Open', FULL: 'Full · ready to burn', ASSEMBLED: `Statement ${Number(m.assembled?.number)}${m.auction && !m.auction.settled ? (m.auction.highEth != null ? ' · auction, high bid ' + ethx(m.auction.highEth) : ' · auction opens at ' + ethx(m.auction.reserveEth)) : ''}`, SOLD: `Statement ${Number(m.assembled?.number)} · sold`, EXPIRED: 'Expired' }[m.status] || esc(m.status || '—'));
-const LAUNCH_NOTE = 'Four minutes of the Credits mint produced exactly 80 Credits each. Each can become one Statement if its holders deposit.';
+const LAUNCH_NOTE = 'In four minutes of the Credits mint, exactly 80 Credits were bought in each. Each can become one Statement if its holders deposit.';
 
 async function pageFour() {
   const L = await launchData();
@@ -1277,7 +1317,8 @@ function lookupBox(el, L) {
     if (!q) return render(out, '');
     render(out, '<p class="muted">Checking…</p>');
     if (!isAddress(q)) {
-      try { q = (await api('users/' + encodeURIComponent(q))).address; } catch (e) { return render(out, `<p class="error">${esc(e.message)}</p>`); }
+      try { q = (await api('ens/resolve?name=' + encodeURIComponent(q))).address; } catch (e) { return render(out, `<p class="error">${esc(e.message)}</p>`); }
+      if (!q) return render(out, '<p class="error">That name does not resolve to an address.</p>');
     }
     const rows = L.minutes.map(m => ({ m, cs: m.cells.filter(c => c.who === q) })).filter(r => r.cs.length);
     render(out, rows.length
@@ -1313,7 +1354,7 @@ async function pageMinute(key) {
   ${m.assembled ? `<div class="modes view-toggle" style="margin-bottom:12px"><button type="button" data-view="st" aria-pressed="true">Statement</button><button type="button" data-view="cr" aria-pressed="false">Burned Credits</button></div>
   <div id="mstatement">${sheet({ credits: m.cells })}</div>` : ''}
   <div class="mgrid" id="mgrid" ${m.assembled ? 'hidden' : ''}>${m.cells.map(cell).join('')}</div>
-  <div class="caption"><span class="muted">${m.assembled ? 'The 80 Credits in their burned order, earliest mint first.' : 'Mint order, earliest first: how the Statement will be laid out.'} <span class="key-in">In the party</span> · <span class="key-out">not yet</span>${me ? ' · <span class="dot y"></span>yours' : ''}</span></div>
+  <div class="caption"><span class="muted">${m.assembled ? 'The 80 Credits in their burned order, earliest purchase first.' : 'Purchase order, earliest first: how the Statement will be laid out.'} <span class="key-in">In the party</span> · <span class="key-out">not yet</span>${me ? ' · <span class="dot y"></span>yours' : ''}</span></div>
   <div class="detail" id="mdetail" ${m.assembled ? 'hidden' : ''}><span class="faint">—</span><span class="muted">Select a Credit.</span></div>
   <div class="works" style="margin-top:48px">
    <section>
@@ -1323,13 +1364,12 @@ async function pageMinute(key) {
        : !free.length ? `<p class="alert-k">${meName()} holds ${mineAll.length ? 'no undeposited Credits' : 'none of these 80'}.</p><div class="actions">${switchBtn}</div>`
        : `<p class="muted">${meName()} holds ${free.length} of these 80 not yet deposited. Tap yours on the grid (marked yellow) to pick.</p>
        <div class="actions"><button type="button" id="m-all">Select all mine</button><button type="button" id="m-none">Clear</button></div>
-       <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
-       <label class="check" style="margin:12px 0"><input type="checkbox" id="m-ack"> <span>I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s price, and <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
-       <button class="cta" id="m-deposit" disabled>Deposit</button> ${cost('deposit')} each`}
+       ${FEE_BOX}
+       <label class="check" style="margin:12px 0"><input type="checkbox" id="m-ack"> <span>${HOUSE_ACK}</span></label>
+       <button class="cta" id="m-deposit" disabled>Deposit</button> ${depGas()}`}
      <div class="error" id="m-err"></div>
-     <p class="note">Each Credit deposited returns one Credit Card. Until all 80 are in, the card’s holder can redeem it for that Credit. At 80, any card holder can burn them into the Statement, in mint order.</p>
+     <p class="note">Each Credit deposited returns one Credit Card. Until all 80 are in, the card’s holder can redeem it for that Credit. At 80, any card holder can burn them into the Statement, in purchase order. ${PREVIEW_NOTE}</p>
     </div>` : ''}
-    ${m.assembled ? '' : '<div class="panel" id="lookup"></div>'}
    </section>
    <section>
     <div class="panel">
@@ -1341,6 +1381,7 @@ async function pageMinute(key) {
    </section>
   </div>
   <div id="more" style="margin-top:48px"></div>
+  ${launchPhase() ? '' : `<div class="panel" style="margin-top:48px;max-width:900px"><h2>Rules for the four</h2><p class="muted" style="margin-bottom:10px">The four Minute parties keep their launch rules, including the auction.</p><div class="rows terms no-defs">${launchRulesRows()}</div></div>`}
   <div class="panel" id="log" style="margin-top:48px;max-width:900px"></div>`);
 
   const byCell = new Map(m.cells.map(c => [c.id, c]));
@@ -1370,7 +1411,6 @@ async function pageMinute(key) {
     catch (e) { $('#m-err').textContent = e.message; }
   });
   depState();
-  if ($('#lookup')) lookupBox($('#lookup'), L);
   logPanel(m.party, $('#log'));
   // The regular party panels (your cards, burn, price votes, buy, claim, chat). Hidden when the party page is not
   // readable by this wallet (after launch, unassembled parties are for Credit holders).
@@ -1410,15 +1450,16 @@ async function route() {
     // list, other party pages and the Credits lookup open after the first Statement.
     // Party pages (The Four, Minute and party pages, Start a party, Credits) need the Rules agreement first.
     // View-only visitors (no wallet) read them without it; every action needs a wallet, then the agreement.
-    if (me && ['minute', 'party', 'new', 'wallet', 'four', 'parties'].includes(page) && !rulesAgreed()) return toRules();
+    const housePage = page === 'minute' || (page === 'party' && /^minute-\d{4}$/.test(arg || ''));
+    if (me && ['minute', 'party', 'new', 'wallet', 'four', 'parties'].includes(page) && !(housePage ? houseAgreed() : rulesAgreed())) return toRules();
     if (page === 'minute') return await pageMinute(arg);
-    if (launch && !['four', 'minute', 'rules', 'terms', 'statements', 'statement'].includes(page)) { location.replace('#/'); return; }
+    if (launch && !['four', 'minute', 'rules', 'terms', 'statements', 'statement'].includes(page)) { location.replace('#/four'); return; }
     if (page === 'four' && !launch) { location.replace('#/parties'); return; }
     if (page === 'parties' && launch) { location.replace('#/four'); return; }
     if (page === 'four') return await pageFour();
     // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements and Terms only.
     const gated = page === 'parties' || page === 'new' || page === 'wallet' || page === 'party';
-    if (gated && me && !rulesAgreed()) return toRules();
+    if (gated && me && !(housePage ? houseAgreed() : rulesAgreed())) return toRules();
     if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page, arg);
     if (page === 'party') await pageParty(arg);
     else if (page === 'new') await pageNew();
@@ -1440,4 +1481,4 @@ app.addEventListener('click', e => {
   if ($('#mdetail')) $('#mdetail').hidden = st; // "Select a Credit" only applies to the Credits view
 });
 window.addEventListener('hashchange', route);
-Promise.all([api('auth/me').then(async m => { me = m.address && m.terms ? m.address : ''; access = m; await syncRules(); }), api('stats').then(x => (stats = x))]).then(async () => { const a = await Wallets.restore(CHAIN); const w = Wallets.wallet(); if (w) try { chainNow = Number(await w.provider.request({ method: 'eth_chainId' })) || CHAIN; } catch {} if (me && a && a !== me) { await api('auth/logout', {}).catch(() => {}); me = ''; access = await api('auth/me').catch(() => access); } }).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
+Promise.all([api('auth/me').then(async m => { me = m.address && (m.terms || m.house) ? m.address : ''; access = m; await syncRules(); }), api('stats').then(x => (stats = x))]).then(async () => { const a = await Wallets.restore(CHAIN); const w = Wallets.wallet(); if (w) try { chainNow = Number(await w.provider.request({ method: 'eth_chainId' })) || CHAIN; } catch {} if (me && a && a !== me) { await api('auth/logout', {}).catch(() => {}); me = ''; access = await api('auth/me').catch(() => access); } }).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
