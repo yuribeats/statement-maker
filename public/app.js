@@ -486,7 +486,8 @@ function pageRules() {
    <div><span><b class="rn y">11</b> Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
   </div>
   <div class="rows">
-   <div><span>Contract</span><strong>Credits 0x9763…3043, Ethereum</strong></div>
+   <div><span>Contract</span><strong><a href="https://etherscan.io/address/0x97630aa70ab14ed9883b41dafccbc11349723043" target="_blank" rel="noopener noreferrer">Credits 0x9763…3043, Ethereum ↗</a></strong></div>
+   <div><span>Source code</span><strong><a href="https://github.com/yuribeats/statement-maker" target="_blank" rel="noopener noreferrer">github.com/yuribeats/statement-maker ↗</a></strong></div>
    <div><span>Traits</span><strong>Computed by the Credits art contract itself</strong></div>
    <div><span>Rarity</span><strong>Sum of −log2 frequency over Colors, Print, Weight, Eights</strong></div>
    <div><span>Status</span><strong><span class="demo">Preview</span> · the Statement contract is not published yet · nothing here moves Credits or ETH</strong></div>
