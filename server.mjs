@@ -15,7 +15,9 @@ const ZERO = '0x0000000000000000000000000000000000000000';
 const TERMS_VERSION = '2026-09-23';
 const VOTE_WINDOW = 48 * 36e5;
 const WINDOWS = [24, 48, 72, 168]; // allowed voting windows, hours
-const EXEC_WINDOW = 7 * 864e5; // a passed proposal lapses if nobody executes it within 7 days
+const EXEC_WINDOW = 7 * 864e5;
+// Deadlock escape: after 3 NO-blocked proposals of a kind, or 30 days without one executing, 2/3 (54 cards) passes it despite NO.
+const DEADLOCK_FAILS = 3, DEADLOCK_DAYS = 30, OVERRIDE = Math.ceil(80 * 2 / 3); // a passed proposal lapses if nobody executes it within 7 days
 const windowMs = (h, p) => (WINDOWS.includes(Number(h)) ? Number(h) : (p.params.voteHours || 48)) * 36e5;
 // Measured on a mainnet fork (see SPEC §4c) or estimated; used to show costs next to actions.
 const GAS = { deposit: 125815, withdraw: 125815, propose: 120000, vote: 60000, execute: 80000, arrange: 2000000, assemble: 2576314, returnCredit: 125815 };
@@ -63,6 +65,11 @@ refreshGas(); setInterval(refreshGas, 5 * 60 * 1000);
 // ---- state ----
 const STATE = path.join(DATA, 'state.json');
 let state = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE)) : { parties: [] };
+// Credit Cards: one ERC-721 per deposited Credit. `address` on a deposit is the card's current holder;
+// `depositor` is who put the Credit in. Everything (votes, withdrawals, returns, proceeds) follows the holder.
+state.nextCard ||= 1;
+for (const p of state.parties) for (const d of p.deposits) { d.depositor ||= d.address; d.card ||= state.nextCard++; }
+for (const p of state.parties) if (p.deposits.length >= 80 && !p.fullAt) p.fullAt = Math.max(...p.deposits.map(d => d.at));
 // Dev clock: lets the prototype skip ahead through voting windows and deadlines.
 const now = () => Date.now() + (state.clockOffset || 0);
 const save = () => { const tmp = STATE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(state, null, 1)); fs.renameSync(tmp, STATE); };
@@ -117,20 +124,35 @@ const members = p => {
 };
 function status(p) {
   if (p.closed || (!p.assembled && now() > p.deadline)) return 'EXPIRED';
+  if (p.sold) return 'SOLD';
   if (p.assembled) return 'ASSEMBLED';
   return p.deposits.length >= SLOTS ? 'FULL' : 'OPEN';
 }
 function tally(p, prop) {
-  const w = new Map(members(p).map(m => [m.address, m.count]));
+  // Weight comes from the cards each address held when the proposal was created (no buy-vote-sell).
+  const w = new Map(Object.entries(prop.snapshot || Object.fromEntries(members(p).map(m => [m.address, m.count]))));
   let yes = 0, no = 0;
   for (const [a, v] of Object.entries(prop.votes)) (v ? (yes += w.get(a) || 0) : (no += w.get(a) || 0));
   const endsAt = prop.endsAt || prop.at + VOTE_WINDOW;
   const closed = now() >= endsAt;
-  const passing = yes > SLOTS / 2 && no === 0;
+  // A price below the floor needs 75% of cards (60 of 80); everything else needs a majority (41).
+  const below = prop.type === 'LIST' && belowFloor(prop.args);
+  const need = below ? Math.ceil(SLOTS * 0.75) : Math.floor(SLOTS / 2) + 1;
+  const passing = prop.override ? yes >= Math.max(need, OVERRIDE) : yes >= need && no === 0;
   const execBy = endsAt + EXEC_WINDOW;
   const lapsed = closed && passing && !prop.executed && now() > execBy;
-  return { yes, no, passing, endsAt, closed, execBy, lapsed, executable: closed && passing && !prop.executed && !lapsed && !prop.superseded };
+  return { yes, no, need: prop.override ? Math.max(need, OVERRIDE) : need, override: !!prop.override, below, passing, endsAt, closed, execBy, lapsed, executable: closed && passing && !prop.executed && !lapsed && !prop.superseded };
 }
+const kindOf = t => (t === 'CANCEL_LISTING' ? 'LIST' : t);
+function deadlocked(p, type) {
+  const k = kindOf(type);
+  const same = p.proposals.filter(q => kindOf(q.type) === k);
+  if (same.some(q => q.executed)) return false;
+  const blocked = same.filter(q => { const t = tally(p, q); return t.closed && t.no > 0 && !q.override; }).length;
+  const since = p.assembled?.at || p.fullAt;
+  return blocked >= DEADLOCK_FAILS || (since != null && now() - since > DEADLOCK_DAYS * 864e5);
+}
+const belowFloor = t => { const e = priceEth(t), f = floor.credit ? floor.credit * SLOTS : null; return e != null && f != null && e < f; };
 function priceEth(t) {
   const base = floor.credit ? floor.credit * SLOTS : null;
   if (t.mode === 'fixed') return t.value;
@@ -150,7 +172,9 @@ function view(p) {
   const order = p.order || deposited(p);
   return {
     ...p, now: now(), orderApproved: !!p.order, arranger: arrangerOf(p), arrangerElected: !!p.arranger, status: status(p), members: members(p), targetEth: targetEth(p),
-    credits: order.map(id => card(byId.get(id), p.deposits.find(d => d.id === id)?.address)),
+    credits: order.map(id => { const d = p.deposits.find(x => x.id === id); return { ...card(byId.get(id), d?.address), card: d?.card, depositorAddr: d?.depositor, claimed: !!d?.claimed }; }),
+    perCard: p.sold ? p.sold.perCard : null,
+    deadlock: { LIST: deadlocked(p, 'LIST'), NOMINATE_ARRANGER: deadlocked(p, 'NOMINATE_ARRANGER'), APPROVE_ARRANGEMENT: deadlocked(p, 'APPROVE_ARRANGEMENT') },
     proposals: p.proposals.map(x => ({ ...x, ...tally(p, x) })),
     eligible: p.eligible ?? (p.eligible = eligibleCount(p.params.filters)),
     floorEth: floor.credit ? floor.credit * SLOTS : null,
@@ -171,13 +195,39 @@ async function svg(id) {
   return s;
 }
 
+// ---- Credit Card image: what the ERC-721's on-chain tokenURI would draw ----
+const xml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
+async function cardSvg(p, d) {
+  const art = Buffer.from(String(await svg(d.id))).toString('base64');
+  const st = status(p);
+  const order = p.order || deposited(p);
+  const slot = order.indexOf(d.id);
+  const pos = slot >= 0 ? `ROW ${Math.floor(slot / 8) + 1} · COL ${(slot % 8) + 1}` : 'UNPLACED';
+  const line = st === 'SOLD' ? (d.claimed ? 'REDEEMED' : `CLAIM ${p.sold.perCard.toFixed(4)} ETH`) : st === 'ASSEMBLED' ? `STATEMENT ${p.assembled.number}` : st === 'EXPIRED' ? 'REDEEM FOR CREDIT' : st === 'FULL' ? 'ARRANGING' : `${p.deposits.length}/80 FILLED`;
+  const t = (x, y, text, size = 18, weight = 400, fill = '#111') => `<text x="${x}" y="${y}" font-family="SF Mono, Menlo, monospace" font-size="${size}" font-weight="${weight}" fill="${fill}" letter-spacing=".04em">${xml(text)}</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 856 540" width="856" height="540">
+<rect width="856" height="540" fill="#fff"/><rect x=".5" y=".5" width="855" height="539" fill="none" stroke="#111"/>
+<image x="40" y="90" width="360" height="360" href="data:image/svg+xml;base64,${art}"/>
+<rect x="40" y="90" width="360" height="360" fill="none" stroke="#e3e3e3"/>
+${t(40, 60, 'CREDIT CARD', 22, 700)}${t(816, 60, 'NO. ' + String(d.card).padStart(6, '0'), 18, 400, '#929292').replace('<text', '<text text-anchor="end"')}
+${t(440, 120, p.name.toUpperCase().slice(0, 30), 20, 700)}
+${t(440, 160, 'CREDIT #' + d.id, 18)}
+${t(440, 192, pos, 18, 400, '#929292')}
+${t(440, 224, '1 OF 80 · 1 VOTE · 1/80 OF SALE', 16, 400, '#929292')}
+${t(440, 300, line, 22, 700)}
+${t(440, 332, st, 16, 400, '#929292')}
+<rect x="440" y="410" width="22" height="22" fill="#00B5E2"/><rect x="466" y="410" width="22" height="22" fill="#E4007C"/><rect x="492" y="410" width="22" height="22" fill="#FFD100"/><rect x="518" y="410" width="22" height="22" fill="#111"/>
+${t(816, 428, 'STATEMENT MAKER', 16, 400, '#929292').replace('<text', '<text text-anchor="end"')}
+</svg>`;
+}
+
 // ---- demo seed: real Credits from real holders, marked DEMO ----
 if (!state.parties.length) {
   const pick = (f, n, perHolderMax) => {
     const out = [];
     for (const [addr, ids] of [...holders].sort((a, b) => b[1].length - a[1].length)) {
       const ok = ids.filter(id => matches(byId.get(id), f)).slice(0, perHolderMax);
-      for (const id of ok) { if (out.length < n) out.push({ address: addr, id, at: Date.now() - Math.random() * 864e5 }); }
+      for (const id of ok) { if (out.length < n) out.push({ address: addr, depositor: addr, card: state.nextCard++, id, at: Date.now() - Math.random() * 864e5 }); }
       if (out.length >= n) break;
     }
     return out;
@@ -189,13 +239,33 @@ if (!state.parties.length) {
   const a = mk('eights', 'Two Eights Or More', { minDeposit: 1, target: { mode: 'floorPct', value: 40 }, filters: { eights: [2, 3, 4, 5] } }, 51, 6);
   const b = mk('cyan', 'Cyan Plate Only', { minDeposit: 2, target: { mode: 'fixed', value: 3 }, filters: { colors: ['C'] } }, 23, 4);
   const c = mk('slip', 'Misregistered', { minDeposit: 1, target: { mode: 'floorEth', value: 0.5 }, filters: { print: ['Slip', 'Drift', 'Skew', 'Loose', 'Nudge'] } }, 80, 5);
+  const snap = q => Object.fromEntries(members(q).map(m => [m.address, m.count]));
+  const votesUpTo = (q, cap, skip = []) => { const v = {}; let w = 0; for (const m of members(q)) { if (skip.includes(m.address) || w + m.count > cap) continue; v[m.address] = true; w += m.count; } return v; };
+  const T = Date.now();
   const ms = members(c);
-  c.arranger = null;
-  c.proposals.push({ id: 1, type: 'NOMINATE_ARRANGER', args: { address: ms[1].address }, by: ms[0].address, at: Date.now() - 20 * 36e5, votes: (() => { const v = {}; let w = 0; for (const m of ms) { if (m.address === ms[1].address || w + m.count > 36) continue; v[m.address] = true; w += m.count; } return v; })() });
-  c.chat.push({ address: ms[0].address, text: 'we are full. nominating an arranger. i like sorting by print, drift on top.', at: Date.now() - 35e5 });
-  c.chat.push({ address: ms[2].address, text: 'yes from me. keep the loose ones in the bottom row.', at: Date.now() - 20e5 });
-  a.chat.push({ address: a.hosts[0], text: 'twos and up only. 29 slots left.', at: Date.now() - 50e5 });
-  state.parties = [a, b, c];
+  c.fullAt = T - 3 * 864e5;
+  const fl = floor.credit ? floor.credit * SLOTS : 2.4;
+  c.arranger = ms[1].address;
+  c.proposals.push({ id: 1, type: 'NOMINATE_ARRANGER', args: { address: ms[1].address }, by: ms[0].address, at: T - 60 * 36e5, endsAt: T - 12 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 46), executed: true, executedBy: ms[3].address });
+  const printOrder = ['Registered', 'Nudge', 'Slip', 'Skew', 'Drift', 'Loose'];
+  const ord = deposited(c).map(id => byId.get(id)).sort((x, y) => printOrder.indexOf(y.print) - printOrder.indexOf(x.print) || x.id - y.id).map(x => x.id);
+  c.proposals.push({ id: 2, type: 'APPROVE_ARRANGEMENT', args: { order: ord, preset: 'Print' }, by: ms[1].address, at: T - 28 * 36e5, endsAt: T + 20 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 44) });
+  const v3 = votesUpTo(c, 50, [ms[9].address]); v3[ms[9].address] = false;
+  c.proposals.push({ id: 3, type: 'LIST', args: { mode: 'floorPct', value: -20 }, by: ms[2].address, at: T - 10 * 36e5, endsAt: T + 38 * 36e5, snapshot: snap(c), votes: v3 });
+  c.proposals.push({ id: 4, type: 'LIST', args: { mode: 'floorPct', value: 15 }, by: ms[0].address, at: T - 50 * 36e5, endsAt: T - 2 * 36e5, snapshot: snap(c), votes: votesUpTo(c, 48) });
+  c.chat.push({ address: ms[0].address, text: 'arranger elected. price at floor +15% passed, anyone can execute it.', at: T - 35e5 });
+  c.chat.push({ address: ms[9].address, text: 'voted no on -20%. not selling below floor.', at: T - 20e5 });
+  a.chat.push({ address: a.hosts[0], text: 'twos and up only. 29 slots left.', at: T - 50e5 });
+  // An assembled, listed party so the buy and claim flow can be seen.
+  const k = mk('black', 'Black Plate Only', { minDeposit: 1, target: { mode: 'fixed', value: 3 }, filters: { colors: ['K'] } }, 80, 5);
+  k.fullAt = T - 6 * 864e5;
+  k.order = deposited(k).map(id => byId.get(id)).sort((x, y) => x.marks - y.marks).map(x => x.id);
+  k.assembled = { by: members(k)[2].address, at: T - 2 * 864e5, number: 1 };
+  k.proposals.push({ id: 1, type: 'APPROVE_ARRANGEMENT', args: { order: k.order, preset: 'Ink' }, by: k.hosts[0], at: T - 5 * 864e5, endsAt: T - 3 * 864e5, snapshot: snap(k), votes: votesUpTo(k, 52), executed: true, executedBy: k.hosts[0] });
+  k.proposals.push({ id: 2, type: 'LIST', args: { mode: 'fixed', value: 3 }, by: k.hosts[0], at: T - 44 * 36e5, endsAt: T - 20 * 36e5, snapshot: snap(k), votes: votesUpTo(k, 47), executed: true, executedBy: members(k)[1].address });
+  k.listing = { mode: 'fixed', value: 3, startEth: 3, at: T - 19 * 36e5 };
+  k.deadline = T + 10 * 864e5;
+  state.parties = [a, b, c, k];
   save();
 }
 
@@ -250,6 +320,19 @@ http.createServer(async (req, res) => {
       if (x.version !== TERMS_VERSION || x.accept !== true) return json(res, 400, { error: 'terms must be accepted in full' });
       (state.terms ||= {})[who] = { version: TERMS_VERSION, at: now() };
       save(); return json(res, 200, { accepted: true });
+    }
+    if (a === 'card' && b) {
+      const n = Number(String(b).replace(/\.svg$/, ''));
+      const p = state.parties.find(q => q.deposits.some(d => d.card === n));
+      if (!p) return json(res, 404, { error: 'no card' });
+      res.writeHead(200, { ...SECURITY, 'content-security-policy': 'sandbox', 'content-type': 'image/svg+xml', 'cache-control': 'no-cache' });
+      return res.end(await cardSvg(p, p.deposits.find(d => d.card === n)));
+    }
+    if (a === 'cards' && b) {
+      const who = addr(b);
+      const out = [];
+      for (const p of state.parties) for (const d of p.deposits) if (d.address === who) out.push({ card: d.card, party: p.id, name: p.name, credit: d.id, status: status(p), claimed: !!d.claimed });
+      return json(res, 200, out);
     }
     if (a === 'gas') return json(res, 200, { ...gas, units: GAS });
     if (DEV && a === 'dev' && b === 'advance' && req.method === 'POST') {
@@ -342,18 +425,20 @@ http.createServer(async (req, res) => {
           if (taken.has(id)) return json(res, 400, { error: `#${id} is already in a party` });
           if (!matches(cr, p.params.filters)) return json(res, 400, { error: `#${id} does not meet this party's filters` });
         }
-        ids.forEach(id => p.deposits.push({ address: who, id, at: now() }));
+        ids.forEach(id => p.deposits.push({ address: who, depositor: who, card: state.nextCard++, id, at: now() }));
+        if (p.deposits.length === SLOTS) p.fullAt = now();
         save(); return json(res, 200, view(p));
       }
       if (c === 'withdraw') {
         if (st !== 'OPEN' && st !== 'EXPIRED') return json(res, 400, { error: 'withdrawals are closed once a party is full' });
+        // The card's holder withdraws that card's Credit (burning the card), whoever deposited it.
         const only = Array.isArray(x.ids) ? new Set(x.ids.slice(0, SLOTS).map(Number)) : null;
         p.deposits = p.deposits.filter(d => !(d.address === who && (!only || only.has(d.id))));
         save(); return json(res, 200, view(p));
       }
       if (c === 'chat') {
         const isMember = p.deposits.some(d => d.address === who) || p.hosts.includes(who);
-        if (!isMember) return json(res, 403, { error: 'only depositors and hosts can post' });
+        if (!isMember) return json(res, 403, { error: 'only Credit Card holders and hosts can post' });
         const text = String(x.text || '').trim().slice(0, 500);
         const last = [...p.chat].reverse().find(m => m.address === who);
         if (last && now() - last.at < 3000) return json(res, 429, { error: 'slow down' });
@@ -381,13 +466,13 @@ http.createServer(async (req, res) => {
           x.args = t;
         }
         const at = now();
-        p.proposals.push({ id: p.proposals.length + 1, type: x.type, args: x.args || {}, by: who, at, endsAt: at + windowMs(x.hours, p), votes: { [who]: true } });
+        p.proposals.push({ id: p.proposals.length + 1, type: x.type, args: x.args || {}, by: who, at, endsAt: at + windowMs(x.hours, p), override: deadlocked(p, x.type), snapshot: Object.fromEntries(members(p).map(m => [m.address, m.count])), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
       }
       if (c === 'vote') {
         const prop = p.proposals.find(q => q.id === Number(x.proposal));
         if (!prop) return json(res, 404, { error: 'no proposal' });
-        if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'Credit Card holders only' });
+        if (!(prop.snapshot ? prop.snapshot[who] > 0 : p.deposits.some(d => d.address === who))) return json(res, 403, { error: 'only addresses holding Credit Cards when this proposal opened can vote' });
         if (tally(p, prop).closed) return json(res, 400, { error: 'voting has closed' });
         prop.votes[who] = !!x.yes;
         save(); return json(res, 200, view(p));
@@ -408,8 +493,7 @@ http.createServer(async (req, res) => {
         if (prop.type === 'LIST') p.listing = { ...prop.args, startEth: priceEth(prop.args), at: now() };
         if (prop.type === 'CANCEL_LISTING') p.listing = null;
         // Executing one proposal supersedes every other pending proposal of the same kind (no stale re-runs).
-        const kind = t => (t === 'CANCEL_LISTING' ? 'LIST' : t);
-        for (const q of p.proposals) if (q !== prop && !q.executed && kind(q.type) === kind(prop.type)) q.superseded = true;
+        for (const q of p.proposals) if (q !== prop && !q.executed && kindOf(q.type) === kindOf(prop.type)) q.superseded = true;
         save(); return json(res, 200, view(p));
       }
       if (c === 'arrange') {
@@ -419,7 +503,7 @@ http.createServer(async (req, res) => {
         if (!validOrder(p, order)) return json(res, 400, { error: 'order must contain each of the 80 Credits once' });
         if (p.proposals.filter(q => q.type === 'APPROVE_ARRANGEMENT' && !tally(p, q).closed).length >= 3) return json(res, 429, { error: 'at most 3 arrangements under vote at once' });
         const at = now();
-        p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: String(x.preset || 'custom').slice(0, 60) }, by: who, at, endsAt: at + windowMs(x.hours, p), votes: { [who]: true } });
+        p.proposals.push({ id: p.proposals.length + 1, type: 'APPROVE_ARRANGEMENT', args: { order, preset: String(x.preset || 'custom').slice(0, 60) }, by: who, at, endsAt: at + windowMs(x.hours, p), override: deadlocked(p, 'APPROVE_ARRANGEMENT'), snapshot: Object.fromEntries(members(p).map(m => [m.address, m.count])), votes: { [who]: true } });
         save(); return json(res, 200, view(p));
       }
       if (c === 'assemble') {
@@ -431,11 +515,40 @@ http.createServer(async (req, res) => {
         save(); return json(res, 200, view(p));
       }
       if (c === 'return') {
-        // After expiry any member may push every Credit back to its depositor.
+        // After expiry any member may push every Credit back to whoever holds its card.
         if (!p.deposits.some(d => d.address === who)) return json(res, 403, { error: 'members only' });
         if (st !== 'EXPIRED') return json(res, 400, { error: 'party has not expired' });
-        p.returned = { by: who, at: now(), count: p.deposits.length };
+        p.returned = { by: who, at: now(), count: p.deposits.length, to: Object.fromEntries(p.deposits.map(d => [d.card, d.address])) };
         p.deposits = [];
+        save(); return json(res, 200, view(p));
+      }
+      if (c === 'transfer') {
+        // Credit Cards are ERC-721s: the holder can send one anywhere; the new holder gets its vote, Credit and proceeds.
+        const d = p.deposits.find(q => q.card === Number(x.card));
+        if (!d) return json(res, 404, { error: 'no such card' });
+        if (d.address !== who) return json(res, 403, { error: 'only the holder can send this card' });
+        if (d.claimed) return json(res, 400, { error: 'this card was redeemed' });
+        const to = addr(x.to);
+        if (!isAddr(to) || to === ZERO) return json(res, 400, { error: 'bad recipient' });
+        d.address = to; (d.history ||= []).push({ from: who, to, at: now() });
+        save(); return json(res, 200, view(p));
+      }
+      if (c === 'buy') {
+        // Simulated sale at the party's approved ask. Royalty is unknown until the Statement contract ships (0 here).
+        if (st !== 'ASSEMBLED') return json(res, 400, { error: 'party is ' + st });
+        if (!p.listing) return json(res, 400, { error: 'not listed' });
+        const price = priceEth(p.listing);
+        if (!(price > 0)) return json(res, 400, { error: 'no price available' });
+        const royalty = 0, fee = price * 0.01;
+        p.sold = { buyer: who, price, royalty, fee, perCard: (price - royalty - fee) / SLOTS, at: now() };
+        save(); return json(res, 200, view(p));
+      }
+      if (c === 'claim') {
+        // Proceeds are claimed per card by its current holder; the card is burned on claim.
+        if (st !== 'SOLD') return json(res, 400, { error: 'nothing to claim yet' });
+        const mine = p.deposits.filter(d => d.address === who && !d.claimed && (!Array.isArray(x.cards) || x.cards.map(Number).includes(d.card)));
+        if (!mine.length) return json(res, 400, { error: 'no unclaimed cards held by this wallet' });
+        mine.forEach(d => { d.claimed = { to: who, eth: p.sold.perCard, at: now() }; });
         save(); return json(res, 200, view(p));
       }
       if (c === 'params') {

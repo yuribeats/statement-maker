@@ -5,23 +5,22 @@ Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 ## 1. Objects
 - **Party**: one group assembling one Statement. Has hosts, params (§3), 80 slots, a deadline, a page with chat.
   "Sheet" now means only the 8×10 artwork layout.
-- **Credit Card**: the token a depositor gets back for each Credit — one ERC-20 per party (symbol CARD), deployed by a factory as a minimal clone. Supply exactly 80 × 10^18 (one whole token per Credit; 18 decimals so fractions trade).
-  Freely transferable. Anyone may pair it on Uniswap; the tool links to "create pool" but does not seed liquidity.
-  Balance = vote weight in that party = share of any proceeds.
-  Votes: OpenZeppelin ERC20Votes (checkpointed) with self-delegation by default, so holders never need a separate "delegate" transaction.
+- **Credit Card**: an ERC-721, one per deposited Credit, minted to the depositor at deposit. One collection for all parties (tokenId = global card number; the card records its party and its Credit).
+  EVERYTHING FOLLOWS THE CARD: whoever holds it has the vote, the right to redeem its Credit (while OPEN, or after EXPIRED), and 1/80 of any sale. The depositor has no residual rights once the card moves.
+  Image: on-chain SVG — the Credit's art, party name, card number, Credit #, its row/column in the 8×10, 1-of-80 share, and live status (filled count, arranging, Statement N, claimable ETH, redeemed).
+  Freely transferable; trades on NFT marketplaces (ERC-721s do not pool on Uniswap).
 - **Vault**: holds deposited Credits, then the assembled Statement.
 
 ## 2. Party lifecycle
 | State | Enters when | Allowed |
 |---|---|---|
-| OPEN | host opens party | deposit (must meet the party's params); withdraw your own Credit. Deposits are recorded, no Credit Card yet |
-| FULL | 80th deposit | 80 Credit Cards minted, 1 per Credit to each depositor. Withdraw closed. Arrangement phase (§5) |
+| OPEN | host opens party | deposit (must meet the party's params) → one Credit Card per Credit; a card's holder may redeem it for its Credit (card burned) |
+| FULL | 80th deposit | redemption closed. Arrangement phase (§5) |
 | ASSEMBLED | vault calls Statement contract with the approved order; Credits burned | governance on the Statement |
 | LISTED / SOLD | passed LIST proposal | anyone buys at the ask. No offers, ever |
-| DISTRIBUTED | sale settles | Credit Card holders redeem Credit Cards for ETH pro rata (burned on redeem) |
-| EXPIRED | deadline passes unfilled or unassembled | every depositor withdraws their original Credit; any minted Credit Cards are void |
+| DISTRIBUTED | sale settles | each card's holder claims 1/80 of net proceeds (card burned on claim) |
+| EXPIRED | deadline passes unfilled or unassembled | each Credit goes to whoever holds its card (any member can push all) |
 
-Credit Cards are minted at FULL, not at deposit: a Credit Card that could be sold while OPEN would detach from the Credit it stands for and break withdrawals.
 Credits are never burned before assembly. If the Statement contract rejects contract callers, nothing is lost: parties expire and Credits return.
 
 ## 3. Hosts and party params
@@ -44,11 +43,12 @@ Credits are never burned before assembly. If the Statement contract rejects cont
 ## 4. Party governance (binding, on-chain) — Party-style
 Borrowed from PartyGovernance.sol: propose → vote → close → execute. No host veto, no rage quit (Statements cannot be split back into Credits).
 Time limits: each proposal has a voting window of 24 h, 48 h, 72 h or 7 days, chosen by the proposer (party default set by hosts, 48 h). A passed proposal must be executed within 7 days of closing or it lapses.
-Vote weight = ERC20Votes checkpoint at the proposal's creation block (stops buy-vote-sell, which matters now that Credit Cards trade).
-**Pass rule:** YES weight > 50% of total supply (more than 40 of 80 Credit Cards) AND NO weight = 0 when voting closes. Any NO vote kills the proposal. Hosts vote with their Credit Cards like everyone else; host privileges are in §3.
-Guard options (undecided):
-- Dust veto: with 18 decimals, 0.000000000000000001 of a Credit Card can block every proposal. Option: a NO counts only from holders of ≥ 1 whole Credit Card at the snapshot.
-- Permanent deadlock: one holder can block every sale forever, leaving the Statement stuck in the vault. Option: after N failed proposals or T days, the same proposal can pass by supermajority (e.g. 2/3) despite NO votes; or dissenters may redeem at the listed price.
+Vote weight = ERC721Votes checkpoint at creation block − 1 (stops buy-vote-sell and flash loans; Party uses the same offset).
+**Pass rule:** 1 card = 1 vote, weight = cards held at proposal creation (snapshot). Passes with YES ≥ 41 of 80 AND zero NO.
+- Below floor: a LIST priced below the floor at creation or execution needs YES ≥ 60 (75%), still zero NO.
+- Deadlock escape: after 3 NO-blocked proposals of a kind, or 30 days since FULL/assembly without one executing, a new proposal of that kind passes with YES ≥ 54 (2/3) and NO is ignored. Below-floor prices still need 60.
+- Dust veto: impossible — cards are whole (ERC-721).
+- Executing a proposal supersedes every other pending proposal of the same kind.
 Proposal types (closed set, no arbitrary calls):
 - Pre-assembly: NOMINATE_ARRANGER (address), APPROVE_ARRANGEMENT (80-id array hash), ASSEMBLE
 - Post-assembly: LIST (price rule, duration) · CANCEL_LISTING · DISTRIBUTE
@@ -79,8 +79,8 @@ Every state change is a transaction: someone calls it and pays gas. Rule: once a
 
 | Function | Who may call | When | Gas (measured on a mainnet fork 2026-09-23 unless marked) |
 |---|---|---|---|
-| openParty(params) | any Credit holder (becomes host) | any time | est. ~250k (clone ERC-20 + vault) |
-| deposit(ids) | the Credits' owner | OPEN | ~126k per Credit (1 transfer measured: 125,815) |
+| openParty(params) | any Credit holder (becomes host) | any time | est. ~250k (vault clone; cards share one ERC-721 collection) |
+| deposit(ids) | the Credits' owner | OPEN | ~126k per Credit transfer (measured 125,815) + card mint (est. ~60–90k) |
 | withdraw(ids) | the depositor | OPEN or EXPIRED | ~ same as deposit |
 | propose(type, args) | any member | per state | est. ~80–150k |
 | vote(id, yes) | any member | voting window open | est. ~50–70k |
@@ -136,10 +136,9 @@ One page per party: 8×10 frame, member list with Credit Card balances, chat, op
 - Text buttons only (underline when pressed), no fills, no rounded corners.
 
 ## 9. Open decisions
-- Pass rule guards: dust-veto minimum, deadlock escape (§4).
 - Param edits after deposits exist (§3).
 - Chat readable by public or members only.
-- Fork Party Protocol governance or build on OZ Governor/ERC20Votes.
+- Fork Party Protocol governance or build on OZ Governor/ERC721Votes.
 
 ## 10. Unknowns
 - Statement contract ABI/rules (single-owner? contract callers? order semantics?). Ships ~2026-10-01.

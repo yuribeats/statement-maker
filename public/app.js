@@ -158,6 +158,7 @@ async function pageParty(id) {
   const p = await api('parties/' + encodeURIComponent(id));
   const isHost = p.hosts.includes(me), isMember = p.members.some(m => m.address === me), isArranger = p.arranger === me;
   const myTokens = p.members.find(m => m.address === me)?.count || 0;
+  const myCards = me ? p.credits.filter(c => c.depositor === me).sort((a, b) => a.card - b.card) : [];
   const order = partyUI.mode === 'arrange' && partyUI.order ? partyUI.order : p.credits;
   const sel = order.find(c => c.id === partyUI.selected) || null;
   const wallet = me && p.status === 'OPEN' ? await api('wallet/' + me) : [];
@@ -206,9 +207,36 @@ async function pageParty(id) {
       <div><span>Floor (80 × Credit floor)</span><strong>${eth(p.floorEth)}</strong></div>
       ${p.listing ? `<div><span>Approved price</span><strong>${priceLabel(p.listing)} · ${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div>` : ''}
       <div><span>Sale split</span><strong>Artist royalty · 1% Statement Maker · rest to the 80 Credit Cards</strong></div>
-      ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 ${p.status === 'OPEN' ? 'deposited' : 'Credit Cards'}</strong></div>` : ''}
+      ${isMember ? `<div><span>You</span><strong><span class="dot y"></span>${myTokens} of 80 Credit Cards</strong></div>` : ''}
      </div>
     </div>
+
+    ${myCards.length ? `
+    <div class="panel">
+     <h2>Your Credit Cards · ${myCards.length}</h2>
+     <p class="muted" style="margin-bottom:10px">One card per Credit. The card is the vote, the claim on its Credit before the Statement is made, and 1/80 of the sale. Whoever holds it has all three.</p>
+     <div class="cards">${myCards.map(c => `<figure><img src="/api/card/${Number(c.card)}.svg" alt="Credit Card ${Number(c.card)}" loading="lazy"><figcaption class="actions">
+       ${c.claimed ? '<span class="muted">Redeemed</span>' : `<button type="button" data-send="${Number(c.card)}">Send</button>`}
+       ${!c.claimed && (p.status === 'OPEN' || p.status === 'EXPIRED') ? `<button type="button" data-wd="${Number(c.id)}">Redeem for Credit #${Number(c.id)}</button>` : ''}
+       ${!c.claimed && p.status === 'SOLD' ? `<button type="button" data-claim="${Number(c.card)}">Claim ${eth(p.perCard)}</button>` : ''}
+     </figcaption></figure>`).join('')}</div>
+     <div class="actions" id="send-row" hidden><span class="muted">Send card <span id="send-no"></span> to</span><input id="send-to" placeholder="0x…" style="width:340px;border:0;border-bottom:1px solid var(--line)"><button type="button" id="send-go">Send</button><button type="button" id="send-x">Cancel</button></div>
+     ${p.status === 'SOLD' && myCards.some(c => !c.claimed) ? `<div class="actions"><button type="button" class="cta" id="claim-all">Claim all · ${eth(p.perCard * myCards.filter(c => !c.claimed).length)}</button></div>` : ''}
+     <div class="error" id="card-err"></div>
+    </div>` : ''}
+
+    ${p.status === 'ASSEMBLED' && p.listing ? `
+    <div class="panel"><h2>Buy</h2>
+     <div class="rows"><div><span>Price</span><strong>${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div><div><span>Split</span><strong>Artist royalty · 1% Statement Maker · ${eth(p.listingEth ? p.listingEth * 0.99 / SLOTS : null)} per Credit Card</strong></div></div>
+     ${me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Simulated · royalty 0 until the Statement contract is known</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
+     <div class="error" id="buy-err"></div></div>` : ''}
+    ${p.status === 'SOLD' ? `
+    <div class="panel"><h2>Sold</h2><div class="rows">
+     <div><span>Price</span><strong>${eth(p.sold.price)} to ${short(p.sold.buyer)}</strong></div>
+     <div><span>Artist royalty</span><strong>${eth(p.sold.royalty)}</strong></div>
+     <div><span>Statement Maker 1%</span><strong>${eth(p.sold.fee)}</strong></div>
+     <div><span>Per Credit Card</span><strong>${eth(p.perCard)}</strong></div>
+     <div><span>Claimed</span><strong>${p.credits.filter(c => c.claimed).length} / 80 cards</strong></div></div></div>` : ''}
 
     ${p.status === 'OPEN' ? `
     <div class="panel">
@@ -218,55 +246,72 @@ async function pageParty(id) {
        <div class="picker">${wallet.slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
        <button class="cta" id="deposit">Deposit ${partyUI.picks.size || ''}</button> ${cost('deposit')} each
-       ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Withdraw mine</button>` : ''}`}
+       ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Redeem all my cards</button>` : ''}`}
      <div class="error" id="dep-err"></div>
-     <p class="note">Credits stay yours until 80 are in. Withdraw any time before the party fills.</p>
+     <p class="note">Each Credit you deposit returns one Credit Card. Until the party fills, the card's holder can redeem it for that Credit.</p>
     </div>` : ''}
 
     ${p.status === 'EXPIRED' ? `
     <div class="panel"><h2>Expired</h2>
-     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their depositors by ${short(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Any member can send every Credit back to its depositor.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit')} per Credit</div>` : ''}`}
+     ${p.returned ? `<p class="muted">${Number(p.returned.count)} Credits returned to their card holders by ${short(p.returned.by)}.</p>` : `<p class="muted">The party did not finish in time. Each Credit goes to whoever holds its card. Any member can send them all.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="return">Return all Credits</button> ${cost('returnCredit')} per Credit</div>` : ''}`}
      <div class="error" id="ret-err"></div></div>` : ''}
     ${p.status !== 'OPEN' && p.status !== 'EXPIRED' ? `
-    <div class="panel">
-     <h2>Proposals</h2>
-     <p class="muted" style="margin-bottom:10px">Votes run 24 hours to 7 days (party default ${Number(p.params.voteHours || 48)}h). Passes when YES &gt; 40 Credit Cards and no one votes NO. Any member can then execute it, within 7 days, or it lapses.</p>
-     ${p.status === 'FULL' && p.orderApproved ? `<div class="proposal"><div class="caption" style="min-height:0"><strong>Assemble</strong><span class="pass">Ready</span></div><div class="muted">Arrangement approved. Any member can burn the 80 into the Statement. Simulated: the Statement contract is not public yet.</div>${isMember ? `<div class="actions"><button type="button" class="cta" id="assemble">Assemble</button> ${cost('assemble')}</div>` : ''}</div>` : ''}
-     ${p.assembled ? `<div class="proposal"><strong>Statement ${Number(p.assembled.number)}</strong> <span class="muted">assembled by ${short(p.assembled.by)}</span> · <a href="#/statement/${esc(p.id)}">View Statement →</a></div>` : ''}
-     ${p.proposals.length ? p.proposals.map(q => `
-      <div class="proposal">
-       <div class="caption" style="min-height:0"><strong>${Number(q.id)}. ${esc(q.type.replace('_', ' '))}</strong><span class="${q.executed || q.executable ? 'pass' : q.no ? 'blocked' : 'muted'}">${q.executed ? 'Executed' : q.lapsed ? 'Lapsed · not executed in time' : q.no ? 'Blocked by NO' : q.executable ? 'Passed · execute within ' + hrs(q.execBy - p.now) : q.closed ? 'Failed' : q.passing ? 'Passing · closes in ' + hrs(q.endsAt - p.now) : 'Open · closes in ' + hrs(q.endsAt - p.now)}</span></div>
-       <div class="muted">${q.type === 'NOMINATE_ARRANGER' ? 'Arranger: ' + short(q.args.address) : q.type === 'APPROVE_ARRANGEMENT' ? 'Order: ' + esc(q.args.preset) : q.type === 'LIST' ? 'Price: ' + priceLabel(q.args) + ' · ' + eth(priceOf(q.args, p.floorEth)) + ' · ' + vsFloor(priceOf(q.args, p.floorEth), p.floorEth) : ''} · by ${short(q.by)} · ${ago(q.at)} ago</div>
-       <div class="tally"><div class="bar"><i style="width:${q.yes / SLOTS * 100}%"></i></div><span>Yes ${q.yes}</span><div class="bar no"><i style="width:${q.no / SLOTS * 100}%"></i></div><span>No ${q.no}</span></div>
-       ${q.executed && q.executedBy ? `<div class="muted">Executed by ${short(q.executedBy)}</div>` : ''}
-       ${isMember && q.executable ? `<div class="actions"><button type="button" class="cta" data-exec="${Number(q.id)}">Execute</button> ${cost('execute')}</div>` : ''}
-       ${isMember && !q.executed && !q.closed ? `<div class="actions"><button type="button" data-vote="${Number(q.id)}" data-yes="1">Vote yes</button><button type="button" data-vote="${Number(q.id)}" data-yes="0">Vote no</button><span>${cost('vote')}</span>${q.type === 'APPROVE_ARRANGEMENT' ? `<button type="button" data-preview="${Number(q.id)}">Preview order</button>` : ''}</div>` : ''}
-      </div>`).join('') : '<p class="muted">None yet.</p>'}
-     ${isMember && p.status === 'FULL' ? `
-      <div class="actions" style="margin-top:14px"><span class="muted">Nominate arranger</span>
-       <select id="nominee" style="border:0;border-bottom:1px solid var(--line)">${p.members.map(m => `<option value="${esc(m.address)}">${short(m.address)} · ${Number(m.count)}</option>`).join('')}</select>
-       <button type="button" id="nominate">Propose</button></div>` : ''}
-     ${isMember ? `<div class="actions" style="margin-top:10px"><span class="muted">Voting window</span><select id="win" style="border:0;border-bottom:1px solid var(--line)">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (p.params.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select><span class="hint">Range: 24 hours – 7 days · applies to the next proposal</span></div>` : ''}
+    <div class="panel" id="proposals">
+     <div class="caption" style="min-height:0;margin-bottom:10px"><h2>Proposals</h2><button type="button" id="rules-t" class="muted">${partyUI.rules ? 'Hide rules' : 'How votes work'}</button></div>
+     ${partyUI.rules ? `<div class="rules-box">
+      <div><span>Weight</span><strong>1 Credit Card = 1 vote, counted as held when the proposal opened</strong></div>
+      <div><span>Passes</span><strong>41 of 80 yes and zero no</strong></div>
+      <div><span>Below floor</span><strong>60 of 80 yes and zero no</strong></div>
+      <div><span>Deadlock</span><strong>After 3 blocked proposals of a kind or 30 days, 54 yes passes it; no is ignored</strong></div>
+      <div><span>Window</span><strong>24 hours to 7 days, chosen by the proposer</strong></div>
+      <div><span>Execute</span><strong>Any card holder, within 7 days of passing, or it lapses</strong></div></div>` : ''}
+     ${p.status === 'FULL' && p.orderApproved ? `<div class="prop ready"><div class="prop-head"><strong>Assemble</strong><span class="chip pass">Ready</span></div><p class="muted">Arrangement approved. Any card holder can burn the 80 into the Statement. Simulated until the Statement contract is public.</p>${isMember ? `<div class="actions"><button type="button" class="cta" id="assemble">Assemble</button> ${cost('assemble')}</div>` : ''}</div>` : ''}
+     ${p.assembled ? `<div class="prop"><div class="prop-head"><strong>Statement ${Number(p.assembled.number)}</strong><a href="#/statement/${esc(p.id)}">View →</a></div><p class="muted">Assembled by ${short(p.assembled.by)}</p></div>` : ''}
+     ${[...p.proposals].reverse().map(q => {
+       const mine = q.votes?.[me];
+       const canVote = isMember && !q.executed && !q.closed && !q.superseded && (q.snapshot ? q.snapshot[me] > 0 : true);
+       const state = q.executed ? ['Executed', 'done'] : q.superseded ? ['Superseded', 'muted'] : q.lapsed ? ['Lapsed', 'muted'] : q.executable ? ['Passed · execute', 'pass'] : q.no && !q.override ? ['Blocked by no', 'blocked'] : q.closed ? ['Failed', 'muted'] : q.passing ? ['Passing', 'pass'] : ['Voting', 'open'];
+       const what = q.type === 'NOMINATE_ARRANGER' ? `Make ${short(q.args.address)} the arranger` : q.type === 'APPROVE_ARRANGEMENT' ? `Approve the 8 × 10 order · ${esc(q.args.preset)}` : q.type === 'LIST' ? `Sell for ${eth(priceOf(q.args, p.floorEth))} <span class="faint">(${priceLabel(q.args)})</span> ${vsFloor(priceOf(q.args, p.floorEth), p.floorEth)}` : q.type === 'CANCEL_LISTING' ? 'Cancel the listing' : esc(q.type);
+       return `
+      <div class="prop s-${state[1]}">
+       <div class="prop-head"><span><span class="faint">#${Number(q.id)}</span> <strong>${esc({ NOMINATE_ARRANGER: 'Arranger', APPROVE_ARRANGEMENT: 'Arrangement', LIST: 'Price', CANCEL_LISTING: 'Cancel listing' }[q.type] || q.type)}</strong></span><span class="chip ${state[1]}">${state[0]}</span></div>
+       <p class="prop-what">${what}</p>
+       <div class="meter" title="Pass line at ${Number(q.need)} cards">
+        <i class="yes" style="width:${q.yes / SLOTS * 100}%"></i><b style="left:${q.need / SLOTS * 100}%"></b>
+       </div>
+       <div class="prop-nums"><span>Yes ${q.yes} / ${Number(q.need)} needed${q.below ? ' · below floor' : ''}${q.override ? ' · deadlock rule' : ''}</span><span class="${q.no ? 'blocked' : 'faint'}">No ${q.no}${q.override && q.no ? ' (ignored)' : ''}</span></div>
+       <div class="prop-foot">
+        <span class="faint">${short(q.by)} · ${ago(q.at)} ago · ${q.executed ? 'executed by ' + short(q.executedBy) : q.closed ? (q.executable ? 'execute within ' + hrs(q.execBy - p.now) : 'closed') : 'closes in ' + hrs(q.endsAt - p.now)}</span>
+        <span class="actions" style="margin:0">
+         ${mine !== undefined ? `<span class="you">You voted ${mine ? 'yes' : 'no'}</span>` : ''}
+         ${canVote ? `<button type="button" data-vote="${Number(q.id)}" data-yes="1" class="${mine === true ? 'on' : ''}">Yes</button><button type="button" data-vote="${Number(q.id)}" data-yes="0" class="${mine === false ? 'on no' : ''}">No</button>` : ''}
+         ${q.type === 'APPROVE_ARRANGEMENT' ? `<button type="button" data-preview="${Number(q.id)}">Preview</button>` : ''}
+         ${isMember && q.executable ? `<button type="button" class="cta" data-exec="${Number(q.id)}" style="margin:0">Execute</button>` : ''}
+        </span>
+       </div>
+      </div>`; }).join('') || '<p class="muted">No proposals yet.</p>'}
+
      ${isMember ? `
-      <div class="actions" style="margin-top:10px;align-items:center"><span class="muted">Propose price</span>
-       <select id="pm" style="border:0;border-bottom:1px solid var(--line)"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select>
-       <input id="pv" type="number" step="0.01" value="${p.floorEth ? (p.floorEth * 0.9).toFixed(2) : 1}" style="width:90px;border:0;border-bottom:1px solid var(--line)">
-       <span id="pp" class="muted"></span>
-       <span class="hint" id="ph"></span>
-       <button type="button" id="propose-price">Propose</button></div>
-      <p class="note">Any price can be proposed, below the floor included. Only the vote decides.</p>` : ''}
+     <div class="composer">
+      <div class="caption" style="min-height:0"><h2>New proposal</h2><div class="modes">${(p.status === 'FULL' ? ['price', 'arranger'] : ['price']).map(k => `<button type="button" data-ptype="${k}" aria-pressed="${(partyUI.ptype || 'price') === k}">${k === 'price' ? 'Price' : 'Arranger'}</button>`).join('')}</div></div>
+      ${(partyUI.ptype || 'price') === 'price' ? `
+       <div class="field"><label>Price</label><div><div style="display:flex;gap:12px;align-items:center"><select id="pm"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select><input id="pv" type="number" step="0.01" value="${p.floorEth ? (p.floorEth * 1.1).toFixed(2) : 1}" style="width:110px"><span id="pp" class="muted"></span></div><div class="hint" id="ph"></div></div></div>`
+      : `<div class="field"><label>Arranger</label><div><select id="nominee">${p.members.map(m => `<option value="${esc(m.address)}">${short(m.address)} · ${Number(m.count)} cards</option>`).join('')}</select><div class="hint">Must hold a Credit Card. Replaces the ${p.arrangerElected ? 'elected' : 'default'} arranger ${short(p.arranger)}.</div></div></div>`}
+      <div class="field"><label>Voting window</label><div><select id="win">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (p.params.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select><div class="hint">Range: 24 hours – 7 days</div></div></div>
+      <div class="actions" style="margin-top:12px"><button type="button" class="cta" id="${(partyUI.ptype || 'price') === 'price' ? 'propose-price' : 'nominate'}" style="margin:0">Propose</button> ${cost('propose')} <span class="hint">Your yes vote is cast automatically.</span></div>
+     </div>` : `<p class="note">Only Credit Card holders can propose and vote.</p>`}
      <div class="error" id="vote-err"></div>
     </div>` : ''}
 
     <div class="panel">
-     <h2>Members · ${p.members.length}</h2>
+     <h2>Card holders · ${p.members.length}</h2>
      <table class="table"><tbody>${p.members.slice(0, 30).map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${short(m.address)}${m.host ? ' <span class="muted">host</span>' : ''}${m.address === p.arranger ? ` <span class="muted">arranger${p.arrangerElected ? '' : ' (default)'}</span>` : ''}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
     </div>
 
     <div class="panel">
      <h2>Chat</h2>
      <div class="chat" id="chat">${p.chat.map(m => `<div class="msg"><span class="muted">${short(m.address)} · ${ago(m.at)}</span><p>${esc(m.text)}</p></div>`).join('') || '<p class="muted" style="padding:10px 0">Quiet.</p>'}</div>
-     ${isMember || isHost ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : `<p class="note">Depositors and hosts can post.</p>`}
+     ${isMember || isHost ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : `<p class="note">Credit Card holders and hosts can post.</p>`}
      <div class="error" id="chat-err"></div>
     </div>
    </section>
@@ -307,6 +352,16 @@ async function pageParty(id) {
   $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', hours: $('#win')?.value, args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
   app.querySelectorAll('[data-exec]').forEach(b => b.onclick = () => act('execute', { proposal: b.dataset.exec }, 'vote-err'));
   $('#skip')?.addEventListener('click', async () => { await api('dev/advance', { hours: 24 }); route(); });
+  $('#rules-t')?.addEventListener('click', () => { partyUI.rules = !partyUI.rules; route(); });
+  app.querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { partyUI.ptype = b.dataset.ptype; route(); });
+  let sending = null;
+  app.querySelectorAll('[data-send]').forEach(b => b.onclick = () => { sending = Number(b.dataset.send); $('#send-row').hidden = false; $('#send-no').textContent = '#' + sending; $('#send-to').focus(); });
+  $('#send-x')?.addEventListener('click', () => { $('#send-row').hidden = true; sending = null; });
+  $('#send-go')?.addEventListener('click', () => act('transfer', { card: sending, to: $('#send-to').value.trim() }, 'card-err'));
+  app.querySelectorAll('[data-wd]').forEach(b => b.onclick = () => act(p.status === 'EXPIRED' ? 'withdraw' : 'withdraw', { ids: [Number(b.dataset.wd)] }, 'card-err'));
+  app.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => act('claim', { cards: [Number(b.dataset.claim)] }, 'card-err'));
+  $('#claim-all')?.addEventListener('click', () => act('claim', {}, 'card-err'));
+  $('#buy')?.addEventListener('click', () => act('buy', {}, 'buy-err'));
   $('#assemble')?.addEventListener('click', () => act('assemble', {}, 'vote-err'));
   $('#return')?.addEventListener('click', () => act('return', {}, 'ret-err'));
   $('#nominate')?.addEventListener('click', () => act('propose', { type: 'NOMINATE_ARRANGER', hours: $('#win')?.value, args: { address: $('#nominee').value } }, 'vote-err'));

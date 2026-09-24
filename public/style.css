@@ -157,3 +157,33 @@ form.new{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
 .mini{display:inline-flex;gap:3px;vertical-align:middle}
 .mini img{width:16px;height:16px}
 @media(max-width:1000px){.fit{grid-template-columns:1fr;gap:0}.fit details+details{border-top:1px solid var(--line)}}
+
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.cards figure{margin:0}
+.cards img{width:100%;display:block}
+.cards figcaption{margin-top:4px}
+
+.prop{padding:16px 0;border-top:1px solid var(--line2)}
+.prop-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.prop-what{margin:6px 0 10px;font-size:13px}
+.chip{padding:1px 7px;border:1px solid var(--line);color:#999}
+.chip.pass{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 -2px 0 var(--y)}
+.chip.blocked{border-color:var(--m);color:var(--m)}
+.chip.done{border-color:var(--ink);color:var(--ink)}
+.chip.open{border-color:var(--c);color:var(--ink)}
+.prop.s-muted .prop-what,.prop.s-muted .meter{opacity:.45}
+.meter{position:relative;height:8px;background:var(--line2)}
+.meter .yes{position:absolute;inset:0 auto 0 0;background:var(--c)}
+.meter b{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.prop-nums{display:flex;justify-content:space-between;margin-top:6px}
+.prop-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.prop-foot .actions button{border:1px solid var(--line);padding:4px 12px;color:var(--ink)}
+.prop-foot .actions button.on{border-color:var(--ink);box-shadow:inset 0 -2px 0 var(--c)}
+.prop-foot .actions button.on.no{box-shadow:inset 0 -2px 0 var(--m)}
+.you{color:var(--ink);box-shadow:inset 0 -2px 0 var(--y)}
+.rules-box{border:1px solid var(--line);padding:4px 14px;margin-bottom:14px}
+.rules-box>div{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:6px 0;border-bottom:1px solid var(--line2)}
+.rules-box>div:last-child{border:0}
+.rules-box span{color:#999}.rules-box strong{font-weight:400}
+.composer{margin-top:24px;padding:16px 18px;border:1px solid var(--line)}
+.composer select,.composer input{border:0;border-bottom:1px solid var(--line);background:none;padding:3px 0}
