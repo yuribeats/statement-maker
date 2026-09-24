@@ -6,8 +6,37 @@ const $ = (s, el = document) => el.querySelector(s);
 const render = (el, s) => el.replaceChildren(document.createRange().createContextualFragment(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const short = a => a ? esc(String(a).slice(0, 6) + '…' + String(a).slice(-4)) : '—';
+// ENS: every address is drawn as its short form with data-addr; primary names (resolved and verified server-side,
+// GET /api/ens) replace the text when they arrive. Rendering never waits for them.
+const isAddress = a => /^0x[0-9a-f]{40}$/.test(String(a));
+const ensNames = new Map(); // address -> name | null
+const ensAsked = new Set();
+const nameOf = a => ensNames.get(a) || null;
+const nameTag = a => isAddress(a) ? `<span data-addr="${a}">${nameOf(a) ? esc(nameOf(a)) : short(a)}</span>` : short(a);
 // Every address shown on the site links to its profile (#/u/<address>).
-const userLink = a => /^0x[0-9a-f]{40}$/.test(String(a)) ? `<a class="addr" href="#/u/${a}">${short(a)}</a>` : short(a);
+const userLink = a => isAddress(a) ? `<a class="addr" href="#/u/${a}" data-addr="${a}">${nameOf(a) ? esc(nameOf(a)) : short(a)}</a>` : short(a);
+function applyNames() {
+  document.querySelectorAll('[data-addr]').forEach(el => {
+    const n = nameOf(el.dataset.addr);
+    const text = (n || short(el.dataset.addr).replace('&hellip;', '…')) + (el.dataset.suffix || '');
+    if (n && el.textContent !== text) { el.textContent = text; el.title = el.dataset.addr; }
+  });
+}
+let ensTimer = null;
+function queueNames() {
+  clearTimeout(ensTimer);
+  ensTimer = setTimeout(async () => {
+    applyNames();
+    const want = [...new Set([...document.querySelectorAll('[data-addr]')].map(el => el.dataset.addr))].filter(a => isAddress(a) && !ensAsked.has(a));
+    for (let i = 0; i < want.length; i += 100) {
+      const batch = want.slice(i, i + 100);
+      batch.forEach(a => ensAsked.add(a));
+      try { const r = await api('ens?a=' + batch.join(',')); for (const a of batch) if (a in r.names) ensNames.set(a, r.names[a]); else ensAsked.delete(a); } catch { batch.forEach(a => ensAsked.delete(a)); return; }
+      applyNames();
+    }
+  }, 60);
+}
+new MutationObserver(queueNames).observe(document.body, { childList: true, subtree: true });
 const eth = n => n == null ? '—' : (+n).toFixed(n >= 10 ? 1 : 3) + ' ETH';
 const svg = id => `/api/svg/${Number(id)}`;
 const hrs = ms => ms <= 0 ? '0h' : ms < 36e5 ? Math.ceil(ms / 6e4) + 'm' : Math.ceil(ms / 36e5) + 'h';
@@ -29,11 +58,12 @@ const storeBanner = () => `<div class="store-only"><strong>Sold only on Statemen
 // The SIWE session must belong to the wallet's active account: switching accounts in the wallet signs out.
 const CHAIN = 1;
 let chainNow = CHAIN;
-const meName = () => esc(access?.ens || '') || short(me);
+const meName = () => nameTag(me);
 function fillActing() {
   const b = $('#acting');
   if (!b) return;
-  b.textContent = me ? (access?.ens || me.slice(0, 6) + '…' + me.slice(-4)) : 'Connect wallet';
+  b.textContent = me ? (nameOf(me) || me.slice(0, 6) + '…' + me.slice(-4)) : 'Connect wallet';
+  if (me) b.dataset.addr = me; else delete b.dataset.addr; // the ENS name swaps in (queueNames)
   b.title = me ? 'Wallet: switch or disconnect' : 'Connect a wallet';
   b.classList.toggle('alert-m', !!me && chainNow !== CHAIN);
 }
@@ -71,7 +101,7 @@ function walletPanel() {
    <div class="modal wallet-modal" role="dialog" aria-modal="true" aria-labelledby="wt">
     <div class="modal-head"><h2 id="wt">Wallet</h2><span class="muted">Signed in</span></div>
     <div class="modal-body"><div class="rows">
-     <div><span>Connected</span><strong>${userLink(me)}${access?.ens ? ' · ' + short(me) : ''}</strong></div>
+     <div><span>Connected</span><strong>${userLink(me)}</strong></div>
      <div><span>Wallet</span><strong class="w-inline">${ico}${w ? esc(w.name) : stats?.dev ? 'Simulated (dev)' : 'Not connected in this tab'}</strong></div>
      ${w && chainNow !== CHAIN ? `<div><span>Network</span><strong class="alert-m">Chain ${Number(chainNow)} · this site reads Ethereum mainnet</strong></div>` : ''}
      <div><span>Parties</span><strong>${access?.canParty ? 'Allowed · holds a Credit or a Credit Card' : 'Holds 0 Credits · parties need a wallet holding a Credit'}</strong></div>
@@ -322,7 +352,7 @@ async function pageParty(id) {
      <h2>Deposit</h2>
      ${!me ? `<p class="muted">Use “Connect wallet” at the top right.</p>` : `
        ${!wallet.length ? `<p class="alert-k">Connected: ${meName()} holds 0 Credits. Parties need a wallet holding a Credit.</p><div class="actions">${switchBtn}</div>` : !eligibleMine.length ? `<p class="alert-k">Connected: ${meName()} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'}; none meet this party’s criteria.</p><div class="actions">${switchBtn}</div>` : ''}
-       <p class="muted">${short(me)} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'} · ${eligibleMine.length} eligible here · minimum ${minDep}</p>
+       <p class="muted">${nameTag(me)} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'} · ${eligibleMine.length} eligible here · minimum ${minDep}</p>
        <div class="picker">${wallet.slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
        <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
@@ -541,7 +571,7 @@ async function pageNew() {
     else if (!own.length) { render(note, `<span class="alert-k">Connected: ${meName()} holds 0 Credits. Parties need a wallet holding a Credit.</span><span class="actions" style="display:flex;margin-top:10px">${switchBtn}</span>`); render($('#own-picker'), ''); }
     else if (!ok.length) { render(note, `<span class="alert-k">Connected: ${meName()} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; none match the chosen filters.</span> Loosen the filters, or switch to a wallet holding a matching Credit.<span class="actions" style="display:flex;margin-top:10px">${switchBtn}</span>`); render($('#own-picker'), ''); }
     else {
-      note.textContent = `${short(me)} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; ${ok.length} meet these criteria. Selected ${picks.size} of at least ${min}.`;
+      note.textContent = `${nameOf(me) || short(me)} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; ${ok.length} meet these criteria. Selected ${picks.size} of at least ${min}.`;
       render($('#own-picker'), ok.slice(0, 200).map(c => `<button type="button" data-own="${Number(c.id)}" aria-pressed="${picks.has(c.id)}" title="#${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`).join(''));
     }
     app.querySelectorAll('[data-own]').forEach(b => b.onclick = () => { const id = Number(b.dataset.own); picks.has(id) ? picks.delete(id) : picks.add(id); drawOwn(); });
@@ -587,11 +617,14 @@ async function pageWallet(addr) {
 const CARD_STATE = { redeemable: 'Redeemable', locked: 'Locked · party full', 'statement made': 'Statement made', claimable: 'Claimable', claimed: 'Claimed' };
 async function pageUser(addr) {
   addr = String(addr || me || '').toLowerCase();
-  if (!/^0x[0-9a-f]{40}$/.test(addr)) {
-    render(app, `<div class="intro"><div><h1>Profile</h1><p class="muted">${me ? 'Not a wallet address.' : 'Connect a wallet to see your profile, or open any address shown on the site.'}</p></div></div>`);
+  const byName = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(addr);
+  if (!isAddress(addr) && !byName) {
+    render(app, `<div class="intro"><div><h1>Profile</h1><p class="muted">${me ? 'Not a wallet address or ENS name.' : 'Connect a wallet to see your profile, or open any address shown on the site.'}</p></div></div>`);
     return;
   }
-  const u = await api('users/' + addr);
+  const u = await api('users/' + encodeURIComponent(addr));
+  if (u.name) ensNames.set(u.address, u.name);
+  addr = u.address;
   const you = me === addr;
   const mini = ids => `<span class="mini">${ids.map(id => `<img src="${svg(id)}" alt="">`).join('')}</span>`;
   const statementLink = (id, number, name) => `<a href="#/statement/${esc(id)}">Statement ${Number(number)}</a> <span class="faint">${esc(name)}</span>`;
@@ -599,7 +632,7 @@ async function pageUser(addr) {
   const past = u.past.map(q => `<div><span>${statementLink(q.id, q.number, q.name)}${q.demo ? ' <span class="demo">Demo</span>' : ''}</span><strong>${q.deposited ? `${Number(q.deposited)} deposited` : ''}${q.deposited && q.held ? ' · ' : ''}${q.held ? `${Number(q.held)} card${q.held === 1 ? '' : 's'} held` : ''} · ${q.soldPrice != null ? `sold ${eth(q.soldPrice)}` : 'not sold'}${q.claimed ? ` · <span class="dot y"></span>claimed ${eth(q.claimedEth)}` : ''}${q.claimable ? ` · ${Number(q.claimable)} claimable · <a href="#/party/${esc(q.id)}">Claim →</a>` : ''}</strong></div>`).join('');
   const listed = u.statements.filter(p => p.resale && p.resale.seller === addr);
   render(app, `
-  <div class="intro"><div><h1>${short(addr)}${you ? ' <span class="muted">· you</span>' : ''}</h1><p class="muted">${esc(addr)}</p></div>
+  <div class="intro"><div><h1>${nameTag(addr)}${you ? ' <span class="muted">· you</span>' : ''}</h1><p class="muted">${esc(addr)}</p></div>
    <p class="muted"><a href="https://etherscan.io/address/${esc(addr)}" target="_blank" rel="noopener noreferrer">Etherscan ↗</a></p></div>
   <div class="stats">
    <div><strong>${u.statements.length}</strong><span>Statements owned</span></div>
@@ -728,7 +761,7 @@ function openTermsModal(address, mode = 'sim') {
   render(root, `
   <div class="modal-back" id="mb">
    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
-    <div class="modal-head"><h2 id="mt">Terms and conditions</h2><span class="muted">Connecting ${short(address)} · version ${TERMS_VERSION}</span></div>
+    <div class="modal-head"><h2 id="mt">Terms and conditions</h2><span class="muted">Connecting ${nameTag(address)} · version ${TERMS_VERSION}</span></div>
     <div class="modal-body" id="mbody">
      <p class="muted" style="margin-bottom:18px"><span class="demo">Draft, needs legal review before launch</span> · Read to the end to continue.</p>
      ${termsBody()}
