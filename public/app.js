@@ -1329,7 +1329,7 @@ async function pageMinute(key) {
      <div class="error" id="m-err"></div>
      <p class="note">Each Credit deposited returns one Credit Card. Until all 80 are in, the card’s holder can redeem it for that Credit. At 80, any card holder can burn them into the Statement, in mint order.</p>
     </div>` : ''}
-    <div class="panel" id="lookup"></div>
+    ${m.assembled ? '' : '<div class="panel" id="lookup"></div>'}
    </section>
    <section>
     <div class="panel">
@@ -1370,7 +1370,7 @@ async function pageMinute(key) {
     catch (e) { $('#m-err').textContent = e.message; }
   });
   depState();
-  lookupBox($('#lookup'), L);
+  if ($('#lookup')) lookupBox($('#lookup'), L);
   logPanel(m.party, $('#log'));
   // The regular party panels (your cards, burn, price votes, buy, claim, chat). Hidden when the party page is not
   // readable by this wallet (after launch, unassembled parties are for Credit holders).
