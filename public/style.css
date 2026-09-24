@@ -123,3 +123,6 @@ form.new{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
  .msg{grid-template-columns:1fr;gap:2px}
  .picker{grid-template-columns:repeat(6,1fr)}
 }
+
+.hint{color:var(--faint);margin-top:4px;font-size:10px}
+.actions .cta{margin-top:0;padding:6px 14px}
