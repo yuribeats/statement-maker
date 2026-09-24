@@ -1,4 +1,4 @@
-# STATEMENT POOL — spec draft v0.3 (2026-09-23)
+# STATEMENT POOL — spec draft v0.4 (2026-09-23)
 
 Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 
@@ -17,7 +17,7 @@ Model: PartyDAO (Party Protocol). Facts in RESEARCH.md.
 | OPEN | host opens party | deposit (must meet the party's params); withdraw your own Credit. Deposits are recorded, no token yet |
 | FULL | 80th deposit | 80 tokens minted, 1 per Credit to each depositor. Withdraw closed. Arrangement phase (§5) |
 | ASSEMBLED | vault calls Statement contract with the approved order; Credits burned | governance on the Statement |
-| LISTED / SOLD | passed proposal | buy / accept |
+| LISTED / SOLD | passed LIST proposal | anyone buys at the ask. No offers, ever |
 | DISTRIBUTED | sale settles | token holders redeem tokens for ETH pro rata (tokens burned on redeem) |
 | EXPIRED | deadline passes unfilled or unassembled | every depositor withdraws their original Credit; any minted tokens are void |
 
@@ -33,7 +33,10 @@ Credits are never burned before assembly. If the Statement contract rejects cont
   - Moderate the party chat.
 - Params (set by hosts):
   - **Minimum deposit**: fewest Credits one depositor may add. Final slots are exempt: when fewer slots remain than the minimum, the deposit may equal the remainder, so the party can always reach exactly 80.
-  - **Target sell price**: shown on the party page. Once assembled, it pre-fills the first LIST proposal (members still vote).
+  - **Target sell price**, one of two modes:
+    - Fixed: X ETH.
+    - Floor-relative: floor + X. The floor source is the Statement collection floor; until Statements trade, Credits floor × 80.
+    Shown on the party page. Once assembled, it pre-fills the first LIST proposal (members still vote).
   - **Eligibility filters**: Colors (plate combo), Print, Weight, Eights, marks range, rarity rank range, token-number range. Filters combine with AND.
 - Filter enforcement: our indexer turns the filters into the list of eligible Credit ids and publishes its Merkle root; deposit requires a membership proof. Anyone can check the list: every trait is recomputable from the chain (CreditArt.describe(seed, paidAt) is public). Rarity rank comes from OpenSea's OpenRarity calculation and is the one input not on-chain.
 - Param edits after deposits exist: undecided (options: allowed freely, allowed only if they do not disqualify Credits already deposited, or locked at first deposit).
@@ -47,7 +50,17 @@ Guard options (undecided):
 - Permanent deadlock: one holder can block every sale forever, leaving the Statement stuck in the vault. Option: after N failed proposals or T days, the same proposal can pass by supermajority (e.g. 2/3) despite NO votes; or dissenters may redeem at the listed price.
 Proposal types (closed set, no arbitrary calls):
 - Pre-assembly: NOMINATE_ARRANGER (address), APPROVE_ARRANGEMENT (80-id array hash), ASSEMBLE
-- Post-assembly: LIST (price, venue, duration) · ACCEPT_OFFER (offer id, min price) · AUCTION (reserve, duration) · CANCEL_LISTING · DISTRIBUTE
+- Post-assembly: LIST (price rule, duration) · CANCEL_LISTING · DISTRIBUTE
+
+## 4b. Selling — asks only, never offers
+- The party never accepts offers, on OpenSea or anywhere. There is no offer-acceptance code path in the contracts. Reason: offer-taking invites predatory lowballs aimed at thin or inattentive parties.
+- Sales happen only at the party's own ask. Two surfaces for the same ask:
+  - Vault `buy()` at the approved price (native, no marketplace needed).
+  - A Seaport listing on OpenSea signed by the vault (vault validates its own orders via EIP-1271, as Party's SetSignatureValidatorProposal does).
+- Floor-relative asks: a keeper re-prices the listing as the floor moves, inside the rule the vote approved. Guards against floor manipulation (someone lists a Statement cheap to drag our ask down, then buys ours):
+  - The LIST proposal carries an absolute minimum in ETH; the ask never goes below it.
+  - Floor = time-weighted (e.g. 24 h), not the instant value.
+  - Undecided: allow re-pricing downward at all, or only upward.
 - DISPLAY/LEND (optional, later)
 
 ## 5. Arrangement (the 8×10 order)
@@ -87,6 +100,7 @@ One page per party: 8×10 frame, member list with token balances, chat, open pro
 ## 9. Open decisions
 - Pass rule guards: dust-veto minimum, deadlock escape (§4).
 - Param edits after deposits exist (§3).
+- Floor-relative X: ETH amount or percent. Auctions allowed or not (bids resemble offers). Downward re-pricing (§4b).
 - Chat readable by public or members only.
 - Fork Party Protocol governance or build on OZ Governor/ERC20Votes.
 
