@@ -563,6 +563,13 @@ const arrDesc = a => a?.preset === 'Manual' ? (a.metric || 'no metric stated') :
 const ARR_HINT = { preset: 'Any card holder burns once the party is full; the order is set at that moment. There is no vote on arrangement.', manual: 'Manual: state the metric you will order the 80 by. Only you can burn, with your order. If you have not burned within 1 day of the party filling, any card holder can burn in Time order.' };
 async function pageNew() {
   stats = stats || await api('stats');
+  if (!stats.partiesUnlocked) {
+    const mins = [['1349', '13:49'], ['1505', '15:05'], ['1528', '15:28'], ['1622', '16:22']];
+    render(app, `
+    <div class="intro"><div><h1>Start a party</h1><p class="muted">Not open yet. At launch there are four parties: the four minutes of the Credits mint in which exactly 80 Credits were minted. Starting your own party opens once one of them has made its Statement.</p></div></div>
+    <div class="panel" style="max-width:900px"><h2>The four parties</h2><div class="rows">${mins.map(([id, t]) => `<div><span><a href="#/party/minute-${id}">Minute ${t} UTC</a></span><strong><a href="#/party/minute-${id}">Open →</a></strong></div>`).join('')}</div></div>`);
+    return;
+  }
   const chip = (key, vals) => `<div class="chips">${vals.map(v => `<button type="button" data-f="${key}" data-v="${esc(v)}" aria-pressed="${[].concat(draft.filters[key] ?? []).map(String).includes(String(v))}">${esc(key === 'shiftMin' ? v + '+' : v)}</button>`).join('')}</div>`;
   const val = v => v == null ? '' : esc(v);
   const rg = stats.ranges;
