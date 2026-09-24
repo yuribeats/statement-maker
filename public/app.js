@@ -518,7 +518,7 @@ function pageRules() {
   <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div></div>
   <div class="works"><div class="rows terms">
    <div><span>01 Open</span><strong>A host opens a party and sets its defaults: which Credits qualify, minimum deposit, default arrangement, default price, voting window, deadline.</strong></div>
-   <div><span>02 Deposit</span><strong>Deposit matching Credits. Each one returns a Credit Card (ERC-721). Depositing accepts the party's defaults.</strong></div>
+   <div><span>02 Deposit</span><strong>Users deposit Credits that match the party’s criteria. Each deposited Credit returns one Credit Card (ERC-721) to the depositor. Depositing accepts the party’s defaults.</strong></div>
    <div><span>03 The card</span><strong>Whoever holds a Credit Card has its vote, can redeem its Credit until the party fills or if it expires, and gets 1/80 of the sale. Credit Cards are ERC-721s: list and trade them on OpenSea or anywhere. The Statement itself sells only here.</strong></div>
    <div><span>04 Full</span><strong>At 80, redemption closes.</strong></div>
    <div><span>05 Arrange</span><strong>The host is the only arranger. The arrangement is a party setting: an auto-order, or Manual, where the host orders the 80 by hand. There is no vote on arrangement.</strong></div>
