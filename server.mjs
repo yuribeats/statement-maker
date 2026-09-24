@@ -389,6 +389,23 @@ if (!state.parties.length) {
   b.description = 'Cyan plate only. One colour, eighty ways. Light to dark.';
   c.description = 'Every print that slipped, drifted, skewed or came loose. Registration errors as the subject.';
   k.description = 'Black plate only, sparse to dense.';
+  // In production, demo parties must not attribute invented votes or chat to real people: swap in synthetic addresses.
+  if (!DEV) {
+    const map = new Map(); const fake = a => { if (!map.has(a)) map.set(a, '0x' + (map.size + 1).toString(16).padStart(40, '0')); return map.get(a); };
+    for (const q of [a, b, c, k]) {
+      q.hosts = q.hosts.map(fake);
+      q.deposits.forEach(d => { d.address = fake(d.address); d.depositor = fake(d.depositor); });
+      if (q.arranger) q.arranger = fake(q.arranger);
+      q.chat.forEach(m => { m.address = fake(m.address); });
+      for (const pr of q.proposals) {
+        pr.by = fake(pr.by); if (pr.executedBy) pr.executedBy = fake(pr.executedBy);
+        if (pr.args?.address) pr.args.address = fake(pr.args.address);
+        pr.votes = Object.fromEntries(Object.entries(pr.votes).map(([x, v]) => [fake(x), v]));
+        pr.snapshot = Object.fromEntries(Object.entries(pr.snapshot || {}).map(([x, v]) => [fake(x), v]));
+      }
+      if (q.assembled) q.assembled.by = fake(q.assembled.by);
+    }
+  }
   state.parties = [a, b, c, k];
   save();
 }

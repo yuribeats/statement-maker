@@ -13,7 +13,7 @@ const PORT = Number(process.env.ANVIL_PORT || 8547);
 
 export async function startEvm() {
   const url = `http://127.0.0.1:${PORT}`;
-  const proc = spawn('anvil', ['--port', String(PORT), '--silent', '--code-size-limit', '100000'], { stdio: 'ignore' });
+  const proc = spawn(process.env.ANVIL_BIN || 'anvil', ['--port', String(PORT), '--silent', '--code-size-limit', '100000'], { stdio: 'ignore' });
   for (let i = 0; i < 50; i++) {
     try { await fetch(url, { method: 'POST', body: '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}', headers: { 'content-type': 'application/json' } }); break; }
     catch { await new Promise(r => setTimeout(r, 200)); }
