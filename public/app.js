@@ -1143,7 +1143,7 @@ async function pageStatement(id) {
      <p class="muted">Listed by ${userLink(p.resale.seller)}. 1% to Statement Maker, the rest to the seller.</p>
      ${me === p.resale.seller ? `<button type="button" id="unlist">Cancel your listing</button>` : me ? `<button class="cta" id="buy-r">Buy Statement ${Number(p.assembled.number)} for ${eth(p.resale.priceEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
      <div class="error" id="buy-r-err"></div></div>` : ''}
-   ${p.sold && p.owner === me && !p.resale ? `<div class="buy-box">
+   ${p.sold && p.owner === me && !p.resale && !launchPhase() ? `<div class="buy-box">
      <h2 style="margin-bottom:10px">List it for sale</h2>
      <p class="muted">You own Statement ${Number(p.assembled.number)}. List it here at a fixed price; buyers pay the price, you receive it less 1%. You may also sell anywhere else.</p>
      <div class="actions"><input id="lp" type="number" step="0.01" min="0" value="${p.sold.price.toFixed(2)}" style="width:110px;border:0;border-bottom:1px solid var(--line)"> ETH <button class="cta" id="list" style="margin:0">List</button></div>
