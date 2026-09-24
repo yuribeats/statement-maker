@@ -38,11 +38,18 @@ function queueNames() {
 }
 new MutationObserver(queueNames).observe(document.body, { childList: true, subtree: true });
 const eth = n => n == null ? '—' : (+n).toFixed(n >= 10 ? 1 : 3) + ' ETH';
+// Exact enough for bids: up to 6 decimals, never rounded to 1 like eth() above 10 ETH.
+const ethx = n => n == null ? '—' : (+n).toLocaleString('en-US', { maximumFractionDigits: 6 }) + ' ETH';
+const weiDec = w => { w = BigInt(w); const f = (w % 10n ** 18n).toString().padStart(18, '0').replace(/0+$/, ''); return (w / 10n ** 18n) + (f ? '.' + f : ''); };
+const clock = ms => { const t = Math.max(0, Math.floor(ms / 1e3)); return `${Math.floor(t / 3600)}h ${String(Math.floor(t / 60) % 60).padStart(2, '0')}m ${String(t % 60).padStart(2, '0')}s`; };
+let auctionTick = null;
 const svg = id => `/api/svg/${Number(id)}`;
 const hrs = ms => ms <= 0 ? '0h' : ms < 36e5 ? Math.ceil(ms / 6e4) + 'm' : Math.ceil(ms / 36e5) + 'h';
 const ago = t => { const s = (Date.now() - t) / 1e3; return s < 3600 ? Math.max(1, Math.round(s / 60)) + 'm' : s < 86400 ? Math.round(s / 3600) + 'h' : Math.round(s / 86400) + 'd'; };
 const SLOTS = 80;
+let launchBust = 0; // set by any write from this tab, so the next GET /api/launch skips the 30 s CDN copy
 const api = async (path, body) => {
+  if (body) launchBust = Date.now();
   const r = await fetch('/api/' + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {});
   const j = await r.json();
   if (!r.ok) throw new Error(j.error || r.statusText);
@@ -51,7 +58,7 @@ const api = async (path, body) => {
 let stats = null;
 let me = ''; // set from the server session (GET /api/auth/me), never from local state
 let access = { canParty: false, storeOnly: '' };
-const STORE_ONLY_TEXT = 'A party sells its Statement only on Statement Maker, at the party\u2019s own price. The party cannot list, offer or auction it on OpenSea or any other marketplace. After the sale, the buyer owns it and may resell anywhere.';
+const STORE_ONLY_TEXT = 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. After the sale, the buyer owns it and may resell it anywhere.';
 const storeBanner = () => `<div class="store-only"><strong>Sold only on Statement Maker.</strong> ${STORE_ONLY_TEXT} Credit Cards can be traded anywhere; the Statement cannot.</div>`;
 
 // ---------- wallet: sign-in with a wallet the user picks (EIP-6963 or WalletConnect); simulated wallets only in dev builds ----------
@@ -126,9 +133,13 @@ Wallets.on('accounts', async ([a]) => {
 Wallets.on('chain', c => { chainNow = c; fillActing(); });
 // A "Switch wallet" button placed anywhere in a page opens the picker.
 app.addEventListener('click', e => { if (e.target.closest?.('[data-switch-wallet]')) connectWallet(); });
+// View only (no wallet): every action shows this in place of its control.
+const connectAct = '<p class="muted">Connect a wallet to act.</p><div class="actions"><button type="button" class="cta" data-switch-wallet style="margin:0">Connect wallet</button></div>';
+const VIEW_KEY = 'sm-view-only';
+const viewOnly = () => { try { return sessionStorage.getItem(VIEW_KEY) === '1'; } catch { return false; } };
 const switchBtn = '<button type="button" class="cta" data-switch-wallet style="margin:0">Switch wallet</button>';
-const navProfile = () => { const a = $('#nav-profile'); if (a) { a.hidden = !me; a.href = me ? '#/u/' + me : '#/u'; } };
-async function setMe(v) { me = v; try { const m = await api('auth/me'); access = m; } catch {} navProfile(); fillActing(); route(); }
+const navProfile = () => { const a = $('#nav-profile'); if (a) a.href = me ? '#/u/' + me : '#/u'; applyNav(); };
+async function setMe(v) { me = v; try { const m = await api('auth/me'); access = m; } catch {} await syncRules(); navProfile(); fillActing(); route(); }
 
 // ---------- ordering presets ----------
 const COLOR_ORDER = ['C', 'M', 'Y', 'K', 'CM', 'CY', 'MY', 'CK', 'MK', 'YK', 'CMY', 'CMK', 'CYK', 'MYK', 'CMYK'];
@@ -192,6 +203,17 @@ const priceLabel = t => esc(t.mode === 'fixed' ? `${t.value} ETH` : `Floor ${t.v
 const vsFloor = (eth, floorEth) => { if (eth == null || !floorEth) return ''; const d = (eth / floorEth - 1) * 100; return `<span class="${d < 0 ? 'blocked' : 'muted'}">${Math.abs(d).toFixed(0)}% ${d < 0 ? 'below' : 'above'} floor</span>`; };
 let gasInfo = null;
 const cost = key => { if (!gasInfo?.gwei || !gasInfo.units[key]) return ''; const e = gasInfo.units[key] * gasInfo.gwei / 1e9; return `<span class="faint">~${(gasInfo.units[key] / 1e6 >= 1 ? (gasInfo.units[key] / 1e6).toFixed(1) + 'M' : Math.round(gasInfo.units[key] / 1e3) + 'k')} gas · $${(e * gasInfo.ethUsd).toFixed(2)}</span>`; };
+// Burning is the one heavy call: measured 5.8M–10.5M gas by preset (Rarity the most) before the Statement mint itself.
+// With a preset known, its own figure; otherwise the range. Dollars from live gwei and ETH/USD (/api/gas) when available.
+function burnAlert(preset) {
+  const a = gasInfo?.units?.assemble && typeof gasInfo.units.assemble === 'object' ? gasInfo.units.assemble : { min: 5_800_000, max: 10_510_000, byPreset: { Rarity: 10_510_000, default: 6_080_000 } };
+  const one = preset && preset !== 'Manual' ? (a.byPreset[preset] ?? a.byPreset.default) : null;
+  const g = one ? [one, one] : [a.min, a.max];
+  const units = one ? `about ${(one / 1e6).toFixed(1)}M gas` : `about ${Math.round(a.min / 1e6)}–${Math.round(a.max / 1e6)}M gas`;
+  const usd = gw => { const [x, y] = g.map(v => '$' + Math.round(v * gw / 1e9 * gasInfo.ethUsd).toLocaleString()); return x === y ? x : `${x}–${y}`; };
+  const money = gasInfo?.gwei && gasInfo?.ethUsd ? ` At today’s gas (${gasInfo.gwei.toFixed(1)} gwei) that is about ${usd(gasInfo.gwei)}; at 20 gwei, about ${usd(20)}.` : '';
+  return `<p class="alert-c burn-gas">Burning 80 Credits into a Statement is gas-intensive: ${units} plus the Statement mint, paid entirely by whoever burns.${money} Set your wallet’s gas limit high enough (the per-transaction cap is 16.7M).</p>`;
+}
 const hint = t => `<div class="hint">${esc(t)}</div>`;
 const n = x => Number(x).toLocaleString();
 const floorNote = f => { if (!f || f.eth == null) return 'no reading yet'; const what = f.source === 'statements' ? 'Statement collection floor' : '80 × Credits floor (until Statements trade)'; return f.mode === 'latest' ? `${what}, latest` : `${what}, averaged over ${f.hours < 23.9 ? f.hours + 'h (building up to 24h)' : '24h'}`; };
@@ -273,8 +295,12 @@ function logLine(e) {
     vote: () => `Voted ${e.yes ? 'yes' : 'no'} on #${Number(e.id)} · ${plural(e.weight, 'card')}${e.timeUnknown ? ' <span class="faint">· time not recorded</span>' : ''}`,
     count: () => `Counted #${Number(e.id)} as blocked`,
     execute: () => `Executed #${Number(e.id)}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
-    assemble: () => `Burned the 80 · Statement ${Number(e.number)}${e.arrangement ? ' · ' + esc(e.arrangement === 'Manual' ? 'host’s order' : e.fallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: e.arrangement })) : ''}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}`,
+    assemble: () => `Burned the 80 · Statement ${Number(e.number)}${e.arrangement ? ' · ' + esc(e.arrangement === 'Manual' ? 'host’s order' : e.fallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: e.arrangement })) : ''}${e.askEth != null ? ' · ask ' + eth(e.askEth) : ''}${e.reserveEth != null ? ' · auction opening bid ' + ethx(e.reserveEth) : ''}`,
     raise: () => `Raised the ask to ${eth(e.askEth)}`,
+    bid: () => `Bid ${ethx(e.eth)}${e.endsAt ? ' · first bid: the 24-hour timer started' : ''}`,
+    refund: () => `Outbid: bid of ${ethx(e.eth)} refunded <span class="faint">· simulated</span>`,
+    extend: () => `Bid in the last 5 minutes: end moved to ${esc(new Date(e.endsAt).toLocaleString())}`,
+    settle: () => e.noBids ? `Closed the auction with no bids · now sells at the reserve, ${ethx(e.askEth)}` : `Settled the auction: Statement ${Number(e.number)} to ${userLink(e.winner)} for ${ethx(e.price)} · fee ${eth(e.fee)}`,
     buy: () => `Bought Statement ${Number(e.number)} for ${eth(e.price)} · fee ${eth(e.fee)}`,
     claim: () => `Claimed ${plural(e.cards?.length, 'card')} · ${eth((e.eth || 0) * (e.cards?.length || 0))}`,
     params: () => `Changed settings${e.keys?.length ? ': ' + esc(e.keys.join(', ')) : ''}`,
@@ -300,9 +326,15 @@ async function logPanel(id, el) {
   try { await draw(); } catch (e) { render(el, `<p class="error">${esc(e.message)}</p>`); }
 }
 
+const CARDS_KEY = 'sm-cards-open-';
+const cardsOpen = id => { try { return localStorage.getItem(CARDS_KEY + id) === '1'; } catch { return false; } };
+const setCardsOpen = (id, on) => { try { localStorage.setItem(CARDS_KEY + id, on ? '1' : '0'); } catch {} };
 const freshUI = () => ({ mode: 'sheet', selected: null, order: null, preset: null, picks: new Set() });
 let partyUI = freshUI();
-async function pageParty(id) {
+// opts.root: render only the party's panels into that element (the Minute page embeds them under its own grid),
+// leaving out the sheet, the deposit panel, the card holders table and the log, which the Minute page draws itself.
+async function pageParty(id, opts = {}) {
+  const root = opts.root || app, embed = !!opts.root;
   const p = await api('parties/' + encodeURIComponent(id));
   const isHost = p.hosts.includes(me), isMember = p.members.some(m => m.address === me);
   const canHandArrange = p.manual && isHost && p.status === 'FULL';
@@ -312,15 +344,18 @@ async function pageParty(id) {
   const myCards = me ? p.credits.filter(c => c.depositor === me).sort((a, b) => a.card - b.card) : [];
   const order = partyUI.mode === 'arrange' && partyUI.order ? partyUI.order : p.credits;
   const sel = order.find(c => c.id === partyUI.selected) || null;
-  const wallet = me && p.status === 'OPEN' ? await api('wallet/' + me) : [];
+  const wallet = !embed && me && p.status === 'OPEN' ? await api('wallet/' + me) : [];
   const remaining = SLOTS - p.credits.length, minDep = Math.min(p.params.minDeposit, remaining);
   const eligibleMine = wallet.filter(c => !c.deposited && matchesClient(c, p.params.filters));
+  const liveCards = myCards.filter(c => !c.claimed);
+  const pickList = [...eligibleMine, ...wallet.filter(c => !eligibleMine.includes(c))];
+  const au = p.auction, auctionOn = !!p.house && (p.status === 'FULL' || (!!au && !au.settled));
 
-  render(app, `
-  <div class="intro"><div><h1>${esc(p.name)}</h1>${p.description ? `<p class="desc">${esc(p.description)}</p>` : ''}<p class="muted">${p.status === 'OPEN' ? `${remaining} slots open · closes in ${Math.max(0, Math.ceil((p.deadline - Date.now()) / 864e5))} days` : p.status === 'FULL' ? (p.manual ? (fallbackOpen ? 'Full · host did not burn in time: any card holder can burn in Time order' : 'Full · host arranging by hand') : 'Full · any card holder can burn') : esc(p.status)}${p.demo ? ' · <span class="demo">Demo data</span>' : ''}</p></div><div style="text-align:right"><a href="#/" class="muted">← All parties</a>${stats?.dev ? `<div><button type="button" id="skip" class="faint" title="Prototype only: move the clock forward">Dev · skip 24h</button></div>` : ''}</div></div>
-  ${storeBanner()}
-  <div class="works">
-   <section aria-label="Statement">
+  render(root, `
+  ${embed ? '' : `<div class="intro"><div><h1>${esc(p.name)}</h1>${p.description ? `<p class="desc">${esc(p.description)}</p>` : ''}<p class="muted">${p.status === 'OPEN' ? `${remaining} slots open · closes in ${Math.max(0, Math.ceil((p.deadline - Date.now()) / 864e5))} days` : p.status === 'FULL' ? (p.manual ? (fallbackOpen ? 'Full · host did not burn in time: any card holder can burn in Time order' : 'Full · host arranging by hand') : 'Full · any card holder can burn') : esc(p.status)}${p.demo ? ' · <span class="demo">Demo data</span>' : ''}</p></div><div style="text-align:right"><a href="#/" class="muted">← All parties</a>${stats?.dev ? `<div><button type="button" id="skip" class="faint" title="Prototype only: move the clock forward">Dev · skip 24h</button></div>` : ''}</div></div>
+  ${storeBanner()}`}
+  <div class="works${embed ? ' embed' : ''}">
+   ${embed ? '' : `<section aria-label="Statement">
     ${sheet(p, { interactive: true, order, selected: partyUI.selected })}
     <div class="caption">
      <span>${partyUI.mode === 'arrange' ? 'Arranging' + (partyUI.preset ? ' · ' + esc(partyUI.preset) : '') : 'Statement'} · ${p.credits.length}/80</span>
@@ -340,7 +375,7 @@ async function pageParty(id) {
       <div><span>Weight · Eights</span><strong>${esc(sel.weight)} · ${Number(sel.eights)} (${esc(sel.tier)})</strong></div>
       <div><span>Rarity · Depositor</span><strong>#${sel.rank.toLocaleString()} · ${userLink(sel.depositor)}</strong></div></div>`
       : `<span class="faint">—</span><span class="muted">Select a Credit on the sheet.</span>`}</div>
-   </section>
+   </section>`}
 
    <section>
     <div class="panel">
@@ -354,7 +389,8 @@ async function pageParty(id) {
       <div><span>Vote window</span><strong>${Number(p.params.voteHours || 48)} hours default</strong></div>
       <div><span>Buy wait</span><strong>${Number(p.params.buyDelayHours ?? 1)} hour${(p.params.buyDelayHours ?? 1) === 1 ? '' : 's'} default</strong></div>
       <div><span>Minimum deposit</span><strong>${Number(p.params.minDeposit)}</strong></div>
-      <div><span>Default price</span><strong>${targetText(p.params.target)}${p.params.target.mode !== 'fixed' ? ' · now ' + eth(p.targetEth) : ''}${p.defaultBelowFloor ? ' · <span class="blocked">below floor</span>' : ''}</strong></div>
+      ${p.house ? `<div><span>Sale</span><strong>Auction · opening bid 100 × the Credits floor at the burn · 24 hours from the first bid</strong></div>` : ''}
+      <div${p.house ? ' style="display:none"' : ''}><span>Default price</span><strong>${targetText(p.params.target)}${p.params.target.mode !== 'fixed' ? ' · now ' + eth(p.targetEth) : ''}${p.defaultBelowFloor ? ' · <span class="blocked">below floor</span>' : ''}</strong></div>
       <div><span>Arranged by</span><strong${p.manual ? ' class="alert-c"' : ''}>${p.manual ? 'Manual · the host’s metric below' : esc(arrLabel(p.params.arrangement)) + ' — ' + esc(arrDesc(p.params.arrangement))}${p.assembled && p.orderSource ? ' · burned with ' + esc(p.orderSource === 'Manual' ? 'the host’s order' : p.orderFallback ? 'Time order (host did not burn within 1 day)' : arrLabel({ preset: p.orderSource })) : ''}</strong></div>
       ${p.manual ? `<div class="rule-strong"><span class="alert-c">Host’s metric</span><strong class="alert-c">${esc(arrDesc(p.params.arrangement))}</strong></div>` : ''}
       <div><span>Defaults</span><strong class="muted">Set by the host and applied automatically. Card holders can vote a different price. The host can change settings only until someone else deposits${p.manual ? ', orders and burns this Manual party,' : ''} and can hand hosting on; without Credit Cards a host cannot vote, chat or burn${p.manual ? ' (except the Manual burn)' : ''}.</strong></div>
@@ -368,22 +404,38 @@ async function pageParty(id) {
 
     ${myCards.length ? `
     <div class="panel">
-     <h2>Your Credit Cards · ${myCards.length}</h2>
-     <p class="muted" style="margin-bottom:10px">One card per Credit. The card is the vote, the claim on its Credit before the Statement is made, and 1/80 of the sale. Whoever holds it has all three, and it can be listed on OpenSea like any NFT.</p>
-     <div class="cards">${myCards.map(c => `<figure><img src="/api/card/${Number(c.card)}.svg" alt="Credit Card ${Number(c.card)}" loading="lazy"><figcaption class="actions">
-       ${c.claimed ? '<span class="muted">Redeemed</span>' : `<button type="button" data-send="${Number(c.card)}">Send</button><span class="faint" title="Credit Cards are ERC-721s. The OpenSea link goes live when the Credit Card contract is deployed.">List on OpenSea · at launch</span>`}
-       ${!c.claimed && (p.status === 'OPEN' || p.status === 'EXPIRED') ? `<button type="button" data-wd="${Number(c.id)}">Redeem for Credit #${Number(c.id)}</button>` : ''}
-       ${!c.claimed && p.status === 'SOLD' ? `<button type="button" data-claim="${Number(c.card)}">Claim ${eth(p.perCard)}</button>` : ''}
-     </figcaption></figure>`).join('')}</div>
+     <details class="cards-box" id="mycards" ${cardsOpen(p.id) ? 'open' : ''}>
+      <summary><h2>Your Credit Cards · ${myCards.length}</h2><span class="muted">${myCards.length} card${myCards.length === 1 ? '' : 's'}${liveCards.length && (p.status === 'OPEN' || p.status === 'EXPIRED') ? ` · ${liveCards.length} redeemable` : ''}${liveCards.length && p.status === 'SOLD' ? ` · ${liveCards.length} claimable` : ''}</span></summary>
+      <p class="muted" style="margin:6px 0 10px">One card per Credit. The card is the vote, the claim on its Credit before the Statement is made, and 1/80 of the sale. Whoever holds it has all three, and it can be transferred like any NFT.</p>
+      <div class="cards" id="cards-list"></div>
+      <div class="actions"><button type="button" id="cards-more" hidden></button></div>
+     </details>
+     ${liveCards.length && (p.status === 'OPEN' || p.status === 'EXPIRED') ? `<div class="actions"><button type="button" id="redeem-all">Redeem all my cards · ${liveCards.length}</button></div>` : ''}
      <div class="actions" id="send-row" hidden><span class="muted">Send card <span id="send-no"></span> to</span><input id="send-to" placeholder="0x…" style="width:340px;border:0;border-bottom:1px solid var(--line)"><button type="button" id="send-go">Send</button><button type="button" id="send-x">Cancel</button></div>
      ${p.status === 'SOLD' && myCards.some(c => !c.claimed) ? `<div class="actions"><button type="button" class="cta" id="claim-all">Claim all · ${eth(p.perCard * myCards.filter(c => !c.claimed).length)}</button></div>` : ''}
      <div class="error" id="card-err"></div>
     </div>` : ''}
 
+    ${au ? `
+    <div class="panel" id="auction"><h2>Auction</h2>
+     <div class="rows">
+      <div><span>Opening bid</span><strong>${ethx(au.reserveEth)} <span class="faint">100 × Credits floor ${ethx(au.creditFloorEth)} at the burn</span></strong></div>
+      <div><span>High bid</span><strong>${au.high ? `${ethx(au.high.eth)} · ${userLink(au.high.bidder)}` : 'None yet'}</strong></div>
+      ${!au.settled && !au.ended ? `<div><span>Minimum next bid</span><strong>${ethx(au.minNextEth)} <span class="faint">${au.high ? 'high bid + 0.1 ETH' : 'the opening bid'}</span></strong></div>` : ''}
+      <div><span>Time</span><strong id="au-clock">${au.settled ? (au.settled.noBids ? 'Closed with no bids' : 'Settled ' + esc(new Date(au.settled.at).toLocaleString())) : au.ended ? 'Ended' : au.endsAt == null ? `Opening bid: ${ethx(au.reserveEth)} · no timer until the first bid` : clock(au.endsAt - p.now) + ' left'}</strong></div>
+      ${!au.settled && au.endsAt != null ? `<div><span>Ends</span><strong>${esc(new Date(au.endsAt).toLocaleString())} <span class="faint">a bid in the last 5 minutes moves it to 5 minutes after that bid</span></strong></div>` : ''}
+      ${!au.settled && au.endsAt == null ? `<div><span>No bids</span><strong>If no bid comes by ${esc(new Date(au.openUntil).toLocaleString())}, anyone can close it and the party sells at the opening bid instead.</strong></div>` : ''}
+     </div>
+     ${au.settled ? '' : !au.ended ? (me ? `<div class="actions" style="align-items:center;margin-top:14px"><input id="bid-amt" inputmode="decimal" value="${esc(weiDec(au.minNextWei))}" style="width:140px;border:0;border-bottom:1px solid var(--line)" aria-label="Bid, ETH"><span class="muted">ETH</span><button type="button" class="cta" id="bid">Bid</button><span class="faint">Preview · no ETH moves</span></div>`
+       : connectAct)
+       : me ? `<div class="actions" style="margin-top:14px"><button type="button" class="cta" id="settle">${au.high ? 'Settle · Statement to the high bidder' : 'Close with no bids'}</button></div>` : connectAct}
+     <div class="error" id="bid-err"></div>
+     ${au.bids.length ? `<h2 style="margin:18px 0 8px">Bids · ${au.bids.length}</h2><div class="rows">${au.bids.map(b => `<div><span>${ago(b.at)} ago · ${userLink(b.bidder)}</span><strong>${ethx(b.eth)}${b.refunded ? ' <span class="faint">· outbid, refunded</span>' : ''}${b.extended ? ' <span class="faint">· extended</span>' : ''}</strong></div>`).join('')}</div>` : ''}
+    </div>` : ''}
     ${p.status === 'ASSEMBLED' && p.listing ? `
     <div class="panel"><h2>Buy</h2>
      <div class="rows"><div><span>Price</span><strong>${eth(p.listingEth)} · ${vsFloor(p.listingEth, p.floorEth)}</strong></div><div><span>Split</span><strong>1% Statement Maker · ${eth(p.listingEth ? p.listingEth * 0.99 / SLOTS : null)} per Credit Card</strong></div></div>
-     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
+     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}. ${p.listing.source === 'default' ? 'Default price from the host.' : 'Price set by vote.'}</p>` : me ? `<button class="cta" id="buy">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
      <div class="error" id="buy-err"></div></div>` : ''}
     ${p.status === 'SOLD' ? `
     <div class="panel"><h2>Sold</h2><div class="rows">
@@ -392,16 +444,17 @@ async function pageParty(id) {
      <div><span>Per Credit Card</span><strong>${eth(p.perCard)}</strong></div>
      <div><span>Claimed</span><strong>${p.credits.filter(c => c.claimed).length} / 80 cards</strong></div></div></div>` : ''}
 
-    ${p.status === 'OPEN' ? `
+    ${p.status === 'OPEN' && !embed ? `
     <div class="panel">
      <h2>Deposit</h2>
-     ${!me ? `<p class="muted">Use “Connect wallet” at the top right.</p>` : `
+     ${!me ? `${connectAct}` : `
        ${!wallet.length ? `<p class="alert-k">Connected: ${meName()} holds 0 Credits. Parties need a wallet holding a Credit.</p><div class="actions">${switchBtn}</div>` : !eligibleMine.length ? `<p class="alert-k">Connected: ${meName()} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'}; none meet this party’s criteria.</p><div class="actions">${switchBtn}</div>` : ''}
        <p class="muted">${nameTag(me)} holds ${wallet.length} Credit${wallet.length === 1 ? '' : 's'} · ${eligibleMine.length} eligible here · minimum ${minDep}</p>
-       <div class="picker">${[...eligibleMine, ...wallet.filter(c => !eligibleMine.includes(c))].slice(0, 200).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
+       <div class="picker">${pickList.slice(0, partyUI.pickShown || 80).map(c => { const ok = !c.deposited && matchesClient(c, p.params.filters); return `<button type="button" data-pick="${Number(c.id)}" ${ok ? '' : 'disabled'} aria-pressed="${partyUI.picks.has(c.id)}" title="#${Number(c.id)} ${esc(c.colors)} ${esc(c.print)} ${esc(c.weight)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`; }).join('')}</div>
+       ${pickList.length > (partyUI.pickShown || 80) ? `<div class="actions"><button type="button" id="pick-more">Show more · ${pickList.length - (partyUI.pickShown || 80)} left</button></div>` : ''}
        <div class="actions"><button type="button" id="pick-all">Select eligible</button><button type="button" id="pick-none">Clear</button></div>
        <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
-       <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>I understand the Statement this party makes is sold only on Statement Maker, at the party’s price, and that <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
+       <label class="check" style="margin:12px 0"><input type="checkbox" id="dep-ack"> <span>I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s price, and <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
        <button class="cta" id="deposit" disabled>Deposit</button> ${cost('deposit')} each <span class="hint" id="dep-hint"></span>
        ${isMember ? `<button type="button" id="withdraw" class="muted" style="margin-left:18px">Redeem all my cards</button>` : ''}`}
      <div class="error" id="dep-err"></div>
@@ -420,18 +473,19 @@ async function pageParty(id) {
       <div><span>Passes</span><strong>41 of 80 yes and zero no</strong></div>
       <div><span>Below floor</span><strong>60 of 80 yes and zero no</strong></div>
       <div><span>Deadlock</span><strong>After 3 counted blocks (a price with 41+ yes stopped by a no, recorded by anyone) or 30 days without a price executing, 54 yes passes; no is ignored. Now: ${Number(p.deadlock?.blocked || 0)}/3 counted${p.deadlock?.LIST ? ' · deadlock rule on' : ''}</strong></div>
-      <div><span>Window</span><strong>24 hours to 7 days, chosen by the proposer</strong></div>
+      <div><span>Window</span><strong>1 hour to 7 days, chosen by the proposer</strong></div>
       <div><span>Execute</span><strong>Any card holder, within 7 days of passing, or it lapses</strong></div></div>` : ''}
      ${p.status === 'FULL' ? (() => {
        const hostBurn = p.manual && canHandArrange && partyUI.mode === 'arrange', fbBurn = p.manual && !isHost && fallbackOpen && holder;
        const canBurn = p.manual ? hostBurn || fbBurn : holder;
        return `<div class="prop"><div class="prop-head"><strong>Burn</strong><span class="chip ${!p.manual || fallbackOpen ? 'pass' : 'open'}">${!p.manual ? 'Any card holder' : fallbackOpen ? 'Any card holder · Time order' : 'Host arranges by hand'}</span></div>
-      <p class="muted">${!p.manual ? `Arranged by ${esc(arrLabel(p.params.arrangement))} (${esc(arrDesc(p.params.arrangement))}). Any card holder can burn the 80 into the Statement in one step; the order is set at that moment.`
-        : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} The default price then goes live. Preview until the Statement contract is public.</p>
+      <p class="muted">${!p.manual ? `Arrangement is locked as ${esc(arrLabel(p.params.arrangement))} (${esc(arrDesc(p.params.arrangement))}). Any card holder can burn the 80 into the Statement in one step.`
+        : `The host orders the 80 by the stated metric and burns in one step.${p.fallbackAt ? ` If the host has not burned by ${esc(new Date(p.fallbackAt).toLocaleString())} (1 day after the party filled), any card holder can burn in Time order.` : ''}`} ${p.house ? 'The auction then opens at 100 × the Credits floor; its 24-hour timer starts at the first bid.' : 'The default price then goes live.'} Preview until the Statement contract is public.</p>
+      ${burnAlert(p.manual ? (fallbackOpen && !isHost ? 'Time' : null) : p.params.arrangement?.preset)}
       ${canBurn ? (partyUI.confirmBurn
         ? `<div class="actions"><span class="blocked">Burning is permanent. The 80 Credits become one Statement.</span><button type="button" class="cta" id="assemble">Confirm burn</button><button type="button" id="burn-x">Cancel</button></div>`
-        : `<div class="actions"><button type="button" class="cta" id="burn-ask">${hostBurn ? 'Burn with this order' : fbBurn ? 'Burn in Time order' : 'Burn'}</button> ${cost('assemble')}</div>`)
-        : canHandArrange ? '<p class="note">Open Arrange to set the order, then burn.</p>' : !p.manual && !holder ? '<p class="note">Any Credit Card holder can burn.</p>' : ''}
+        : `<div class="actions"><button type="button" class="cta" id="burn-ask">${hostBurn ? 'Burn with this order' : fbBurn ? 'Burn in Time order' : 'Burn'}</button></div>`)
+        : canHandArrange ? '<p class="note">Open Arrange to set the order, then burn.</p>' : !me ? connectAct : !p.manual && !holder ? '<p class="note">Any Credit Card holder can burn.</p>' : ''}
      </div>`; })() : ''}
      ${p.assembled ? `<div class="prop"><div class="prop-head"><strong>Statement ${Number(p.assembled.number)}</strong><a href="#/statement/${esc(p.id)}">View →</a></div><p class="muted">Assembled by ${userLink(p.assembled.by)}</p></div>` : ''}
      ${[...p.proposals].reverse().map(q => {
@@ -459,43 +513,43 @@ async function pageParty(id) {
        </div>
       </div>`; }).join('') || '<p class="muted">No proposals yet.</p>'}
 
-     ${isMember ? `
+     ${auctionOn ? '<p class="note">This party sells by auction: no price votes.</p>' : isMember ? `
      <div class="composer">
       <div class="caption" style="min-height:0"><h2>New proposal</h2></div>
        <div class="field"><label>Price</label><div><div style="display:flex;gap:12px;align-items:center"><select id="pm"><option value="fixed">ETH</option><option value="floorEth">Floor ± ETH</option><option value="floorPct">Floor ± %</option></select><input id="pv" type="number" step="0.01" value="${p.floorEth ? (p.floorEth * 1.1).toFixed(2) : 1}" style="width:110px"><span id="pp" class="muted"></span></div><div class="hint" id="ph"></div></div></div>
       <div class="field"><label>Buy wait, hours</label><div><input id="bw2" type="number" min="0" max="72" value="${Number(p.params.buyDelayHours ?? 1)}" style="width:80px"><div class="hint">Range: 0–72 · voted with this price · party default ${Number(p.params.buyDelayHours ?? 1)}h</div></div></div>
-      <div class="field"><label>Voting window</label><div><select id="win">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (p.params.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select><div class="hint">Range: 24 hours – 7 days</div></div></div>
+      <div class="field"><label>Voting window</label><div><select id="win">${[1, 24, 48, 72, 168].map(h => `<option value="${h}" ${h === (p.params.voteHours || 48) ? 'selected' : ''}>${h === 1 ? '1 hour' : h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select><div class="hint">Range: 1 hour – 7 days</div></div></div>
       <div class="actions" style="margin-top:12px"><button type="button" class="cta" id="propose-price" style="margin:0">Propose</button> ${cost('propose')} <span class="hint">Your yes vote is cast automatically.</span></div>
-     </div>` : `<p class="note">Only Credit Card holders can propose and vote.</p>`}
+     </div>` : !me ? connectAct : `<p class="note">Only Credit Card holders can propose and vote.</p>`}
      <div class="error" id="vote-err"></div>
     </div>` : ''}
 
-    <div class="panel">
+    ${embed ? '' : `<div class="panel">
      <h2>Card holders · ${p.members.length}</h2>
      <table class="table"><tbody>${p.members.slice(0, 30).map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${userLink(m.address)}${m.host ? ' <span class="muted">host</span>' : ''}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
-    </div>
+    </div>`}
 
     <div class="panel">
      <h2>Chat</h2>
      <div class="chat" id="chat">${p.chat.map(m => `<div class="msg"><span class="muted">${userLink(m.address)} · ${ago(m.at)}</span><p>${esc(m.text)}</p></div>`).join('') || '<p class="muted" style="padding:10px 0">Quiet.</p>'}</div>
-     ${holder ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : `<p class="note">Credit Card holders can post.</p>`}
+     ${holder ? `<div class="compose"><textarea id="say" rows="1" placeholder="Say something"></textarea><button type="button" id="send">Send</button></div>` : !me ? connectAct : `<p class="note">Credit Card holders can post.</p>`}
      <div class="error" id="chat-err"></div>
     </div>
 
-    <div class="panel" id="log"></div>
+    ${embed ? '' : '<div class="panel" id="log"></div>'}
    </section>
   </div>`);
 
   const chat = $('#chat'); if (chat) chat.scrollTop = chat.scrollHeight;
-  logPanel(p.id, $('#log'));
+  if (!embed) logPanel(p.id, $('#log'));
   const err = (id, e) => { const el = $('#' + id); if (el) el.textContent = e.message || e; };
   const act = async (path, body, errId) => { try { await api(`parties/${encodeURIComponent(p.id)}/${path}`, body); await route(); return true; } catch (e) { err(errId, e); return false; } };
 
-  app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { partyUI.mode = b.dataset.mode; if (partyUI.mode === 'arrange' && !partyUI.order) partyUI.order = [...p.credits]; route(); });
-  app.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => { partyUI.order = PRESETS[b.dataset.preset](partyUI.order || p.credits); partyUI.preset = b.dataset.preset + (partyUI.order.seed ? ' #' + partyUI.order.seed : ''); route(); });
-  const sheetEl = $('#sheet');
-  sheetEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { partyUI.selected = Number(b.dataset.id); route(); } });
-  if (partyUI.mode === 'arrange') {
+  root.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { partyUI.mode = b.dataset.mode; if (partyUI.mode === 'arrange' && !partyUI.order) partyUI.order = [...p.credits]; route(); });
+  root.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => { partyUI.order = PRESETS[b.dataset.preset](partyUI.order || p.credits); partyUI.preset = b.dataset.preset + (partyUI.order.seed ? ' #' + partyUI.order.seed : ''); route(); });
+  const sheetEl = embed ? null : $('#sheet');
+  sheetEl?.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { partyUI.selected = Number(b.dataset.id); route(); } });
+  if (sheetEl && partyUI.mode === 'arrange') {
     sheetEl.classList.add('dragging');
     let from = null;
     sheetEl.addEventListener('dragstart', e => { from = Number(e.target.closest('button')?.dataset.i); });
@@ -509,7 +563,8 @@ async function pageParty(id) {
   $('#burn-ask')?.addEventListener('click', () => { partyUI.confirmBurn = true; route(); });
   $('#burn-x')?.addEventListener('click', () => { partyUI.confirmBurn = false; route(); });
   $('#submit-order-legacy')?.addEventListener('click', () => act('arrange', { order: partyUI.order.map(c => c.id), preset: partyUI.preset || 'Deposit order', hours: $('#win')?.value }, 'arr-err'));
-  app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const id = Number(b.dataset.pick); partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); depState(); });
+  root.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const id = Number(b.dataset.pick); partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); depState(); });
+  $('#pick-more')?.addEventListener('click', () => { partyUI.pickShown = (partyUI.pickShown || 80) + 80; route(); });
   $('#pick-all')?.addEventListener('click', () => { partyUI.picks = new Set(eligibleMine.slice(0, remaining).map(c => c.id)); route(); });
   $('#pick-none')?.addEventListener('click', () => { partyUI.picks.clear(); route(); });
   // Deposit exactly the Credits picked: at least the party minimum, at most the slots left.
@@ -524,8 +579,8 @@ async function pageParty(id) {
   $('#dep-ack')?.addEventListener('change', depState);
   $('#deposit')?.addEventListener('click', async () => { const picks = [...partyUI.picks]; partyUI.picks.clear(); if (!await act('deposit', { ids: picks, storeOnly: $('#dep-ack').checked }, 'dep-err')) partyUI.picks = new Set(picks); });
   $('#withdraw')?.addEventListener('click', () => act('withdraw', {}, 'dep-err'));
-  app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => act('vote', { proposal: b.dataset.vote, yes: b.dataset.yes === '1' }, 'vote-err'));
-  app.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { const q = p.proposals.find(x => x.id === Number(b.dataset.preview)); const m = new Map(p.credits.map(c => [c.id, c])); partyUI.mode = 'arrange'; partyUI.order = q.args.order.map(id => m.get(id)); partyUI.preset = 'Proposal ' + q.id; route(); });
+  root.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => act('vote', { proposal: b.dataset.vote, yes: b.dataset.yes === '1' }, 'vote-err'));
+  root.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { const q = p.proposals.find(x => x.id === Number(b.dataset.preview)); const m = new Map(p.credits.map(c => [c.id, c])); partyUI.mode = 'arrange'; partyUI.order = q.args.order.map(id => m.get(id)); partyUI.preset = 'Proposal ' + q.id; route(); });
   const pricePreview = () => {
     const t = { mode: $('#pm').value, value: +$('#pv').value }; const e = priceOf({ mode: t.mode, value: $('#pv').value }, p.floorEth);
     render($('#pp'), `= ${eth(e)} ${vsFloor(e, p.floorEth)}`);
@@ -533,20 +588,53 @@ async function pageParty(id) {
   };
   if ($('#pm')) { $('#pm').onchange = pricePreview; $('#pv').oninput = pricePreview; pricePreview(); }
   $('#propose-price')?.addEventListener('click', () => act('propose', { type: 'LIST', hours: $('#win')?.value, buyDelayHours: Number($('#bw2')?.value ?? 1), args: { mode: $('#pm').value, value: +$('#pv').value } }, 'vote-err'));
-  app.querySelectorAll('[data-exec]').forEach(b => b.onclick = () => act('execute', { proposal: b.dataset.exec }, 'vote-err'));
-  app.querySelectorAll('[data-count]').forEach(b => b.onclick = () => act('countBlocked', { proposal: b.dataset.count }, 'vote-err'));
+  root.querySelectorAll('[data-exec]').forEach(b => b.onclick = () => act('execute', { proposal: b.dataset.exec }, 'vote-err'));
+  root.querySelectorAll('[data-count]').forEach(b => b.onclick = () => act('countBlocked', { proposal: b.dataset.count }, 'vote-err'));
   $('#raise-ask')?.addEventListener('click', () => act('raiseAsk', {}, 'vote-err'));
   $('#skip')?.addEventListener('click', async () => { await api('dev/advance', { hours: 24 }); route(); });
   $('#rules-t')?.addEventListener('click', () => { partyUI.rules = !partyUI.rules; route(); });
-  app.querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { partyUI.ptype = b.dataset.ptype; route(); });
+  root.querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { partyUI.ptype = b.dataset.ptype; route(); });
   let sending = null;
-  app.querySelectorAll('[data-send]').forEach(b => b.onclick = () => { sending = Number(b.dataset.send); $('#send-row').hidden = false; $('#send-no').textContent = '#' + sending; $('#send-to').focus(); });
+  // Your Credit Cards: collapsed unless opened (remembered per party); drawn 40 at a time once open.
+  const cardsBox = $('#mycards', root);
+  if (cardsBox) {
+    const list = $('#cards-list', root), more = $('#cards-more', root);
+    let shown = 0;
+    const fig = c => `<figure><img src="/api/card/${Number(c.card)}.svg" alt="Credit Card ${Number(c.card)}" loading="lazy"><figcaption class="actions">
+       ${c.claimed ? '<span class="muted">Redeemed</span>' : `<button type="button" data-send="${Number(c.card)}">Send</button>`}
+       ${!c.claimed && (p.status === 'OPEN' || p.status === 'EXPIRED') ? `<button type="button" data-wd="${Number(c.id)}">Redeem for Credit #${Number(c.id)}</button>` : ''}
+       ${!c.claimed && p.status === 'SOLD' ? `<button type="button" data-claim="${Number(c.card)}">Claim ${eth(p.perCard)}</button>` : ''}
+     </figcaption></figure>`;
+    const draw = () => { list.append(document.createRange().createContextualFragment(myCards.slice(shown, shown + 40).map(fig).join(''))); shown = Math.min(myCards.length, shown + 40); more.hidden = shown >= myCards.length; more.textContent = `Show more · ${myCards.length - shown} left`; };
+    if (cardsBox.open) draw();
+    cardsBox.addEventListener('toggle', () => { setCardsOpen(p.id, cardsBox.open); if (cardsBox.open && !shown) draw(); });
+    more.onclick = draw;
+    list.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.send) { sending = Number(b.dataset.send); $('#send-row').hidden = false; $('#send-no').textContent = '#' + sending; $('#send-to').focus(); }
+      else if (b.dataset.wd) act('withdraw', { ids: [Number(b.dataset.wd)] }, 'card-err');
+      else if (b.dataset.claim) act('claim', { cards: [Number(b.dataset.claim)] }, 'card-err');
+    });
+  }
+  $('#redeem-all')?.addEventListener('click', () => act('withdraw', {}, 'card-err'));
   $('#send-x')?.addEventListener('click', () => { $('#send-row').hidden = true; sending = null; });
   $('#send-go')?.addEventListener('click', () => act('transfer', { card: sending, to: $('#send-to').value.trim() }, 'card-err'));
-  app.querySelectorAll('[data-wd]').forEach(b => b.onclick = () => act(p.status === 'EXPIRED' ? 'withdraw' : 'withdraw', { ids: [Number(b.dataset.wd)] }, 'card-err'));
-  app.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => act('claim', { cards: [Number(b.dataset.claim)] }, 'card-err'));
   $('#claim-all')?.addEventListener('click', () => act('claim', {}, 'card-err'));
   $('#buy')?.addEventListener('click', () => act('buy', {}, 'buy-err'));
+  $('#bid')?.addEventListener('click', () => act('bid', { amount: $('#bid-amt').value.trim() }, 'bid-err'));
+  $('#settle')?.addEventListener('click', () => act('settle', {}, 'bid-err'));
+  // Live countdown on the server's clock (p.now); at zero, redraw so Settle appears.
+  clearInterval(auctionTick);
+  if (au && !au.settled && !au.ended && au.endsAt != null) {
+    const skew = p.now - Date.now();
+    auctionTick = setInterval(() => {
+      const el = document.getElementById('au-clock');
+      if (!el) return clearInterval(auctionTick);
+      const left = au.endsAt - (Date.now() + skew);
+      if (left <= 0) { clearInterval(auctionTick); route(); return; }
+      el.textContent = clock(left) + ' left';
+    }, 1000);
+  }
   $('#assemble')?.addEventListener('click', async () => { partyUI.confirmBurn = false; await act('assemble', p.manual && isHost ? { order: (partyUI.order || p.credits).map(c => c.id) } : {}, 'vote-err'); });
   $('#return')?.addEventListener('click', () => act('return', {}, 'ret-err'));
   $('#nominate-legacy')?.addEventListener('click', () => act('propose', { type: 'NOMINATE_ARRANGER', hours: $('#win')?.value, args: { address: $('#nominee').value } }, 'vote-err'));
@@ -560,7 +648,7 @@ const arrLabel = a => !a ? 'Deposit order' : a.preset === 'Random' ? `Random #${
 // The metric each arrangement orders by, in one plain line (must match PRESETS in lib/core.mjs). Manual: the host's own words.
 const ARR_DESC = { Time: 'mint order, earliest first', Number: 'token number, lowest first', Rarity: 'rarest first', Colors: 'by ink plates: C, M, Y, K, then combinations', Print: 'most misregistered first', Weight: 'lightest coverage first, sparse to extreme', Eights: 'most eights first', Ink: 'fewest inked squares first', Deposit: 'deposit order, first deposited first' };
 const arrDesc = a => a?.preset === 'Manual' ? (a.metric || 'no metric stated') : a?.preset === 'Random' ? `shuffled with seed ${Number(a.seed)}` : ARR_DESC[a?.preset || 'Deposit'] || '';
-const ARR_HINT = { preset: 'Any card holder burns once the party is full; the order is set at that moment. There is no vote on arrangement.', manual: 'Manual: state the metric you will order the 80 by. Only you can burn, with your order. If you have not burned within 1 day of the party filling, any card holder can burn in Time order.' };
+const ARR_HINT = { preset: a => `Arrangement is locked as ${arrLabel(a)}.`, manual: 'Manual: state the metric you will order the 80 by. Only you can burn, with your order. If you have not burned within 1 day of the party filling, any card holder can burn in Time order.' };
 async function pageNew() {
   stats = stats || await api('stats');
   if (!stats.partiesUnlocked) {
@@ -581,12 +669,12 @@ async function pageNew() {
     <div class="field"><label for="ds">Description</label><div><textarea id="ds" rows="3" maxlength="1000" placeholder="What this Statement is about">${val(draft.description)}</textarea>${hint('Up to 1,000 characters')}</div></div>
     <div class="field"><label for="md">Minimum deposit</label><div><input id="md" type="number" min="1" max="80" value="${val(draft.minDeposit)}">${hint('Range: 1–80 Credits per depositor')}</div></div>
     <div class="field"><label for="dd">Deadline, days</label><div><input id="dd" type="number" min="1" max="60" value="${val(draft.days)}">${hint('Range: 1–60 days')}</div></div>
-    <div class="field"><label for="vh">Vote window</label><div><select id="vh">${[24, 48, 72, 168].map(h => `<option value="${h}" ${h === (draft.voteHours || 48) ? 'selected' : ''}>${h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select>${hint('Range: 24 hours – 7 days · default for this party’s proposals')}</div></div>
+    <div class="field"><label for="vh">Vote window</label><div><select id="vh">${[1, 24, 48, 72, 168].map(h => `<option value="${h}" ${h === (draft.voteHours || 48) ? 'selected' : ''}>${h === 1 ? '1 hour' : h < 168 ? h + ' hours' : '7 days'}</option>`).join('')}</select>${hint('Range: 1 hour – 7 days · default for this party’s proposals')}</div></div>
     <div class="field"><label>Default arrangement</label><div><div class="chips">${['Time', ...Object.keys(PRESETS).filter(k => k !== 'Time'), 'Deposit', 'Manual'].map(k => `<button type="button" data-arr="${k}" aria-pressed="${(draft.arrangement?.preset || 'Time') === k}">${k === 'Deposit' ? 'Deposit order' : k}</button>`).join('')}</div>
       <div class="hint" id="arr-desc">${esc(draft.arrangement?.preset === 'Manual' ? '' : arrLabel(draft.arrangement) + ': ' + arrDesc(draft.arrangement))}</div>
       <div id="arr-metric" ${draft.arrangement?.preset === 'Manual' ? '' : 'hidden'} style="margin-top:6px"><input id="am" maxlength="200" placeholder="The metric you will order by, e.g. darkest to lightest, left to right" value="${esc(draft.arrangement?.metric || '')}"></div>
-      <div class="hint${draft.arrangement?.preset === 'Manual' ? ' alert-c' : ''}" id="arr-hint">${draft.arrangement?.preset === 'Manual' ? ARR_HINT.manual : ARR_HINT.preset}</div></div></div>
-    <div class="field"><label>Floor reference</label><div><div class="chips">${[['avg24h', '24-hour average'], ['latest', 'Latest reading']].map(([k, l]) => `<button type="button" data-fm="${k}" aria-pressed="${(draft.floorMode || 'avg24h') === k}">${l}</button>`).join('')}</div>${hint('Floor = the Statement collection floor once Statements trade; until then 80 × the Credits floor. Read from OpenSea every minute. The average resists one cheap listing moving it; the latest follows the market as it is. Used for floor-based prices and the 60/80 below-floor rule.')}</div></div>
+      <div class="hint${draft.arrangement?.preset === 'Manual' ? ' alert-c' : ''}" id="arr-hint">${draft.arrangement?.preset === 'Manual' ? ARR_HINT.manual : esc(ARR_HINT.preset(draft.arrangement))}</div></div></div>
+    <div class="field"><label>Floor reference</label><div><div class="chips">${[['avg24h', '24-hour average'], ['latest', 'Latest reading']].map(([k, l]) => `<button type="button" data-fm="${k}" aria-pressed="${(draft.floorMode || 'avg24h') === k}">${l}</button>`).join('')}</div>${hint('Floor = the Statement collection floor once Statements trade; until then 80 × the Credits floor. Read every minute. The average resists one cheap listing moving it; the latest follows the market as it is. Used for floor-based prices and the 60/80 below-floor rule.')}</div></div>
     <div class="field"><label for="bw">Buy wait, hours</label><div><input id="bw" type="number" min="0" max="72" value="${val(draft.buyDelayHours ?? 1)}">${hint('Range: 0–72 hours · default 1 · how long after a price goes live before anyone can buy. Every price vote can set its own.')}</div></div>
     <div class="field"><label>Default price</label><div>
       <div class="chips">${[['fixed', 'ETH'], ['floorEth', 'Floor + ETH'], ['floorPct', 'Floor + %']].map(([m, l]) => `<button type="button" data-tm="${m}" aria-pressed="${draft.target.mode === m}">${l}</button>`).join('')}</div>
@@ -609,7 +697,7 @@ async function pageNew() {
     </div>
     ${storeBanner()}
     <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
-    <label class="check" style="margin:12px 0"><input type="checkbox" id="new-ack"> <span>I understand the Statement this party makes is sold only on Statement Maker, at the party’s price, and that <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
+    <label class="check" style="margin:12px 0"><input type="checkbox" id="new-ack"> <span>I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s price, and <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
     <button class="cta" id="create" type="button" disabled>Open party and deposit</button>
     <div class="error" id="new-err"></div>
    </div>
@@ -636,7 +724,7 @@ async function pageNew() {
     drawOwn();
   }, 150); };
   // The host's own Credits that meet the criteria; the party opens with at least the minimum of them.
-  let own = [], ownState = 'loading';
+  let own = [], ownState = 'loading', ownShown = 80;
   const picks = new Set();
   api('wallet/' + me).then(w => { own = w; ownState = 'ok'; drawOwn(); }).catch(e => { ownState = e.message; drawOwn(); });
   function drawOwn() {
@@ -649,7 +737,8 @@ async function pageNew() {
     else if (!ok.length) { render(note, `<span class="alert-k">Connected: ${meName()} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; none match the chosen filters.</span> Loosen the filters, or switch to a wallet holding a matching Credit.<span class="actions" style="display:flex;margin-top:10px">${switchBtn}</span>`); render($('#own-picker'), ''); }
     else {
       note.textContent = `${nameOf(me) || short(me)} holds ${own.length} Credit${own.length === 1 ? '' : 's'}; ${ok.length} meet these criteria. Selected ${picks.size} of at least ${min}.`;
-      render($('#own-picker'), ok.slice(0, 200).map(c => `<button type="button" data-own="${Number(c.id)}" aria-pressed="${picks.has(c.id)}" title="#${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`).join(''));
+      render($('#own-picker'), ok.slice(0, ownShown).map(c => `<button type="button" data-own="${Number(c.id)}" aria-pressed="${picks.has(c.id)}" title="#${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>`).join('') + (ok.length > ownShown ? `<button type="button" id="own-more" style="grid-column:1/-1;aspect-ratio:auto;padding:6px 0;text-align:left">Show more · ${ok.length - ownShown} left</button>` : ''));
+      $('#own-more')?.addEventListener('click', () => { ownShown += 80; drawOwn(); });
     }
     app.querySelectorAll('[data-own]').forEach(b => b.onclick = () => { const id = Number(b.dataset.own); picks.has(id) ? picks.delete(id) : picks.add(id); drawOwn(); });
     $('#create').disabled = !($('#new-ack').checked && picks.size >= min && picks.size <= SLOTS);
@@ -663,7 +752,7 @@ async function pageNew() {
   app.querySelectorAll('[data-f]:not([data-f="shiftMin"])').forEach(b => b.onclick = () => { const k = b.dataset.f, v = k === 'eights' ? +b.dataset.v : b.dataset.v; const a = draft.filters[k] || []; draft.filters[k] = a.includes(v) ? a.filter(x => x !== v) : [...a, v]; b.setAttribute('aria-pressed', draft.filters[k].includes(v)); refresh(); });
   const tvHint = () => { const fl = (draft.floorMode === 'latest' ? stats.floorLatest : stats.floorAvg?.credit) * SLOTS || null; $('#tvh').textContent = draft.target.mode === 'fixed' ? 'Range: above 0 ETH' : (draft.target.mode === 'floorPct' ? 'Range: above −100%' : 'Range: above −' + eth(fl)) + ' · floor now ' + eth(fl); };
   app.querySelectorAll('[data-fm]').forEach(b => b.onclick = () => { draft.floorMode = b.dataset.fm; app.querySelectorAll('[data-fm]').forEach(x => x.setAttribute('aria-pressed', x === b)); tvHint(); });
-  app.querySelectorAll('[data-arr]').forEach(b => b.onclick = () => { draft.arrangement = b.dataset.arr === 'Random' ? { preset: 'Random', seed: 1 + Math.floor(Math.random() * 999999) } : { preset: b.dataset.arr }; app.querySelectorAll('[data-arr]').forEach(x => x.setAttribute('aria-pressed', x === b)); const h = $('#arr-hint'); const man = draft.arrangement.preset === 'Manual'; if (man) draft.arrangement.metric = $('#am').value; h.className = 'hint' + (man ? ' alert-c' : ''); h.textContent = man ? ARR_HINT.manual : ARR_HINT.preset; $('#arr-metric').hidden = !man; $('#arr-desc').textContent = man ? '' : arrLabel(draft.arrangement) + ': ' + arrDesc(draft.arrangement); });
+  app.querySelectorAll('[data-arr]').forEach(b => b.onclick = () => { draft.arrangement = b.dataset.arr === 'Random' ? { preset: 'Random', seed: 1 + Math.floor(Math.random() * 999999) } : { preset: b.dataset.arr }; app.querySelectorAll('[data-arr]').forEach(x => x.setAttribute('aria-pressed', x === b)); const h = $('#arr-hint'); const man = draft.arrangement.preset === 'Manual'; if (man) draft.arrangement.metric = $('#am').value; h.className = 'hint' + (man ? ' alert-c' : ''); h.textContent = man ? ARR_HINT.manual : ARR_HINT.preset(draft.arrangement); $('#arr-metric').hidden = !man; $('#arr-desc').textContent = man ? '' : arrLabel(draft.arrangement) + ': ' + arrDesc(draft.arrangement); });
   app.querySelectorAll('[data-tm]').forEach(b => b.onclick = () => { draft.target.mode = b.dataset.tm; app.querySelectorAll('[data-tm]').forEach(x => x.setAttribute('aria-pressed', x === b)); tvHint(); });
   tvHint();
   app.querySelectorAll('input:not([type=checkbox]), textarea').forEach(i => i.oninput = refresh);
@@ -743,10 +832,12 @@ async function pageUser(addr) {
    </section>
    <section>
     <div class="panel">
-     <h2>Credit Cards · ${n(u.cards.total)}</h2>
-     ${u.cards.items.length ? `<div class="sim-cards">${u.cards.items.map(c => `
-      <a class="sim-card" href="#/party/${esc(c.party)}"><img src="${svg(c.credit)}" alt="" loading="lazy"><div><strong>Credit Card</strong><span>No. ${Number(c.card)}</span><span>${esc(c.name)}</span><span>Credit #${Number(c.credit)}</span><span class="${c.status === 'claimable' ? 'you' : c.status === 'claimed' ? 'muted' : ''}">${esc(CARD_STATE[c.status] || c.status)}${c.status === 'claimable' ? ' · ' + eth(c.perCard) : ''}</span></div></a>`).join('')}</div>
-      ${u.cards.total > u.cards.items.length ? `<p class="note">Showing ${u.cards.items.length} of ${n(u.cards.total)}.</p>` : ''}` : '<p class="muted">No Credit Cards.</p>'}
+     ${u.cards.items.length ? `<details class="cards-box" id="ucards" ${cardsOpen('u') ? 'open' : ''}>
+      <summary><h2>Credit Cards · ${n(u.cards.total)}</h2><span class="muted">${n(u.cards.items.filter(c => c.status === 'claimable').length)} claimable · ${n(u.cards.items.filter(c => c.status === 'redeemable').length)} redeemable</span></summary>
+      <div class="sim-cards" id="ucards-list" style="margin-top:10px"></div>
+      <div class="actions"><button type="button" id="ucards-more" hidden></button></div>
+      ${u.cards.total > u.cards.items.length ? `<p class="note">The first ${u.cards.items.length} of ${n(u.cards.total)}.</p>` : ''}
+     </details>` : `<h2>Credit Cards · 0</h2><p class="muted">No Credit Cards.</p>`}
     </div>
     <div class="panel">
      <h2>History</h2>
@@ -762,7 +853,18 @@ async function pageUser(addr) {
    <div class="caption" style="min-height:0;margin:0 0 8px"><span>Statements part of · ${n(u.pastTotal)}</span></div>
    ${past ? `<div class="rows">${past}</div>` : '<p class="muted">None yet.</p>'}
   </div>
-  <p class="note" style="margin-top:32px">Credits, Credit Cards and open parties are shown to wallets that hold a Credit or a Credit Card.${me ? '' : ' Use “Connect wallet” at the top right.'}</p>`}`);
+  <p class="note" style="margin-top:32px">Credits, Credit Cards and open parties are shown to wallets that hold a Credit or a Credit Card and have agreed to the Rules.${me ? '' : ' Use “Connect wallet” at the top right.'}</p>`}`);
+  // Credit Cards: collapsed unless opened; drawn 40 at a time.
+  const ub = $('#ucards');
+  if (ub) {
+    const list = $('#ucards-list'), more = $('#ucards-more'), items = u.cards.items;
+    let shown = 0;
+    const card = c => `<a class="sim-card" href="#/party/${esc(c.party)}"><img src="${svg(c.credit)}" alt="" loading="lazy"><div><strong>Credit Card</strong><span>No. ${Number(c.card)}</span><span>${esc(c.name)}</span><span>Credit #${Number(c.credit)}</span><span class="${c.status === 'claimable' ? 'you' : c.status === 'claimed' ? 'muted' : ''}">${esc(CARD_STATE[c.status] || c.status)}${c.status === 'claimable' ? ' · ' + eth(c.perCard) : ''}</span></div></a>`;
+    const draw = () => { list.append(document.createRange().createContextualFragment(items.slice(shown, shown + 40).map(card).join(''))); shown = Math.min(items.length, shown + 40); more.hidden = shown >= items.length; more.textContent = `Show more · ${items.length - shown} left`; };
+    if (ub.open) draw();
+    ub.addEventListener('toggle', () => { setCardsOpen('u', ub.open); if (ub.open && !shown) draw(); });
+    more.onclick = draw;
+  }
   let offset = u.open ? u.credits.items.length : 0;
   $('#more-credits')?.addEventListener('click', async e => {
     const b = e.currentTarget; b.disabled = true;
@@ -776,26 +878,38 @@ async function pageUser(addr) {
 }
 
 // Parties require agreeing to the rules and terms once per browser (the wallet also signs the terms at connect).
-const RULES_KEY = 'sm-rules-ok-' + '2026-09-24';
-const rulesAgreed = () => { try { return localStorage.getItem(RULES_KEY) === '1'; } catch { return false; } };
+// Signed in, the server's record is what counts (it rejects every party action without it); the browser flag only
+// carries an agreement made before connecting, and is copied to the wallet's record at sign-in.
+const RULES_VERSION = '2026-09-24.2';
+const RULES_KEY = 'sm-rules-ok-' + RULES_VERSION;
+const localRules = () => { try { return localStorage.getItem(RULES_KEY) === '1'; } catch { return false; } };
+const rulesAgreed = () => (me ? !!access.rules : localRules());
+async function syncRules() {
+  if (me && !access.rules && localRules()) try { await api('rules', { accept: true }); access.rules = true; } catch {}
+}
+let afterRules = null; // the page asked for before the Rules, to return to after agreeing
+const toRules = () => { afterRules = location.hash; location.hash = '#/rules'; };
 function pageRules() {
   render(app, `
   <div class="intro"><div><h1>Rules</h1><p class="muted">How a party works. Read these first.</p></div></div>
   <div class="works no-defs"><div class="rows terms">
+   ${launchPhase() ? '<div class="rule-strong"><span>00 Launch</span><strong>Only four parties exist now: the four minutes of the Credits mint that made exactly 80 Credits each. They have no host and fixed settings. Starting your own party opens after the first Statement.</strong></div>' : ''}
    <div><span>01 Open</span><strong>A host opens a party and sets its defaults: which Credits qualify, minimum deposit, default arrangement, default price, voting window, deadline.</strong></div>
    <div><span>02 Deposit</span><strong>Users deposit Credits that match the party’s criteria. Each deposited Credit returns one Credit Card (ERC-721) to the depositor. Depositing accepts the party’s defaults.</strong></div>
-   <div><span>03 The card</span><strong>Whoever holds a Credit Card has its vote, can redeem its Credit until the party fills or if it expires, and gets 1/80 of the sale. Credit Cards are ERC-721s: list and trade them on OpenSea or anywhere. The Statement itself sells only here.</strong></div>
+   <div><span>03 The card</span><strong>Whoever holds a Credit Card has its vote, can redeem its Credit until the party fills or if it expires, and gets 1/80 of the sale. Credit Cards are ERC-721s and can be transferred. The Statement itself sells only here.</strong></div>
    <div><span>04 Full</span><strong>At 80, redemption closes.</strong></div>
    <div><span>05 Arrange</span><strong>The arrangement is a party setting, Time (mint order) by default. The host picks a preset, each ordering by one stated metric, or Manual, where the host states at creation the metric they will order the 80 by. There is no vote on arrangement.</strong></div>
    <div><span>06 Assemble</span><strong>Arranging and burning are one step. With a preset, any card holder can burn once all 80 are deposited. With Manual, the host burns with their order; if the host has not burned within 1 day of the party filling, any card holder can burn in Time order. The Statement is held by the party and the default price goes live.</strong></div>
    <div><span>07 Host</span><strong>The host can change settings until someone else deposits, order and burn a Manual party, and hand hosting to another address. Nothing else: a host without Credit Cards cannot vote, chat or burn a preset party.</strong></div>
-   <div><span>08 Sold only here</span><strong>A party sells its Statement only on Statement Maker, at the party’s own price. The party contract has no other way to release it: the party cannot list, offer or auction it on OpenSea or any other marketplace. No offers, no auctions. Each price carries its own wait before buying opens, voted with the price (the host sets the default, 1 hour unless changed). After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
+   <div><span>08 Sold only here</span><strong>A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s own price; the party contract has no other way to release it. No offers. Each price carries its own wait before buying opens, voted with the price (the host sets the default, 1 hour unless changed). After the sale the buyer owns it outright and may resell anywhere, including in the Statement Maker gallery. The floor is the Statement collection floor once it exists, 80 × the Credits floor until then, as a 24-hour average or the latest reading (the host’s choice).</strong></div>
    <div><span>09 Split</span><strong>1% to Statement Maker, and any creator royalty the Statement contract declares (capped at 10%); the rest split across the 80 Credit Cards.</strong></div>
    <div><span>10 Votes</span><strong>1 card = 1 vote, counted as held when the proposal opened. Passes with 41 of 80 yes and zero no. Prices below the floor need 60. After 3 blocked proposals of a kind or 30 days, 54 yes passes it and no is ignored.</strong></div>
-   <div><span>11 Time</span><strong>Votes run 24 hours to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
+   <div><span>11 Time</span><strong>Votes run 1 hour to 7 days. Any card holder executes a passed proposal within 7 days or it lapses.</strong></div>
    <div><span>12 Expire</span><strong>If a party never fills or never assembles, each Credit goes to whoever holds its card.</strong></div>
+   <div><span>13 The four</span><strong>The four launch Statements (the Minute parties) sell by auction. Opening bid: 100 × the Credits floor at the burn. The 24-hour timer starts at the first bid; each bid at least 0.1 ETH over the last; a bid in the last 5 minutes moves the end to 5 minutes after it. Outbid bidders are refunded. With no bid within 7 days of the burn, anyone can close it and the party sells at the opening bid like any other party.</strong></div>
+   <div><span>Gas</span><strong>${burnAlert(null)}</strong></div>
    <div class="agree"><label class="check"><input type="checkbox" id="rules-ok" ${rulesAgreed() ? 'checked' : ''}> <span>I have read the rules and agree to the <a href="#/terms">terms and conditions</a>.</span></label>
-    <button class="cta" id="rules-go" ${rulesAgreed() ? '' : 'disabled'}>Continue to parties →</button></div>
+    <button class="cta" id="rules-go" ${rulesAgreed() ? '' : 'disabled'}>${launchPhase() ? 'Continue to The Four →' : 'Continue to parties →'}</button><div class="error" id="rules-err"></div></div>
   </div>
   <div class="rows">
    <div><span>Contract</span><strong><a href="https://etherscan.io/address/0x97630aa70ab14ed9883b41dafccbc11349723043" target="_blank" rel="noopener noreferrer">Credits 0x9763…3043, Ethereum ↗</a></strong></div>
@@ -804,8 +918,14 @@ function pageRules() {
    <div><span>Rarity</span><strong>Sum of −log2 frequency over Colors, Print, Weight, Eights</strong></div>
    <div><span>Status</span><strong><span class="demo">Preview</span> · the Statement contract is not published yet · nothing here moves Credits or ETH</strong></div>
   </div></div>`);
-  $('#rules-ok').onchange = e => { try { localStorage.setItem(RULES_KEY, e.target.checked ? '1' : '0'); } catch {} $('#rules-go').disabled = !e.target.checked; };
-  $('#rules-go').onclick = () => { if ($('#rules-ok').checked) location.hash = '#/'; };
+  $('#rules-ok').onchange = async e => {
+    const on = e.target.checked;
+    try { localStorage.setItem(RULES_KEY, on ? '1' : '0'); } catch {}
+    $('#rules-go').disabled = true;
+    if (me) try { await api('rules', { accept: on }); access.rules = on; $('#rules-err').textContent = ''; } catch (x) { $('#rules-err').textContent = x.message; e.target.checked = !!access.rules; }
+    $('#rules-go').disabled = !rulesAgreed(); applyNav();
+  };
+  $('#rules-go').onclick = () => { if (!rulesAgreed()) return; const to = afterRules && afterRules !== '#/rules' ? afterRules : '#/'; afterRules = null; location.hash = to; };
 }
 
 // ---------- terms ----------
@@ -816,8 +936,8 @@ const TERMS = [
  ['How a party works', 'A host opens a party and sets its defaults: eligible Credits, minimum deposit, arrangement, price, voting window and deadline. Each deposited Credit returns one Credit Card; whoever holds a card can redeem its Credit until the party reaches 80. The host can change settings until someone else deposits and hand hosting to another address. Arranging and burning happen in one step: with a preset (Time, mint order, by default) any card holder can burn once all 80 are deposited; with Manual the host burns with an order by the metric they stated, and if the host has not burned within 1 day of the party filling, any card holder can burn in Time order.'],
  ['Burning is permanent', 'Assembly burns all 80 Credits forever. They cannot be restored, withdrawn, or returned after assembly. If a party never fills, or never assembles before its deadline, every Credit goes back to its depositor.'],
  ['Credit Cards', 'A Credit Card is an ERC-721 token, one per deposited Credit. Whoever holds it has that Credit’s vote, the right to redeem the Credit before the Statement is made or if the party expires, and 1/80 of any sale. Credit Cards can be transferred or traded by anyone. They are not a claim on Statement Maker, carry no promise of value, and may end up worth nothing.'],
- ['Voting', 'Every Credit Card is one vote. A proposal passes when more than 40 Credit Cards vote yes and none vote no within its voting window, which lasts 24 hours to 7 days. Any member must then execute it within 7 days or it lapses. A single no vote blocks a proposal, so a party can stay deadlocked and its Statement can go unsold indefinitely.'],
- ['Selling', 'A party sells its Statement only on Statement Maker, only at the price its members approved, to the first buyer who pays it. There are no offers, no auctions, and no marketplace listings. Members may approve any price, including below the floor. A floor-based price can rise automatically but never falls without a new vote.'],
+ ['Voting', 'Every Credit Card is one vote. A proposal passes when more than 40 Credit Cards vote yes and none vote no within its voting window, which lasts 1 hour to 7 days. Any member must then execute it within 7 days or it lapses. A single no vote blocks a proposal, so a party can stay deadlocked and its Statement can go unsold indefinitely.'],
+ ['Selling', 'A party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells only at the price its members approved, to the first buyer who pays it. There are no offers. After the sale, the buyer owns it and may resell it anywhere. Members may approve any price, including below the floor. A floor-based price can rise automatically but never falls without a new vote. The four launch Statements (the Minute parties) are sold instead by auction: opening bid 100 × the Credits floor at the burn, a 24-hour timer from the first bid, steps of at least 0.1 ETH, and a 5-minute extension for a bid in the last 5 minutes; with no bid within 7 days, the party sells at the opening bid.'],
  ['Fees and gas', 'Each sale pays a 1% Statement Maker fee, and any creator royalty the Statement contract declares (capped at 10%); the rest goes to Credit Card holders, 1/80 per card. Every action on-chain (depositing, voting, executing, assembling, claiming) costs gas, paid by whoever calls it. Statement Maker does not refund gas.'],
  ['Risks', 'Smart contracts can have bugs, and ours have not been audited yet. The Statement contract has not been published; it may work differently from what this site assumes, or may not accept parties at all. Prices can fall. Transactions cannot be reversed. If you lose access to your wallet, nobody can recover your Credits, Credit Cards, or proceeds. Laws about tokens like Credit Cards may change or differ where you live.'],
  ['No advice', 'Nothing on this site is financial, investment, legal, or tax advice. You decide what to deposit, how to vote, and whether to sell.'],
@@ -827,7 +947,7 @@ const TERMS = [
  ['The code controls', 'Statement Maker’s contracts are non-custodial and run on their own once deployed. Statement Maker never holds your Credits, Credit Cards, Statements, ETH or keys, and does not broker, match, route, clear or settle anything: every transaction is between your wallet and the contracts. Statement Maker is not an exchange, broker, money transmitter or fiduciary. Where the contracts and these terms differ, the deployed contract code controls. Your wallet shows each transaction before you sign it; by signing you confirm you reviewed and understood it. You can use the contracts without this site.'],
  ['Automatic outcomes', 'By depositing you consent to everything the contracts do by their rules, including actions other members trigger: minting and burning Credit Cards, returning Credits, the burn of all 80, executing a passed price, a sale to the first buyer who pays, fees, and claims. Transactions are final. Statement Maker cannot stop, change or undo them.'],
  ['Members act for themselves', 'Hosts, members, card holders and buyers each act on their own behalf. A party is not a partnership, joint venture, company or fund, and joining one creates no duty of care or trust between members, or between any member and Statement Maker. A host is not Statement Maker’s agent. Voting is a technical mechanism, not a management right.'],
- ['Things outside our control', 'Statement Maker depends on systems it does not run: Ethereum, Jack Butcher’s Credits and Statement contracts, wallets, RPC providers, OpenSea and other price sources, and the floor-price signer. Any of them can fail, change, be attacked or become incompatible. Statement Maker is not responsible for failed, stuck, delayed, reordered or front-run transactions (including MEV), gas costs, network congestion, forks, or other users acting maliciously.'],
+ ['Things outside our control', 'Statement Maker depends on systems it does not run: Ethereum, Jack Butcher’s Credits and Statement contracts, wallets, RPC providers, third-party price sources, and the floor-price signer. Any of them can fail, change, be attacked or become incompatible. Statement Maker is not responsible for failed, stuck, delayed, reordered or front-run transactions (including MEV), gas costs, network congestion, forks, or other users acting maliciously.'],
  ['Collectibles, not investments', 'Credits, Credit Cards and Statements are collectibles, not investments, securities or financial products, and nothing here is an offer to sell one. Floors, prices, rarity and other data on this site are for information only and may be wrong or out of date. Nobody promises that a buyer, market or price will ever exist. You may lose everything you put in.'],
  ['Public by design', 'Your wallet address, holdings and every on-chain action are public and permanent. Statement Maker shows party activity, profiles and ENS names publicly and cannot delete what is on-chain.'],
  ['No warranties', 'Statement Maker, its site and its contracts are experimental and provided as is and as available, without warranties of any kind, including merchantability, fitness for a purpose, title and non-infringement. Statement Maker does not promise the site or contracts will work without interruption, errors, bugs or exploits, or as expected.'],
@@ -838,7 +958,7 @@ const TERMS = [
 const termsBody = () => `<div class="rows terms">${TERMS.map(([h, t], i) => `<div><span>${String(i + 1).padStart(2, '0')} ${esc(h)}</span><strong>${esc(t)}</strong></div>`).join('')}</div>`;
 function pageTerms() {
   render(app, `
-  <div class="intro"><div><h1>Terms and conditions</h1><p class="muted">Version ${TERMS_VERSION} · <span class="demo">Draft, needs legal review before launch</span></p></div></div>
+  <div class="intro"><div><h1>Terms and conditions</h1><p class="muted">Version ${TERMS_VERSION}</p></div></div>
   <div style="max-width:900px">${termsBody()}</div>`);
 }
 // Connecting a wallet opens the terms as a scrollable modal over the site. Accepting is required to connect.
@@ -851,7 +971,7 @@ function openTermsModal(address, mode = 'sim') {
    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
     <div class="modal-head"><h2 id="mt">Terms and conditions</h2><span class="muted">Connecting ${nameTag(address)} · version ${TERMS_VERSION}</span></div>
     <div class="modal-body" id="mbody">
-     <p class="muted" style="margin-bottom:18px"><span class="demo">Draft, needs legal review before launch</span> · Read to the end to continue.</p>
+     <p class="muted" style="margin-bottom:18px">Read to the end to continue.</p>
      ${termsBody()}
     </div>
     <div class="modal-foot">
@@ -914,7 +1034,7 @@ async function statementPNG(p) {
   const a = Object.assign(document.createElement('a'), { href: cv.toDataURL('image/png'), download: `statement-${p.assembled.number}.png` }); a.click();
 }
 // Every listing looks the same whatever its source; only a small label differs.
-const SOURCE = { party: 'Party sale', holder: 'Holder listing', opensea: 'OpenSea' };
+const SOURCE = { party: 'Party sale', holder: 'Holder listing', opensea: 'Listing' };
 function listingCard(it, byId) {
   const p = byId[it.id];
   const pic = p ? sheet(p) : `<div class="frame statement os-frame"><span>Statement ${esc(it.number)}</span></div>`;
@@ -924,7 +1044,7 @@ function listingCard(it, byId) {
    <a class="party-card" href="${href}" ${it.source === 'opensea' ? 'target="_blank" rel="noopener noreferrer"' : ''}>
     ${pic}
     <div class="caption"><span><strong>Statement ${esc(it.number)}</strong> <span class="muted">${esc(it.name)}</span></span><span class="src">${it.demo ? '<span class="demo">Demo</span> ' : ''}${SOURCE[it.source]}</span></div>
-    <div class="price-line"><strong>${eth(it.priceEth)}</strong><span class="muted">${opens > 0 ? 'Opens in ' + hrs(opens) : it.source === 'opensea' ? 'Buy on OpenSea ↗' : 'Buy →'}</span></div>
+    <div class="price-line"><strong>${eth(it.priceEth)}</strong><span class="muted">${opens > 0 ? 'Opens in ' + hrs(opens) : 'Buy →'}</span></div>
    </a>`;
 }
 const statementCard = p => `
@@ -943,7 +1063,7 @@ async function pageStatements() {
   const mine = me ? list.filter(p => p.owner === me || p.members.some(m => m.address === me)) : [];
   const grid = arr => `<div class="parties" style="margin-bottom:64px">${arr.join('')}</div>`;
   render(app, `
-  <div class="intro"><div><h1>Statements</h1><p class="muted">Everything for sale in one place: party sales, holder listings, and OpenSea listings, side by side.</p></div><p class="muted">${list.length} made · ${items.length} for sale${(() => { const own = items.filter(i => i.source !== 'opensea' && !(i.opensAt > Date.now())); const os = items.filter(i => i.source === 'opensea'); return (own.length ? ` · <strong>Statement Maker floor ${eth(Math.min(...own.map(i => i.priceEth)))}</strong>` : '') + (os.length ? ` · OpenSea floor ${eth(Math.min(...os.map(i => i.priceEth)))}` : ''); })()}</p></div>
+  <div class="intro"><div><h1>Statements</h1><p class="muted">Everything for sale in one place.</p></div><p class="muted">${list.length} made · ${items.length} for sale${(() => { const own = items.filter(i => i.source !== 'opensea' && !(i.opensAt > Date.now())); const os = items.filter(i => i.source === 'opensea'); return (own.length ? ` · <strong>Statement Maker floor ${eth(Math.min(...own.map(i => i.priceEth)))}</strong>` : '') + (os.length ? ` · OpenSea floor ${eth(Math.min(...os.map(i => i.priceEth)))}` : ''); })()}</p></div>
   <div class="caption"><h2>For sale · ${items.length}</h2><div class="modes">${[['price', 'Price ↑'], ['high', 'Price ↓'], ['new', 'Newest']].map(([k, l]) => `<button type="button" data-gsort="${k}" aria-pressed="${sort === k}">${l}</button>`).join('')}</div></div>
   ${items.length ? grid(items.map(i => listingCard(i, byId))) : '<p class="muted" style="margin-bottom:64px">Nothing for sale right now.</p>'}
   ${stats?.dev && market.sources.opensea !== 'ok' ? `<p class="note" style="margin:-48px 0 48px">Dev · OpenSea listings: ${esc(market.sources.opensea)}.</p>` : ''}
@@ -976,7 +1096,7 @@ async function pageStatement(id) {
    ${p.sold && p.resale ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy · holder listing</h2><strong class="big">${eth(p.resale.priceEth)}</strong></div>
      <p class="muted">Listed by ${userLink(p.resale.seller)}. 1% to Statement Maker, the rest to the seller.</p>
-     ${me === p.resale.seller ? `<button type="button" id="unlist">Cancel your listing</button>` : me ? `<button class="cta" id="buy-r">Buy Statement ${Number(p.assembled.number)} for ${eth(p.resale.priceEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
+     ${me === p.resale.seller ? `<button type="button" id="unlist">Cancel your listing</button>` : me ? `<button class="cta" id="buy-r">Buy Statement ${Number(p.assembled.number)} for ${eth(p.resale.priceEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
      <div class="error" id="buy-r-err"></div></div>` : ''}
    ${p.sold && p.owner === me && !p.resale ? `<div class="buy-box">
      <h2 style="margin-bottom:10px">List it for sale</h2>
@@ -986,7 +1106,7 @@ async function pageStatement(id) {
    ${!p.sold && p.listing ? `<div class="buy-box">
      <div class="caption" style="min-height:0"><h2>Buy</h2><strong class="big">${eth(p.listingEth)}</strong></div>
      <p class="muted">1% to Statement Maker, then ${eth(p.listingEth * 0.99 / SLOTS)} to each of the 80 Credit Cards.</p>
-     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}.</p>` : me ? `<button class="cta" id="buy-s">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : '<p class="muted">Connect a wallet to buy.</p>'}
+     ${p.buyOpensAt > p.now ? `<p class="muted">Buying opens in ${hrs(p.buyOpensAt - p.now)}.</p>` : me ? `<button class="cta" id="buy-s">Buy Statement ${Number(p.assembled.number)} for ${eth(p.listingEth)}</button> <span class="faint">Preview · no ETH moves</span>` : connectAct}
      <div class="error" id="buy-s-err"></div></div>` : ''}
    <h2 style="margin:48px 0 14px">Holders</h2>
    <table class="table"><tbody>${p.members.map(m => `<tr><td>${m.address === me ? '<span class="dot y"></span>' : ''}${userLink(m.address)}</td><td style="text-align:right">${Number(m.count)}</td></tr>`).join('')}</tbody></table>
@@ -1079,9 +1199,9 @@ async function pageSim() {
       <div class="actions"><button class="cta" id="s-fill">Advance a day</button></div>`
     : sim.step === 'arrange' ? (sim.arrangement === 'Manual' ? `
       <p class="alert-c">Full. Manual: the host orders the 80 by hand by the metric stated at creation, starting from a preset if useful, and burns. If the host does not burn within 1 day of filling, any card holder can burn in Time order.</p>` : `
-      <p>Full. Arrangement is ${esc(sim.arrangement)}: it is applied the moment anyone burns. There is no vote on arrangement.</p>`) + (sim.confirm
+      <p>Full. Arrangement is locked as ${esc(sim.arrangement)}.</p>`) + burnAlert(sim.arrangement) + (sim.confirm
         ? `<div class="actions"><span class="blocked">Burning is permanent. 80 Credits become one Statement.</span><button class="cta" id="s-burn">Confirm burn</button><button type="button" id="s-burn-x">Cancel</button></div>`
-        : `<div class="actions"><button class="cta" id="s-burn-ask">${sim.arrangement === 'Manual' ? 'Burn with this order' : 'Burn'}</button> ${cost('assemble')}</div>`)
+        : `<div class="actions"><button class="cta" id="s-burn-ask">${sim.arrangement === 'Manual' ? 'Burn with this order' : 'Burn'}</button></div>`)
     : sim.step === 'listed' ? `
       <p>Statement made. Your default price is live: ${eth(listEth)}. Buying opens 1 hour after a price goes live (the party default).</p>
       <p class="muted">Ola thinks it is too high and proposes 10% below the floor. Below-floor prices need 60 of 80 yes and zero no.</p>
@@ -1164,7 +1284,7 @@ const DEFS = {
   'description': 'What this Statement is about, in your words. Up to 1,000 characters.',
   'minimum deposit': 'The fewest Credits one person can add at a time. The last slots are exempt so the party can always reach exactly 80.',
   'deadline, days': 'How long the party has to fill and burn. If it misses the deadline, every Credit goes back to whoever holds its card.',
-  'vote window': 'How long a price vote stays open by default. Anyone proposing can pick 24 hours, 48 hours, 72 hours or 7 days.',
+  'vote window': 'How long a price vote stays open by default. Anyone proposing can pick 1 hour, 24 hours, 48 hours, 72 hours or 7 days.',
   'default arrangement': 'The order of the 80 Credits in the 8 × 10 sheet. Time (mint order) by default. A preset is checked by the contract at the burn; Manual means the host arranges by hand by a metric they state.',
   'arrangement': 'The order of the 80 Credits in the 8 × 10 sheet, set by the host when the party opened.',
   'arranged by': 'The metric that orders the 80 Credits in the 8 × 10 sheet, set by the host when the party opened.',
@@ -1216,6 +1336,159 @@ function addDefs(root = app) {
 }
 new MutationObserver(() => addDefs()).observe(app, { childList: true, subtree: true });
 
+// ---------- launch phase: only the four Minute parties, until one of them makes its Statement ----------
+// While stats.partiesUnlocked is false the site shows The Four instead of the parties list, a Minute page per party,
+// and hides starting parties and the Credits lookup. The full-launch pages above stay as they are and return by themselves.
+const launchPhase = () => !stats?.partiesUnlocked;
+// Nav: launch or full-launch links, party links only after the Rules agreement, Profile only when signed in.
+function applyNav() {
+  const l = launchPhase(), ok = !me || rulesAgreed(); // view only (no wallet) may read every page
+  document.querySelectorAll('header nav [data-nav]').forEach(a => {
+    a.hidden = (a.dataset.phase && a.dataset.phase !== (l ? 'launch' : 'full')) || (a.hasAttribute('data-gated') && !ok) || (a.id === 'nav-profile' && !me);
+  });
+}
+const applyPhase = applyNav;
+// GET /api/launch is cached on the CDN for 30 s; after this tab changes something, ask for a fresh copy.
+async function launchData() {
+  const L = await api('launch' + (launchBust ? '?t=' + launchBust : ''));
+  if (stats && stats.partiesUnlocked !== L.unlocked) { stats.partiesUnlocked = L.unlocked; applyPhase(); }
+  const A = i => (i >= 0 ? L.addrs[i] : null);
+  for (const m of L.minutes) m.cells = m.cells.map(c => ({ id: c.id, owner: A(c.o), in: !!c.d, holder: c.d ? A(c.h) : null, get who() { return this.in ? this.holder : this.owner; } }));
+  return L;
+}
+const minuteKey = m => m.time.replace(':', '');
+const minuteTitle = m => `${esc(m.time)} UTC · #${Number(m.from)}–${Number(m.to)}`;
+const minuteState = m => ({ OPEN: 'Open', FULL: 'Full · ready to burn', ASSEMBLED: `Statement ${Number(m.assembled?.number)}${m.auction && !m.auction.settled ? (m.auction.highEth != null ? ' · auction, high bid ' + ethx(m.auction.highEth) : ' · auction opens at ' + ethx(m.auction.reserveEth)) : ''}`, SOLD: `Statement ${Number(m.assembled?.number)} · sold`, EXPIRED: 'Expired' }[m.status] || esc(m.status || '—'));
+const LAUNCH_NOTE = 'Four minutes of the Credits mint produced exactly 80 Credits each. Each can become one Statement if its holders deposit.';
+
+async function pageFour() {
+  const L = await launchData();
+  render(app, `
+  <div class="intro"><div><h1>The Four</h1><p class="muted">${LAUNCH_NOTE}</p></div><p class="muted">Synced to block ${Number(L.syncedBlock).toLocaleString()}</p></div>
+  <div class="four">${L.minutes.map(m => `
+   <a class="party-card" href="#/minute/${minuteKey(m)}">
+    <div class="frame statement">${m.cells.map(c => `<span class="${c.in ? '' : 'out'}${me && c.who === me ? ' mine' : ''}"><img src="${svg(c.id)}" alt="" loading="lazy"></span>`).join('')}</div>
+    <div class="bar" aria-label="${Number(m.filled)} of 80"><i style="width:${m.filled / SLOTS * 100}%"></i></div>
+    <div class="caption"><span><strong>${minuteTitle(m)}</strong></span><span>${Number(m.filled)}/80</span></div>
+    <div class="caption" style="margin-top:-14px"><span class="muted">${n(m.holders)} holders · ${minuteState(m)}</span><span>Open →</span></div>
+   </a>`).join('')}</div>
+  <div class="panel lookup" id="lookup"></div>`);
+  lookupBox($('#lookup'), L);
+}
+
+// "Is my wallet in?": an address or ENS name → which of the 320 Credits it holds (as Credits, or as Credit Cards).
+function lookupBox(el, L) {
+  render(el, `<h2>Is my wallet in?</h2>
+   <div class="compose" style="margin-top:0"><textarea id="lk" rows="1" placeholder="0x… or name.eth">${esc(me || '')}</textarea><button type="button" id="lk-go">Check</button></div>
+   <div id="lk-out" style="margin-top:12px"></div>`);
+  const out = $('#lk-out', el);
+  const go = async () => {
+    let q = $('#lk', el).value.trim().toLowerCase();
+    if (!q) return render(out, '');
+    render(out, '<p class="muted">Checking…</p>');
+    if (!isAddress(q)) {
+      try { q = (await api('users/' + encodeURIComponent(q))).address; } catch (e) { return render(out, `<p class="error">${esc(e.message)}</p>`); }
+    }
+    const rows = L.minutes.map(m => ({ m, cs: m.cells.filter(c => c.who === q) })).filter(r => r.cs.length);
+    render(out, rows.length
+      ? `<p style="margin-bottom:8px">${userLink(q)} holds ${n(rows.reduce((s, r) => s + r.cs.length, 0))} of the 320.</p><div class="rows">${rows.map(({ m, cs }) => `<div><span><a href="#/minute/${minuteKey(m)}">${esc(m.time)} UTC</a></span><strong>${cs.length} · ${cs.filter(c => c.in).length} deposited · ${cs.slice(0, 8).map(c => '#' + Number(c.id)).join(' ')}${cs.length > 8 ? ' …' : ''} · <a href="#/minute/${minuteKey(m)}">Open →</a></strong></div>`).join('')}</div>`
+      : `<p class="muted">${userLink(q)} holds none of the 320 Credits from the four minutes.</p>`);
+  };
+  $('#lk-go', el).onclick = go;
+  $('#lk', el).onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); go(); } };
+  if (me) go();
+}
+
+// A Minute party: the 8×10 grid in Time order is the page. Each cell: the Credit, its number, who holds it, and
+// whether it is in the party. Your own cells can be picked and deposited here; the rest of the party (burn, price
+// votes, buying, claims, chat) is the regular party page's panels, drawn underneath.
+async function pageMinute(key) {
+  const L = await launchData();
+  const m = L.minutes.find(x => minuteKey(x) === key);
+  if (!m || !m.party) return render(app, `<div class="intro"><div><h1>No such minute</h1><p class="muted"><a href="#/">The Four →</a></p></div></div>`);
+  const open = m.status === 'OPEN', remaining = SLOTS - m.filled;
+  const free = me && open ? m.cells.filter(c => !c.in && c.owner === me) : [];
+  const freeIds = new Set(free.map(c => c.id));
+  for (const id of [...partyUI.picks]) if (!freeIds.has(id)) partyUI.picks.delete(id);
+  const mineAll = me ? m.cells.filter(c => c.who === me) : [];
+  const hold = new Map();
+  for (const c of m.cells) { const a = c.who; if (!a) continue; const r = hold.get(a) || hold.set(a, { a, n: 0, d: 0 }).get(a); r.n++; if (c.in) r.d++; }
+  const holders = [...hold.values()].sort((x, y) => y.n - x.n || y.d - x.d);
+  const cell = c => `<div class="mcell${c.in ? '' : ' out'}${me && c.who === me ? ' mine' : ''}">
+    <button type="button" data-cell="${Number(c.id)}" aria-pressed="${partyUI.picks.has(c.id)}" aria-label="Credit ${Number(c.id)}"><img src="${svg(c.id)}" alt="" loading="lazy"></button>
+    <span class="l">#${Number(c.id)}</span><span class="l o">${c.who ? userLink(c.who) : '—'}</span><span class="l s">${c.in ? 'In the party' : 'Not yet'}</span></div>`;
+  render(app, `
+  <div class="intro"><div><h1>Minute ${esc(m.time)} UTC</h1><p class="muted">#${Number(m.from)}–${Number(m.to)} · ${Number(m.filled)}/80 in the party · ${n(m.holders)} holders · ${minuteState(m)}</p></div><a href="#/" class="muted">← The Four</a></div>
+  <div class="bar" style="margin-bottom:16px"><i style="width:${m.filled / SLOTS * 100}%"></i></div>
+  <div class="mgrid" id="mgrid">${m.cells.map(cell).join('')}</div>
+  <div class="caption"><span class="muted">Time order: how the Statement will be laid out. <span class="key-in">In the party</span> · <span class="key-out">not yet</span>${me ? ' · <span class="dot y"></span>yours' : ''}</span></div>
+  <div class="detail" id="mdetail"><span class="faint">—</span><span class="muted">Select a Credit.</span></div>
+  <div class="works" style="margin-top:48px">
+   <section>
+    ${open ? `<div class="panel">
+     <h2>Deposit</h2>
+     ${!me ? connectAct
+       : !free.length ? `<p class="alert-k">${meName()} holds ${mineAll.length ? 'no undeposited Credits' : 'none of these 80'}.</p><div class="actions">${switchBtn}</div>`
+       : `<p class="muted">${meName()} holds ${free.length} of these 80 not yet deposited. Tap yours on the grid (marked yellow) to pick.</p>
+       <div class="actions"><button type="button" id="m-all">Select all mine</button><button type="button" id="m-none">Clear</button></div>
+       <div class="fee-box"><strong>Fee: 1%.</strong> When the Statement sells, Statement Maker keeps 1% of the price. Each of the 80 Credit Cards receives 1/80 of the other 99%. Example: a 3 ETH sale pays 0.03 ETH to Statement Maker and 0.037125 ETH per card.</div>
+       <label class="check" style="margin:12px 0"><input type="checkbox" id="m-ack"> <span>I understand that this party cannot list, sell, offer or auction its Statement on OpenSea or any other marketplace. It sells only on Statement Maker. It sells at the party’s price, and <strong>Statement Maker takes a 1% fee on that sale</strong>. The other 99% is split equally across the 80 Credit Cards.</span></label>
+       <button class="cta" id="m-deposit" disabled>Deposit</button> ${cost('deposit')} each`}
+     <div class="error" id="m-err"></div>
+     <p class="note">Each Credit deposited returns one Credit Card. Until all 80 are in, the card’s holder can redeem it for that Credit. At 80, any card holder can burn them into the Statement, in Time order.</p>
+    </div>` : ''}
+    <div class="panel" id="lookup"></div>
+   </section>
+   <section>
+    <div class="panel">
+     <h2>Holders · ${holders.length}</h2>
+     <table class="table"><thead><tr><th>Holder</th><th style="text-align:right">Of the 80</th><th style="text-align:right">Deposited</th></tr></thead><tbody>${holders.map(h => `<tr><td>${h.a === me ? '<span class="dot y"></span>' : ''}${userLink(h.a)}</td><td style="text-align:right">${h.n}</td><td style="text-align:right">${h.d}</td></tr>`).join('')}</tbody></table>
+    </div>
+   </section>
+  </div>
+  <div id="more" style="margin-top:48px"></div>
+  <div class="panel" id="log" style="margin-top:48px;max-width:900px"></div>`);
+
+  const byCell = new Map(m.cells.map(c => [c.id, c]));
+  const detail = c => render($('#mdetail'), `<img src="${svg(c.id)}" alt="Credit ${Number(c.id)}"><div class="rows">
+    <div><span>Credit</span><strong>#${Number(c.id)} · slot ${m.cells.indexOf(c) + 1} of 80</strong></div>
+    <div><span>${c.in ? 'Card holder' : 'Owner'}</span><strong>${c.who ? userLink(c.who) : '—'}</strong></div>
+    <div><span>Status</span><strong>${c.in ? 'In the party' : 'Not yet deposited'}${freeIds.has(c.id) ? ' · yours · ' + (partyUI.picks.has(c.id) ? 'picked' : 'tap to pick') : ''}</strong></div></div>`);
+  const depState = () => {
+    const b = $('#m-deposit'); if (!b) return;
+    const k = partyUI.picks.size;
+    b.textContent = `Deposit ${k} Credit${k === 1 ? '' : 's'}`;
+    b.disabled = !($('#m-ack').checked && k >= 1 && k <= remaining);
+  };
+  $('#mgrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-cell]'); if (!b) return;
+    const id = Number(b.dataset.cell), c = byCell.get(id);
+    if (freeIds.has(id)) { partyUI.picks.has(id) ? partyUI.picks.delete(id) : partyUI.picks.add(id); b.setAttribute('aria-pressed', partyUI.picks.has(id)); depState(); }
+    else { $('#mgrid').querySelectorAll('[aria-pressed=true]').forEach(x => { if (!freeIds.has(Number(x.dataset.cell))) x.setAttribute('aria-pressed', 'false'); }); b.setAttribute('aria-pressed', 'true'); }
+    detail(c);
+  });
+  $('#m-all')?.addEventListener('click', () => { partyUI.picks = new Set(free.slice(0, remaining).map(c => c.id)); route(); });
+  $('#m-none')?.addEventListener('click', () => { partyUI.picks.clear(); route(); });
+  $('#m-ack')?.addEventListener('change', depState);
+  $('#m-deposit')?.addEventListener('click', async () => {
+    const picks = [...partyUI.picks];
+    try { await api(`parties/${encodeURIComponent(m.party)}/deposit`, { ids: picks, storeOnly: $('#m-ack').checked }); partyUI.picks.clear(); route(); }
+    catch (e) { $('#m-err').textContent = e.message; }
+  });
+  depState();
+  lookupBox($('#lookup'), L);
+  logPanel(m.party, $('#log'));
+  // The regular party panels (your cards, burn, price votes, buy, claim, chat). Hidden when the party page is not
+  // readable by this wallet (after launch, unassembled parties are for Credit holders).
+  pageParty(m.party, { root: $('#more') }).catch(() => render($('#more'), ''));
+}
+
+function pageLater() {
+  render(app, `
+  <div class="intro"><div><h1>Not open yet</h1><p class="muted">This opens after the first Statement is made. Until then there are four parties.</p></div></div>
+  <div class="actions"><a class="cta" href="#/" style="margin:0">The Four →</a></div>`);
+}
+
 // ---------- deploy check: a tab left open across a deploy reloads itself instead of running stale code ----------
 let build = null;
 async function checkBuild() {
@@ -1228,15 +1501,33 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) chec
 let lastParty = null;
 async function route() {
   const [, page, arg] = location.hash.replace(/^#?\/?/, '#/').split('/');
-  // The site lands on the rules: a bare URL (no hash) opens Rules; "#/" is the parties list.
-  if (!location.hash) { location.replace('#/rules'); return; }
-  document.querySelectorAll('[data-nav]').forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === (page || 'parties') || (page === 'party' && a.dataset.nav === 'parties')));
-  if (page !== 'party' || arg !== lastParty) partyUI = freshUI();
-  lastParty = page === 'party' ? arg : null;
+  // A bare URL opens "#/". Not signed in, "#/" is the landing: the name and Connect wallet, nothing else. After
+  // connecting (and accepting the terms) it continues to the Rules, then The Four (or the parties list after launch).
+  if (!location.hash) { location.replace('#/'); return; }
+  const bare = !page && !me && !viewOnly();
+  document.body.classList.toggle('bare', bare);
+  if (bare) { clearInterval(auctionTick); return render(app, `<div class="landing"><h1>Statement Maker</h1><button type="button" class="cta" data-switch-wallet>Connect wallet</button><button type="button" class="view-only" id="view-only">View only</button></div>`), $('#view-only').onclick = () => { try { sessionStorage.setItem(VIEW_KEY, '1'); } catch {} route(); }; }
+  applyPhase();
+  const launch = launchPhase();
+  // Launch phase: a Minute party's generic page opens as its Minute page.
+  if (launch && page === 'party' && /^minute-\d{4}$/.test(arg || '')) { location.replace('#/minute/' + arg.slice(7)); return; }
+  const navKey = launch && (!page || page === 'minute') ? 'four' : page === 'party' ? 'parties' : (page || 'parties');
+  document.querySelectorAll('[data-nav]').forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === navKey));
+  const uiKey = page === 'party' || page === 'minute' ? page + '/' + arg : null;
+  if (!uiKey || uiKey !== lastParty) partyUI = freshUI();
+  lastParty = uiKey;
   try {
+    // Launch phase: The Four (home, after the rules) and the Minute pages are public; starting parties, the parties
+    // list, other party pages and the Credits lookup open after the first Statement.
+    // Party pages (The Four, Minute and party pages, Start a party, Credits) need the Rules agreement first.
+    // View-only visitors (no wallet) read them without it; every action needs a wallet, then the agreement.
+    if (me && (['minute', 'party', 'new', 'wallet'].includes(page) || !page) && !rulesAgreed()) return toRules();
+    if (page === 'minute') return await pageMinute(arg);
+    if (launch && (page === 'new' || page === 'wallet' || page === 'party')) return pageLater();
+    if (launch && !page) return await pageFour();
     // Parties are for Credit holders. Without a Credit or Credit Card: Rules, Statements, Try it and Terms only.
     const gated = !page || page === 'new' || page === 'wallet' || page === 'party';
-    if (gated && !rulesAgreed()) { location.hash = '#/rules'; return; }
+    if (gated && me && !rulesAgreed()) return toRules();
     if (gated && !access.canParty && !(page === 'party' && (await api('parties/' + encodeURIComponent(arg)).catch(() => null))?.assembled)) return pageGate(page, arg);
     if (page === 'party') await pageParty(arg);
     else if (page === 'new') await pageNew();
@@ -1251,4 +1542,4 @@ async function route() {
   } catch (e) { render(app, `<p class="error">${esc(e.message)}</p>`); }
 }
 window.addEventListener('hashchange', route);
-Promise.all([api('auth/me').then(m => { me = m.address && m.terms ? m.address : ''; access = m; }), api('stats').then(x => (stats = x))]).then(async () => { const a = await Wallets.restore(CHAIN); const w = Wallets.wallet(); if (w) try { chainNow = Number(await w.provider.request({ method: 'eth_chainId' })) || CHAIN; } catch {} if (me && a && a !== me) { await api('auth/logout', {}).catch(() => {}); me = ''; access = await api('auth/me').catch(() => access); } }).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);
+Promise.all([api('auth/me').then(async m => { me = m.address && m.terms ? m.address : ''; access = m; await syncRules(); }), api('stats').then(x => (stats = x))]).then(async () => { const a = await Wallets.restore(CHAIN); const w = Wallets.wallet(); if (w) try { chainNow = Number(await w.provider.request({ method: 'eth_chainId' })) || CHAIN; } catch {} if (me && a && a !== me) { await api('auth/logout', {}).catch(() => {}); me = ''; access = await api('auth/me').catch(() => access); } }).then(() => Promise.all([navProfile(), fillActing(), api('gas').then(g => (gasInfo = g)).catch(() => {})])).then(route);

@@ -258,3 +258,45 @@ a.sim-card:hover{opacity:1;border-color:var(--c)}
 .w-inline{display:inline-flex;gap:10px;align-items:center}
 .wc-qr{margin-top:18px;display:grid;justify-items:start;gap:8px}
 .wc-qr img{width:220px;height:220px;image-rendering:pixelated;border:1px solid var(--line)}
+
+/* landing: the name and Connect wallet, centered, nothing else */
+body.bare header,body.bare .site-foot{display:none}
+body.bare main{padding:0;max-width:none}
+.landing{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px;text-align:center}
+.landing .cta{margin-top:18px}
+
+/* launch phase: The Four and the Minute pages */
+.four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:56px 32px}
+.statement .out img{opacity:.3}
+.panel.lookup{max-width:900px;margin-top:64px}
+.mgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:14px 10px;border:1px solid var(--line);padding:18px}
+.mcell{display:flex;flex-direction:column;min-width:0;position:relative}
+.mcell button{padding:0;display:block;width:100%;aspect-ratio:1;border:1px solid var(--line2)}
+.mcell button:hover{opacity:1;border-color:var(--muted)}
+.mcell img{width:100%;height:100%;display:block;pointer-events:none}
+.mcell.out img{opacity:.25}
+.mcell.mine button{border-color:var(--y);box-shadow:inset 0 -3px 0 var(--y)}
+.mcell button[aria-pressed=true]{border-color:var(--ink);outline:1px solid var(--ink)}
+.mcell .l{display:block;font-size:10px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcell .l:first-of-type{margin-top:4px}
+.mcell .s{color:var(--muted)}
+.mcell:not(.out) .s{color:var(--ink)}
+.mcell .o a.addr{border:0}
+.key-in{color:var(--ink)}.key-out{color:var(--faint)}
+.works.embed{grid-template-columns:minmax(0,900px)}
+@media(max-width:1000px){.four{grid-template-columns:1fr 1fr}.mgrid{gap:10px 6px;padding:10px}.mcell .l{font-size:9px}}
+@media(max-width:700px){
+ .four{grid-template-columns:1fr;gap:44px}
+ .mgrid{gap:6px 3px;padding:6px}
+ .mcell .l{font-size:7px;letter-spacing:-.02em}
+ .mcell .o,.mcell .s{display:none}
+ .detail{grid-template-columns:72px 1fr}.detail img{width:72px;height:72px}
+}
+.burn-gas{text-transform:none;font-size:12px;line-height:1.5;margin:10px 0}
+.rows strong .burn-gas{margin:0;text-align:left}
+.cards-box summary{display:flex;justify-content:space-between;align-items:baseline;gap:16px;cursor:pointer;list-style:none;flex-wrap:wrap}
+.cards-box summary::-webkit-details-marker{display:none}
+.cards-box summary h2{margin:0}
+.cards-box summary h2::before{content:"+ ";color:var(--faint)}
+.cards-box[open] summary h2::before{content:"− "}
+.landing .view-only{color:var(--muted);margin-top:10px}
