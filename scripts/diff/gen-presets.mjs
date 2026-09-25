@@ -44,13 +44,15 @@ add('print-mix', shuffle([...S.PRINT_ORDER.flatMap(p => sample(byTrait(c => c.pr
 add('weight-mix-marks-ties', shuffle(S.WEIGHT_ORDER.flatMap(w => { const m = byTrait(c => c.weight === w); const mk = S.byId.get(m[0]).marks; const same = m.filter(id => S.byId.get(id).marks === mk); return [...sample(same, 10), ...sample(m.filter(id => !same.includes(id)), 10)]; })));
 add('colors-mix', shuffle([...S.COLOR_ORDER.flatMap(k => sample(byTrait(c => c.colors === k), 5)), ...sample(all.map(c => c.id), 400)].filter((x, i, a) => a.indexOf(x) === i).slice(0, 80)));
 add('id-extremes-desc', [...Array(40)].map((_, i) => 122154 - i).concat([...Array(40)].map((_, i) => 40 - i)));
-{ // rarity near-ties: Credits from the closest pairs of distinct scores
-  const rep = new Map(); for (const c of all) if (!rep.has(c.score)) rep.set(c.score, []); for (const c of all) rep.get(c.score).push(c.id);
-  const sc = [...rep.keys()].sort((a, b) => a - b);
-  const gaps = sc.slice(1).map((s, i) => [s - sc[i], sc[i], s]).sort((a, b) => a[0] - b[0]);
+{ // rarity ties and neighbours: official-rank groups of 2+ Credits next to their adjacent ranks
+  const g = new Map(); for (const c of all) (g.get(c.rank) || g.set(c.rank, []).get(c.rank)).push(c.id);
+  const rs = [...g.keys()].sort((a, b) => a - b);
   const ids = [];
-  for (const [, a, b] of gaps) { for (const s of [a, b]) for (const id of rep.get(s).slice(0, 2)) if (!ids.includes(id) && ids.length < 80) ids.push(id); if (ids.length >= 80) break; }
-  add('rarity-near-ties', shuffle(ids));
+  for (let i = 0; i < rs.length && ids.length < 80; i++) {
+    if (g.get(rs[i]).length < 2) continue;
+    for (const r of [rs[i - 1], rs[i], rs[i + 1]]) if (r !== undefined) for (const id of g.get(r).slice(0, 3)) if (!ids.includes(id) && ids.length < 80) ids.push(id);
+  }
+  add('rarity-ties', shuffle(ids));
 }
 add('most-misregistered-extreme', shuffle([...sample(byTrait(c => c.print === 'Loose'), 40), ...sample(byTrait(c => c.weight === 'extreme'), 40), ...sample(byTrait(c => c.print === 'Drift'), 10)].filter((x, i, a) => a.indexOf(x) === i).slice(0, 80)));
 // Random seed edges (server clamps seeds to 1..999999; contract takes any uint256).
@@ -86,8 +88,13 @@ const traits = {
   weight: t.map(c => c.weight),
   print: t.map(c => c.print),
   tier: t.map(c => c.tier),
-  score: t.map(c => c.score),
 };
+// Official rating: the fixture ids in the site's (rank, id) order, with their ranks (TraitsDiff.test_rarityClassParity).
+{
+  const o = [...t].sort((a, b) => a.rank - b.rank || a.id - b.id);
+  traits.rankOrder = o.map(c => c.id);
+  traits.rankOfOrder = o.map(c => c.rank);
+}
 fs.writeFileSync(path.join(OUT, 'traits.json'), JSON.stringify(traits));
 console.log(`sets ${sets.length} (${N_RANDOM} random + ${sets.length - N_RANDOM} adversarial), distinct ids ${ids.length}, source ${COPIED.source} ${COPIED.sha256.slice(0, 12)} ranges ${COPIED.ranges.join(' ')}`);
 

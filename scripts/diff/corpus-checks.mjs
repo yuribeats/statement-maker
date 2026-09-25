@@ -1,12 +1,14 @@
 // Whole-corpus checks that need no chain: all 122,154 Credits.
 //  - paidAt % 15 + 1 mask letters == traits.json colors (what CreditKeys.colorRank reads vs what the site sorts on)
 //  - every trait value is one CreditKeys handles without reverting (print/weight/eights tables)
-//  - CreditKeys.sol rarity constants == data/rarity.json == round(-log2(count/N) * 1e9) from the sealed supply
+//  - Rarity: the site's official ranks (lib/core.mjs, from data/jack-rating.json.gz) form a valid competition ranking,
+//    and the site's Rarity order over ALL 122,154 Credits == the order of the contract's committed rarity classes
+//    (contracts/data/keytable/rarity.bin, (class, id)), with equal ranks <=> equal classes
 import fs from 'node:fs';
 import path from 'node:path';
 import { S, ROOT } from './server-copy.mjs';
 
-const sol = fs.readFileSync(path.join(ROOT, 'contracts/src/CreditKeys.sol'), 'utf8');
+const rarityBin = fs.readFileSync(path.join(ROOT, 'contracts/data/keytable/rarity.bin'));
 const all = [...S.byId.values()];
 const N = all.length;
 const letters = m => [...'CMYK'].filter((_, b) => m >> b & 1).join('');
@@ -17,31 +19,25 @@ for (const c of all) {
   if (letters(c.paidAt % 15 + 1) !== c.colors) fail('mask vs colors', c.id);
   if (!S.PRINT_ORDER.includes(c.print)) fail('print outside PRINT_ORDER', c.id);
   if (!S.WEIGHT_ORDER.includes(c.weight)) fail('weight outside WEIGHT_ORDER', c.id);
-  if (!(c.eights >= 0 && c.eights <= 5)) fail('eights outside 0..5 (eightsWeight reverts)', c.id);
-  if (!Number.isSafeInteger(c.score)) fail('score not an exact integer in JS', c.id);
+  if (!(c.eights >= 0 && c.eights <= 15)) fail('eights outside the table field (4 bits)', c.id);
+  if (!(Number.isInteger(c.rank) && c.rank >= 1 && c.rank <= N)) fail('rank', c.id);
+  if (!(c.rating >= 80 && c.rating <= 800)) fail('rating outside 80..800', c.id);
 }
-// Contract constant tables, parsed from CreditKeys.sol
-const fnBody = name => sol.slice(sol.indexOf(`function ${name}(`), sol.indexOf('\n    }', sol.indexOf(`function ${name}(`)));
-const nums = body => [...body.matchAll(/return (\d{6,});/g)].map(m => Number(m[1]));
-const maskOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-const tables = {
-  colors: [nums(fnBody('colorWeight')), maskOrder.map(letters)],
-  print: [nums(fnBody('printWeightR')), S.PRINT_ORDER], // weights by rank (printWeight(string) delegates to it)
-  weight: [nums(fnBody('weightWeightR')), S.WEIGHT_ORDER],
-  eights: [nums(fnBody('eightsWeight')), ['0', '1', '2', '3', '4', '5']],
-};
+// Site Rarity order (PRESETS.Rarity over every Credit) vs the contract's class order
+const site = S.PRESETS.Rarity(all).map(c => c.id);
+const cls = id => rarityBin.readUInt16BE((id - 1) * 2);
+const table = all.map(c => c.id).sort((a, b) => cls(a) - cls(b) || a - b);
 let checked = 0;
-for (const [k, [ws, keys]] of Object.entries(tables)) {
-  if (ws.length !== keys.length) fail(`${k} table length`, `${ws.length} vs ${keys.length}`);
-  keys.forEach((v, i) => {
-    const r = S.RARITY[k][v];
-    const recomputed = Math.round(-Math.log2(r.count / N) * 1e9);
-    const count = all.filter(c => String(c[k]) === v).length;
-    if (count !== r.count) fail(`${k}=${v} count`, `${count} vs rarity.json ${r.count}`);
-    if (ws[i] !== r.w) fail(`${k}=${v} CreditKeys.sol vs rarity.json`, `${ws[i]} vs ${r.w}`);
-    if (recomputed !== r.w) fail(`${k}=${v} rarity.json vs recomputed`, `${r.w} vs ${recomputed}`);
-    checked++;
-  });
+if (rarityBin.length !== N * 2) fail('rarity.bin size', rarityBin.length);
+for (let i = 0; i < N; i++) {
+  if (site[i] !== table[i]) fail('Rarity order: site vs table classes, position', i);
+  if (i) {
+    const a = S.byId.get(site[i - 1]), b = S.byId.get(site[i]);
+    const want = i && a.rank === b.rank ? a.rank : i + 1;
+    if (b.rank !== want) fail('competition rank', b.id);
+    if ((a.rank === b.rank) !== (cls(a.id) === cls(b.id))) fail('rank tie vs class tie', b.id);
+  }
+  checked++;
 }
-console.log(`Credits ${N}; rarity constants checked ${checked}; mismatches ${bad}`);
+console.log(`Credits ${N}; Rarity order positions checked (site vs contract classes) ${checked}; mismatches ${bad}`);
 process.exit(bad ? 1 : 0);

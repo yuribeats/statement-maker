@@ -157,7 +157,7 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 const PRESETS = {
   Number: cs => [...cs].sort((a, b) => a.id - b.id),
   Time: cs => [...cs].sort((a, b) => a.id - b.id), // Party: Time == ascending token id (payment times never decrease with id)
-  Rarity: cs => [...cs].sort((a, b) => a.rank - b.rank),
+  Rarity: cs => [...cs].sort((a, b) => a.rank - b.rank || a.id - b.id), // Jack Butcher's official rating: rank 1 = rarest; ties by id
   Colors: cs => [...cs].sort((a, b) => COLOR_ORDER.indexOf(a.colors) - COLOR_ORDER.indexOf(b.colors) || a.id - b.id),
   Print: cs => [...cs].sort((a, b) => PRINT_ORDER.indexOf(b.print) - PRINT_ORDER.indexOf(a.print) || a.id - b.id),
   Weight: cs => [...cs].sort((a, b) => WEIGHT_ORDER.indexOf(a.weight) - WEIGHT_ORDER.indexOf(b.weight) || a.marks - b.marks),
@@ -165,6 +165,10 @@ const PRESETS = {
   Ink: cs => [...cs].sort((a, b) => a.marks - b.marks),
   Random: (cs, seed = Date.now() % 1e6) => { const r = rng(seed), o = [...cs]; for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } o.seed = seed; return o; },
 };
+
+// Official rating score as Jack Butcher's page shows it: truncated to two decimals.
+const ratingStr = r => (r == null ? '—' : (Math.floor(Number(r) * 100 + 1e-9) / 100).toFixed(2));
+const rarityStr = c => `rank ${Number(c.rank).toLocaleString()} · ${ratingStr(c.rating)}`;
 
 // ---------- pieces ----------
 function sheet(p, { interactive = false, order = null, selected = null } = {}) {
@@ -187,7 +191,7 @@ function filterText(f = {}) {
   if (f.print?.length) parts.push('Print ' + f.print.join('/'));
   if (f.weight?.length) parts.push('Weight ' + f.weight.join('/'));
   if (f.eights?.length) parts.push('Eights ' + f.eights.join('/'));
-  if (f.rankMax) parts.push('Rarity top ' + Number(f.rankMax).toLocaleString());
+  if (f.rankMax) parts.push('Rarity rank ≤ ' + Number(f.rankMax).toLocaleString());
   if (f.idMin || f.idMax) parts.push(`#${f.idMin || 1}–${f.idMax || '∞'}`);
   if (f.marksMin || f.marksMax) parts.push(`Ink ${f.marksMin || 0}–${f.marksMax || '∞'}`);
   if (f.shiftPlates?.length) parts.push(`${f.shiftOnly ? 'Only' : 'Shifted'} ${f.shiftPlates.join('')}`);
@@ -228,12 +232,12 @@ const cost = (key, each = '') => {
   const est = (gasInfo?.estimated || []).includes(key) ? 'est.' : 'about';
   return `<span class="faint">${est} ${gasSpan(lo, hi)} gas${each} on-chain${gasMoney(lo, hi)} · nothing is charged in preview</span>`;
 };
-// Burning is the one heavy call: measured about 3.95M–4.16M paid gas by preset (Rarity the most), plus the Statement mint
+// Burning is the one heavy call: measured about 3.95M–4.12M paid gas by preset (Colors, Print, Weight the most), plus the Statement mint
 // itself (unknown until Jack's contract is published). With a measured preset, its own figure (or range); otherwise the range.
 // The price the burn would put live now, at the current floor reading (server burnPrice, Party._burnPrice).
 const burnPriceText = b => !b ? 'The default price then goes live.' : b.error ? `The burn is blocked for now: ${esc(b.error)}.`
   : `Price that goes live: ${b.priceEth === weiToEth(1n) ? 'the minimum ask (1 wei)' : eth(b.priceEth)}${b.below ? ' (below floor)' : ''} · ${b.source === 'vote' ? `proposal #${Number(b.proposal)}, which passed and still passes at this floor, applied as if executed` : b.source === 'executed' ? `the price executed while full (#${Number(b.proposal)}), which still passes at this floor` : 'the host’s default'} · buying opens ${Number(b.waitHours)} hour${b.waitHours === 1 ? '' : 's'} after the burn (never less than 1).`;
-const BURN_GAS_FALLBACK = { min: 3_950_000, max: 4_160_000, byPreset: { Deposit: [3_950_000, 3_970_000], Number: [3_950_000, 3_970_000], Time: [3_950_000, 3_970_000], Manual: 3_980_000, Random: 4_040_000, Print: [4_100_000, 4_120_000], Weight: [4_100_000, 4_120_000], Eights: [4_100_000, 4_120_000], Ink: [4_100_000, 4_120_000], Colors: 4_110_000, Rarity: 4_160_000 } };
+const BURN_GAS_FALLBACK = { min: 3_950_000, max: 4_120_000, byPreset: { Deposit: [3_950_000, 3_970_000], Number: [3_950_000, 3_970_000], Time: [3_950_000, 3_970_000], Manual: 3_980_000, Random: 4_040_000, Print: [4_110_000, 4_120_000], Weight: [4_110_000, 4_120_000], Eights: [4_110_000, 4_120_000], Ink: [4_110_000, 4_120_000], Colors: 4_120_000, Rarity: 4_090_000 } };
 function burnAlert(preset) {
   const a = gasInfo?.units?.assemble && typeof gasInfo.units.assemble === 'object' ? gasInfo.units.assemble : BURN_GAS_FALLBACK;
   const one = preset ? (a.byPreset?.[preset] ?? null) : null;
@@ -402,7 +406,8 @@ async function pageParty(id, opts = {}) {
       <div><span>Credit</span><strong>#${Number(sel.id)}</strong></div>
       <div><span>Colors · Print</span><strong>${esc(sel.colors)} · ${esc(sel.register || sel.print)}</strong></div>
       <div><span>Weight · Eights</span><strong>${esc(sel.weight)} · ${Number(sel.eights)} (${esc(sel.tier)})</strong></div>
-      <div><span>Rarity · Depositor</span><strong>#${sel.rank.toLocaleString()} · ${userLink(sel.depositor)}</strong></div></div>`
+      <div><span>Rarity</span><strong>${rarityStr(sel)}</strong></div>
+      <div><span>Depositor</span><strong>${userLink(sel.depositor)}</strong></div></div>`
       : `<span class="faint">—</span><span class="muted">Select a Credit on the sheet.</span>`}</div>
    </section>`}
 
@@ -683,7 +688,7 @@ async function pageParty(id, opts = {}) {
 let draft = { name: '', minDeposit: 1, days: 14, voteHours: 48, arrangement: { preset: 'Time' }, target: { mode: 'floorPct', value: 25 }, filters: {} };
 const arrLabel = a => !a ? 'Deposit order' : a.preset === 'Random' ? `Random #${a.seed}` : a.preset === 'Deposit' ? 'Deposit order' : a.preset;
 // The metric each arrangement orders by, in one plain line (must match PRESETS in lib/core.mjs). Manual: the host's own words.
-const ARR_DESC = { Time: 'purchase order, earliest first', Number: 'token number, lowest first', Rarity: 'rarest first', Colors: 'by ink plates: C, M, Y, K, then combinations', Print: 'most misregistered first', Weight: 'lightest coverage first, sparse to extreme', Eights: 'most eights first', Ink: 'fewest inked squares first', Deposit: 'deposit order, first deposited first' };
+const ARR_DESC = { Time: 'purchase order, earliest first', Number: 'token number, lowest first', Rarity: 'rarest first by Jack Butcher’s official Credits rating (rank 1 = rarest), ties by token number', Colors: 'by ink plates: C, M, Y, K, then combinations', Print: 'most misregistered first', Weight: 'lightest coverage first, sparse to extreme', Eights: 'most eights first', Ink: 'fewest inked squares first', Deposit: 'deposit order, first deposited first' };
 const arrDesc = a => a?.preset === 'Manual' ? (a.metric || 'no metric stated') : a?.preset === 'Random' ? `shuffled with seed ${Number(a.seed)}` : ARR_DESC[a?.preset || 'Deposit'] || '';
 const ARR_HINT = { preset: a => `Arrangement is locked as ${arrLabel(a)}.`, manual: 'Manual: state the metric you will order the 80 by. Only you can burn, with your order. If you have not burned within 1 day of the party filling, any card holder can burn in Time order.' };
 async function pageNew() {
@@ -722,7 +727,7 @@ async function pageNew() {
     <div class="field"><label>Shifted plates</label><div>${chip('shiftPlates', ['C', 'M', 'Y', 'K'])}<div class="chips" style="margin-top:4px"><button type="button" id="shift-only" aria-pressed="${!!draft.filters.shiftOnly}">Only these plates</button></div>${hint('Misregistered Credits only · plates that moved off register · from the art contract’s own shift function')}</div></div>
     <div class="field"><label>Shift size</label><div>${chip('shiftMin', [1, 2])}${hint('Range: 1–2 squares · largest move of any plate')}</div></div>
     <div class="field"><label>Eights</label>${chip('eights', [0, 1, 2, 3, 4, 5])}</div>
-    <div class="field"><label for="rk">Rarity rank ≤</label><div><input id="rk" type="number" min="1" max="${rg.rank[1]}" value="${val(draft.filters.rankMax)}" placeholder="Any">${hint(`Range: ${n(rg.rank[0])}–${n(rg.rank[1])} · 1 = rarest · e.g. 1,000 keeps the rarest 1,000`)}</div></div>
+    <div class="field"><label for="rk">Rarity rank ≤</label><div><input id="rk" type="number" min="1" max="${rg.rank[1]}" value="${val(draft.filters.rankMax)}" placeholder="Any">${hint(`Jack Butcher’s official rating · range ${n(rg.rank[0])}–${n(rg.rank[1])} · 1 = rarest · tied Credits share a rank`)}</div></div>
     <div class="field"><label>Ink (marks)</label><div><div style="display:flex;gap:12px"><input id="mk0" type="number" min="${rg.marks[0]}" max="${rg.marks[1]}" placeholder="Min" value="${val(draft.filters.marksMin)}"><input id="mk1" type="number" min="${rg.marks[0]}" max="${rg.marks[1]}" placeholder="Max" value="${val(draft.filters.marksMax)}"></div>${hint(`Range: ${rg.marks[0]}–${rg.marks[1]} inked squares · median 65`)}</div></div>
     <div class="field"><label>Token number</label><div><div style="display:flex;gap:12px"><input id="id0" type="number" min="1" max="${rg.id[1]}" placeholder="From" value="${val(draft.filters.idMin)}"><input id="id1" type="number" min="1" max="${rg.id[1]}" placeholder="To" value="${val(draft.filters.idMax)}"></div>${hint(`Range: ${n(rg.id[0])}–${n(rg.id[1])} · lower numbers paid earlier`)}</div></div>
     <div class="panel" style="margin-top:32px">
@@ -808,7 +813,7 @@ async function pageWallet(addr) {
    <div class="compose" style="min-width:min(420px,100%)"><textarea id="w" rows="1" placeholder="0x…">${esc(addr)}</textarea><button type="button" id="go">Look up</button></div></div>
   ${addr ? `<div class="caption"><h2>${userLink(addr)} · ${list.length} Credits</h2><span class="muted">${solo} Statement${solo === 1 ? '' : 's'} alone · ${list.length % SLOTS} left over</span></div>
   <table class="table"><thead><tr><th></th><th>Credit</th><th>Colors</th><th>Print</th><th>Weight</th><th>Eights</th><th>Ink</th><th>Rarity</th><th>Party</th></tr></thead><tbody>
-  ${list.slice(0, 500).map(c => `<tr><td><img src="${svg(c.id)}" alt="" loading="lazy"></td><td>#${Number(c.id)}</td><td>${esc(c.colors)}</td><td>${esc(c.register || c.print)}</td><td>${esc(c.weight)}</td><td>${Number(c.eights)}</td><td>${Number(c.marks)}</td><td>${c.rank.toLocaleString()}</td><td>${c.deposited ? 'In a party' : '—'}</td></tr>`).join('')}
+  ${list.slice(0, 500).map(c => `<tr><td><img src="${svg(c.id)}" alt="" loading="lazy"></td><td>#${Number(c.id)}</td><td>${esc(c.colors)}</td><td>${esc(c.register || c.print)}</td><td>${esc(c.weight)}</td><td>${Number(c.eights)}</td><td>${Number(c.marks)}</td><td title="score ${ratingStr(c.rating)}">${Number(c.rank).toLocaleString()}</td><td>${c.deposited ? 'In a party' : '—'}</td></tr>`).join('')}
   </tbody></table>` : ''}`);
   const go = () => { location.hash = '#/wallet/' + $('#w').value.trim(); };
   $('#go').onclick = go;
@@ -832,7 +837,7 @@ async function pageUser(addr) {
   const you = me === addr;
   const mini = ids => `<span class="mini">${ids.map(id => `<img src="${svg(id)}" alt="">`).join('')}</span>`;
   const statementLink = (id, number, name) => `<a href="#/statement/${esc(id)}">Statement ${Number(number)}</a> <span class="faint">${esc(name)}</span>`;
-  const creditCell = c => `<span class="${c.party ? 'in-party' : ''}" title="#${Number(c.id)} · ${esc(c.colors)} · ${esc(c.print)} · ${esc(c.weight)} · rarity ${Number(c.rank).toLocaleString()}${c.party ? ' · in ' + esc(c.party.name) : ''}"><img src="${svg(c.id)}" alt="Credit ${Number(c.id)}" loading="lazy"></span>`;
+  const creditCell = c => `<span class="${c.party ? 'in-party' : ''}" title="#${Number(c.id)} · ${esc(c.colors)} · ${esc(c.print)} · ${esc(c.weight)} · rarity ${rarityStr(c)}${c.party ? ' · in ' + esc(c.party.name) : ''}"><img src="${svg(c.id)}" alt="Credit ${Number(c.id)}" loading="lazy"></span>`;
   const past = u.past.map(q => `<div><span>${statementLink(q.id, q.number, q.name)}${q.demo ? ' <span class="demo">Demo</span>' : ''}</span><strong>${q.deposited ? `${Number(q.deposited)} deposited` : ''}${q.deposited && q.held ? ' · ' : ''}${q.held ? `${Number(q.held)} card${q.held === 1 ? '' : 's'} held` : ''} · ${q.soldPrice != null ? `sold ${eth(q.soldPrice)}` : 'not sold'}${q.claimed ? ` · <span class="dot y"></span>claimed ${eth(q.claimedEth)}` : ''}${q.claimable ? ` · ${Number(q.claimable)} claimable · <a href="#/party/${esc(q.id)}">Claim →</a>` : ''}</strong></div>`).join('');
   const listed = u.statements.filter(p => p.resale && p.resale.seller === addr);
   render(app, `
@@ -919,7 +924,7 @@ async function pageUser(addr) {
 // Signed in, the server's record is what counts (it rejects every party action without it); the browser flag only
 // carries an agreement made before connecting, and is copied to the wallet's record at sign-in.
 // Launch and full launch have separate rules (and versions); the flag is kept per version.
-const RULES_V = { launch: '2026-09-24.L10', full: '2026-09-24.9' }, TERMS_V = { launch: '2026-09-24.L9', full: '2026-09-24.8' };
+const RULES_V = { launch: '2026-09-24.L10', full: '2026-09-24.10' }, TERMS_V = { launch: '2026-09-24.L9', full: '2026-09-24.8' };
 const rulesKey = () => 'sm-rules-ok-' + (launchPhase() ? RULES_V.launch : RULES_V.full);
 const localRules = () => { try { return localStorage.getItem(rulesKey()) === '1'; } catch { return false; } };
 const rulesAgreed = () => (me ? !!access.rules : localRules());
@@ -991,7 +996,7 @@ function pageRulesFull() {
    <div><span>Contract</span><strong><a href="https://etherscan.io/address/0x97630aa70ab14ed9883b41dafccbc11349723043" target="_blank" rel="noopener noreferrer">Credits 0x9763…3043, Ethereum ↗</a></strong></div>
    <div><span>Source code</span><strong><a href="https://github.com/yuribeats/statement-maker" target="_blank" rel="noopener noreferrer">github.com/yuribeats/statement-maker ↗</a></strong></div>
    <div><span>Traits</span><strong>Computed by the Credits art contract itself</strong></div>
-   <div><span>Rarity</span><strong>Sum of −log2 frequency over Colors, Print, Weight, Eights</strong></div>
+   <div><span>Rarity</span><strong>Jack Butcher’s official Credits rating (<a href="https://jack.art/credits/rating" target="_blank" rel="noopener noreferrer">jack.art/credits/rating ↗</a>), rank 1 = rarest</strong></div>
    <div><span>Status</span><strong><span class="demo">Preview</span> · Statement Maker’s own contracts are not deployed on mainnet yet · the Statement contract is not published yet · nothing here moves Credits or ETH</strong></div>
   </div></div>`);
   bindRules();
@@ -1246,7 +1251,7 @@ const DEFS = {
   'eights': 'How many 8s appear in the X Money transaction ID. More eights are rarer.',
   'shifted plates': 'For misregistered Credits: which ink plates moved off register.',
   'shift size': 'The largest distance any plate moved, in squares (1 or 2).',
-  'rarity rank ≤': 'Keep only Credits at or above this rarity. 1 is the rarest of all 122,154.',
+  'rarity rank ≤': 'Keep only Credits at or above this rank in Jack Butcher’s official Credits rating. 1 is the rarest of all 122,154; tied Credits share a rank.',
   'ink (marks)': 'How many squares are inked, from 16 to 160.',
   'token number': 'The Credit number. Lower numbers were paid for earlier.',
   'status': 'Where the party is: open (filling), full (ready to burn), assembled (Statement made), sold, or expired.',
@@ -1273,7 +1278,7 @@ const DEFS = {
   'contract': 'The Credits contract on Ethereum that every party works with.',
   'source code': 'Statement Maker\u2019s code, public on GitHub.',
   'traits': 'Colors, print, weight and eights, read directly from the Credits art contract.',
-  'rarity': 'How rare a Credit is: the sum of how uncommon each of its four traits is.',
+  'rarity': 'Jack Butcher’s official Credits rating (jack.art/credits/rating): rank 1 = rarest, score 800 to 80. It weighs how uncommon a Credit’s palette, active bits, occupied cells, eights (counted twice) and print are. It does not measure price or how good the art is. Statement Maker uses a frozen copy taken before launch.',
   'deposit': 'Adding Credits to a party. Each one returns a Credit Card.',
   'approved price': 'The price in force now, set by the host default or by a vote.',
 };

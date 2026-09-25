@@ -7,7 +7,7 @@ Live preview: https://statement-maker.vercel.app
 **Status: preview.** The Statement contract is not published yet, so nothing here moves Credits or ETH. Independent project, not affiliated with Jack Butcher.
 
 ## How it works
-- A host opens a party and sets defaults: eligible Credits (on-chain traits, rarity, misregistration detail), minimum deposit, default arrangement, default price, voting window.
+- A host opens a party and sets defaults: eligible Credits (on-chain traits, rarity by Jack Butcher's official Credits rating, misregistration detail), minimum deposit, default arrangement, default price, voting window.
 - Each deposited Credit returns one Credit Card (ERC-721). The card carries the vote, the right to redeem its Credit before the burn, and 1/80 of the sale. Everything follows the card.
 - At 80 the default arrangement applies; the host arranges (auto or manual) without a vote; card holders can challenge by vote.
 - Votes: 41/80 yes and zero no. Below the floor: 60/80. Deadlock escape: 54/80 after 3 blocked proposals or 30 days.

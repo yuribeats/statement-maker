@@ -13,7 +13,7 @@
     "api/index.mjs": {
       "memory": 2048,
       "maxDuration": 60,
-      "includeFiles": "{data/credits.json.gz,data/traits.json.gz,data/rarity.json,public/app.js,public/style.css,public/wallets.js,scripts/evm.mjs}"
+      "includeFiles": "{data/credits.json.gz,data/traits.json.gz,data/jack-rating.json.gz,public/app.js,public/style.css,public/wallets.js,scripts/evm.mjs}"
     }
   },
   "crons": [

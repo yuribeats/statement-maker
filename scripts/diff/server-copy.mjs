@@ -5,7 +5,7 @@
 // Each range runs from the line starting with `first` to the next line (inclusive) starting with `last`.
 // The resolved line numbers and the server.mjs sha256 are exported as COPIED for the report.
 //   SLOTS, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS/DEADLOCK_DAYS/OVERRIDE
-//   credits + traits → byId, TRAITS, RARITY → score + rank
+//   credits + traits → byId, TRAITS, RATING (Jack Butcher's official rating snapshot) → rank + rating, MAX_RANK
 //   COLOR_ORDER … PRESETS (arrangement presets)
 //   tally, isSuperseded/lastExecAt/canCountBlocked/countBlocked/blockedCount, kindOf, deadlocked,
 //   the wei price-math block (decUnits … priceWei/priceEth/belowFloor, listingWei/listingEth/goLive), cleanTarget,
@@ -15,6 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { keccak256, encodePacked } from 'viem';
 
@@ -45,7 +46,7 @@ export const RANGES = [
   ['const DEADLOCK_FAILS', 'const DEADLOCK_FAILS'],
   ['const { block, credits }', 'credits.forEach('],
   ['const TRAITS', 'const TRAITS'],
-  ['const RARITY', '[...byId.values()].sort('],
+  ['const RATING', 'const MAX_RANK'],
   ['const COLOR_ORDER', '};'],
   ['function tally(p, prop)', '}'],
   ['const isSuperseded', 'const isSuperseded'],
@@ -66,7 +67,7 @@ export const RANGES = [
 ];
 
 const code = RANGES.map(r => lines(...r)).join('\n') + `
-;({ SLOTS, OVERRIDE, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS, DEADLOCK_DAYS, byId, credits, TRAITS, RARITY,
+;({ SLOTS, OVERRIDE, VOTE_WINDOW, EXEC_WINDOW, DEADLOCK_FAILS, DEADLOCK_DAYS, byId, credits, TRAITS, RATING, MAX_RANK,
     COLOR_ORDER, PRINT_ORDER, WEIGHT_ORDER, PRESETS, tally, kindOf, deadlocked, isSuperseded, lastExecAt, canCountBlocked, countBlocked, blockedCount,
     belowFloor, priceEth, priceWei, resolvePrice, listingWei, listingEth, goLive, weiStr, cleanTarget,
     BURN_CANDIDATES, burnCandidates, noteCandidate, pendingProposal, passesHere, burnPrice })`;
@@ -74,8 +75,8 @@ const code = RANGES.map(r => lines(...r)).join('\n') + `
 export const clock = { now: Date.UTC(2026, 8, 23) };
 const ctx = vm.createContext({
   fs, path, DATA: path.join(ROOT, 'data'), keccak256, encodePacked, BigInt, Math, Number, String, Map, Object, JSON,
-  // lib/core.mjs reads data through readData (plain or .gz); same result for the plain files.
-  readData: n => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', n))),
+  // lib/core.mjs reads data through readData (plain or .gz); same fallback here.
+  readData: n => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', n))); } catch { return JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(ROOT, 'data', n + '.gz')))); } },
   floorFor: p => ({ eth: p.__floorEth ?? null, wei: p.__floorWei ?? null }),
   now: () => clock.now,
 });
