@@ -31,8 +31,8 @@ ce2ff1dc71441941240cdf58b60f3804466fb280d742c8293d3565ee7ce8b686  contracts/src/
 | `contracts/src/Party.sol` | 564 | 456 | One party: deposits, redemption, verified burn, price governance, sale, claims. Deployed as a minimal clone. |
 | `contracts/src/PartyFactory.sol` | 59 | 45 | Deploys party clones, owns the shared card collection, verifies EIP-712 floor signatures. No admin. |
 | `contracts/src/CreditCards.sol` | 120 | 96 | Shared ERC-721 for all parties. Per-party vote checkpoints. On-chain SVG/JSON metadata. |
-| `contracts/src/CreditKeys.sol` | — | — | Library: arrangement presets, burn-order verification, trait-key formulas, rarity table, seeded shuffle. |
-| `contracts/src/CreditTraits.sol` | — | — | Sealed per-Credit trait table (SSTORE2 chunks) and `keys(preset, ids)`. Data: `contracts/data/keytable/table.bin` (keccak in `table.keccak`), built and verified by `scripts/keytable/`. |
+| `contracts/src/CreditKeys.sol` | — | — | Library: arrangement presets, burn-order verification, trait-key formulas, seeded shuffle. |
+| `contracts/src/CreditTraits.sol` | — | — | Sealed per-Credit trait table (SSTORE2 chunks) and `keys(preset, ids)`. Data: `contracts/data/keytable/table.bin` (5 bytes per id; keccak in `table.keccak`), built and verified by `scripts/keytable/`; its rarity class comes from `contracts/data/keytable/rarity.bin` (Jack Butcher's official rating snapshot, `data/jack-rating.json.gz`, `scripts/rating/`). |
 | `contracts/src/interfaces/IExternal.sol` | 45 | 34 | Interfaces for Credits, CreditArt, the unpublished Statement contract. |
 | **Total** | **931** | **752** | |
 

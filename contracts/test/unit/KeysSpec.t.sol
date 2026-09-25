@@ -10,7 +10,9 @@ import {ICredits, ICreditArt} from "../../src/interfaces/IExternal.sol";
 /// every expected key is derived from the spec instead:
 ///  - traits by NAME from art.describe() (the source of truth for every trait),
 ///  - order tables as in the site (lib/core.mjs COLOR_ORDER / PRINT_ORDER / WEIGHT_ORDER),
-///  - rarity weights copied from data/rarity.json (weights by trait name, not by the contract's mask/rank tables),
+///  - Rarity: this synthetic collection has no official rating, so its table carries the stand-in class of
+///    test/ref/CreditKeysRef.sol (eights descending, then most misregistered first), written out here by name;
+///    mainnet Rarity (Jack Butcher's official rating) is checked in test/keytable and test/diff,
 ///  - the key layout documented in CreditKeys: (primary << 32) | id, ascending.
 contract KeysSpecTest is UnitBase {
     string[15] COLOR_ORDER = ["C", "M", "Y", "K", "CM", "CY", "MY", "CK", "MK", "YK", "CMY", "CMK", "CYK", "MYK", "CMYK"];
@@ -30,52 +32,6 @@ contract KeysSpecTest is UnitBase {
     function _idx4(string memory s) internal view returns (uint256) {
         for (uint256 i; i < 4; ++i) if (keccak256(bytes(WEIGHT_ORDER[i])) == keccak256(bytes(s))) return i;
         revert("weight not in WEIGHT_ORDER");
-    }
-
-    // data/rarity.json, by trait name
-    function _wColors(string memory c) internal pure returns (uint256) {
-        bytes32 h = keccak256(bytes(c));
-        if (h == keccak256("C")) return 3908947081;
-        if (h == keccak256("M")) return 3913745110;
-        if (h == keccak256("Y")) return 3908060305;
-        if (h == keccak256("K")) return 3939426425;
-        if (h == keccak256("CM")) return 3903634585;
-        if (h == keccak256("CY")) return 3919631122;
-        if (h == keccak256("MY")) return 3887463858;
-        if (h == keccak256("CK")) return 3889562832;
-        if (h == keccak256("MK")) return 3910011931;
-        if (h == keccak256("YK")) return 3926259272;
-        if (h == keccak256("CMY")) return 3915169818;
-        if (h == keccak256("CMK")) return 3901515053;
-        if (h == keccak256("CYK")) return 3895350809;
-        if (h == keccak256("MYK")) return 3877188084;
-        if (h == keccak256("CMYK")) return 3908592305;
-        revert("colors");
-    }
-
-    function _wPrint(string memory r) internal pure returns (uint256) {
-        bytes32 h = keccak256(bytes(r));
-        if (h == keccak256("Registered")) return 195465472;
-        if (h == keccak256("Nudge")) return 4661729380;
-        if (h == keccak256("Slip")) return 4640364522;
-        if (h == keccak256("Skew")) return 5366472805;
-        if (h == keccak256("Drift")) return 6072587748;
-        if (h == keccak256("Loose")) return 6964650926;
-        revert("register");
-    }
-
-    function _wWeight(string memory w) internal pure returns (uint256) {
-        bytes32 h = keccak256(bytes(w));
-        if (h == keccak256("sparse")) return 2887813475;
-        if (h == keccak256("lean")) return 1831411512;
-        if (h == keccak256("even")) return 801626426;
-        if (h == keccak256("extreme")) return 6615253228;
-        revert("weight");
-    }
-
-    function _wEights(uint256 e) internal pure returns (uint256) {
-        uint256[6] memory w = [uint256(448838239), 2125356957, 4849173708, 8261716960, 12197901863, 16898341581];
-        return w[e];
     }
 
     uint256[15] colorsSeen;
@@ -104,8 +60,8 @@ contract KeysSpecTest is UnitBase {
         assertEq(probe.key(CreditKeys.Preset.Eights, c, id), ((uint256(type(uint32).max) - r.eights) << 32) | id, "Eights");
         assertEq(probe.key(CreditKeys.Preset.Print, c, id), ((5 - pi) << 32) | id, "Print: most misregistered first");
         assertEq(probe.key(CreditKeys.Preset.Weight, c, id), (((wi << 16) | r.marks) << 32) | id, "Weight");
-        uint256 score = _wColors(r.colors) + _wPrint(r.register) + _wWeight(r.weight) + _wEights(r.eights);
-        assertEq(probe.key(CreditKeys.Preset.Rarity, c, id), ((uint256(type(uint64).max) - score) << 32) | id, "Rarity");
+        uint256 standIn = ((r.eights >= 5 ? 0 : 5 - r.eights) << 3) | (5 - pi);
+        assertEq(probe.key(CreditKeys.Preset.Rarity, c, id), (standIn << 32) | id, "Rarity (stand-in class)");
     }
 
     function _range(uint256 h, uint256 from, uint256 n) internal {

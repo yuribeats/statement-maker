@@ -13,8 +13,8 @@ Jack Butcher's Credits (122,154 sealed ERC-721s) can be burned 80 at a time into
 | `PartyFactory` | Once | Deploys one `Party` EIP-1167 clone per party. In its constructor it deploys the shared `CreditCards` collection and the `Party` implementation. It holds the immutable addresses (Credits, Statement, fee recipient, floor signer, CreditTraits) and the constant `FEE_BPS = 100` (1%). It verifies floor signatures (EIP-712). It has **no owner, admin, pause, or upgrade path.** |
 | `Party` | One clone per party | Custodies deposited Credits and later the Statement. Mints and burns cards through `CreditCards`. Runs price governance, the sale, and payouts. Holds all ETH from the sale until claimed. |
 | `CreditCards` | Once (created by the factory) | One ERC-721 for every party. Each card is tied to one party (`partyOf`) at mint. Only a registered party can mint, and only the card's own party can burn it. It keeps `Checkpoints.Trace208` balances per `(party, account)` for snapshot voting, and renders on-chain metadata through `Party.cardView`. |
-| `CreditKeys` | Linked library | `verifyOrder` (the burn-order check), trait-key formulas and rarity table, seeded Fisher–Yates shuffle. Never calls the art contract. |
-| `CreditTraits` | Once (15 SSTORE2 data contracts + 1) | Sealed table of every Credit's sort traits (3 bytes per id: marks, plate mask, eights, print rank, weight rank), committed once from `data/keytable/table.bin`. `keys(preset, ids)` returns the sort keys Party verifies. No owner or admin. `tableHash` pins the chunk code. |
+| `CreditKeys` | Linked library | `verifyOrder` (the burn-order check), trait-key formulas, seeded Fisher–Yates shuffle. Never calls the art contract. |
+| `CreditTraits` | Once (25 SSTORE2 data contracts + 1) | Sealed table of every Credit's sort traits (5 bytes per id: marks, plate mask, eights, print rank, weight rank, and a 16-bit rarity class from Jack Butcher's official rating snapshot), committed once from `data/keytable/table.bin`. `keys(preset, ids)` returns the sort keys Party verifies. No owner or admin. `tableHash` pins the chunk code. |
 | Credits (external) | Live mainnet | The deposited asset. See SCOPE.md §5.2. |
 | Statement (external) | Unpublished | Burns the 80 Credits and mints the Statement. See SCOPE.md §5.3. |
 
@@ -141,7 +141,7 @@ Arranging and burning happen in one call. Orders are computed off-chain; the bur
 Key definitions (`CreditKeys.traitKey` over the CreditTraits entry; identical to the original describe()-based keys, `test/ref/CreditKeysRef.sol`, for all 122,154 Credits):
 - Number = Time = id. Colors = `colorRank(mask)`, mask = `(paidAt % 15) + 1` as in `CreditDrawing.platesAt`, stored in the table. Ink = `marks`.
 - Eights = `uint32.max − eights` (descending). Print = `5 − printRank` (most misregistered first). Weight = `(weightRank << 16) | marks`.
-- Rarity = `uint64.max − Σ(−log2 frequency × 1e9)` over the four traits (descending score). Constants are hard-coded from the sealed supply.
+- Rarity = the table's rarity class: the index of the Credit's rank among the distinct ranks of Jack Butcher's official Credits rating (jack.art/credits/rating, frozen snapshot `data/jack-rating.json.gz`), 0 = rarest; equal official ranks share a class, ties break by id. Not derivable on-chain (THREAT_MODEL R-23); checked against the snapshot for every id, and the snapshot is reproduced from on-chain traits by `scripts/rating/verify.mjs`.
 - The table was built from the art contract's `describe()` and checked three ways (scripts/keytable): forge derivation (a) == live-mainnet eth_call derivation (b) for all ids × presets (0 mismatches), table == site trait data (0 mismatches), table keys == (a) for all ids; fork tests re-check 2,000 sampled ids and all 320 house-party ids.
 
 Sequence:
@@ -150,7 +150,7 @@ Sequence:
 3. `credits.setApprovalForAll(statement, true)`, then `_assembling = true`, then `statement.make(order)`, then `_assembling = false`, then revoke approval.
 4. Verify: `statement.ownerOf(sid) == party`, and for each of the 80, `credits.ownerOf(id)` reverts with `ERC721NonexistentToken` (selector `0x7e273289`, the mainnet Credits error for a burned or never-minted id, checked on chain 2026-09-24). A Credit that still has any owner, or any other revert, fails with `not burned`.
 
-Measured cost (mainnet fork, cold, MockStatement): 4.88M–5.14M gas before refunds (the figure the 16,777,216 per-transaction cap applies to), 3.95M–4.16M after refunds, for every preset (test/gas/Cap.t.sol, test/gas/Breakdown.t.sol). Of that, Credits.burn is 1.94M and MockStatement's mint 1.51M; the real Statement contract's `make` is unknown until it ships (PRE_MAINNET.md). Before the key table: 7.38M–12.84M before refunds.
+Measured cost (mainnet fork, cold, MockStatement): 4.88M–5.09M gas before refunds (the figure the 16,777,216 per-transaction cap applies to), 3.95M–4.12M after refunds, for every preset (test/gas/Cap.t.sol, test/gas/Breakdown.t.sol). Of that, Credits.burn is 1.94M and MockStatement's mint 1.51M; the real Statement contract's `make` is unknown until it ships (PRE_MAINNET.md). Before the key table: 7.38M–12.84M before refunds.
 
 ## 8. Floor oracle
 
@@ -176,7 +176,7 @@ Trust: the signer is fully trusted for floor values. See THREAT_MODEL.md §3 for
 | "Any party member" can execute / assemble | Must hold ≥ 1 card **now** (`heldNow`). Depositors who moved their cards cannot. |
 | Royalty: ERC-2981, then Royalty Registry | No royalty paid (removed) |
 | `claimFor(holder)`: push, anyone calls | `claim` by the holder only. The fee recipient withdraws. |
-| Rarity from OpenSea OpenRarity | On-chain table from sealed-supply trait frequencies |
+| Rarity from OpenSea OpenRarity | Jack Butcher's official rating, frozen snapshot sealed into the key table |
 | openParty by "any Credit holder" | Anyone |
 
 ## 10. Access control by function

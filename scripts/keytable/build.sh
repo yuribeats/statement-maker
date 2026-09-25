@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Builds the sealed CreditTraits table (contracts/data/keytable/table.bin) and the reference keys of derivation (a).
-#   1. extract-input.py: seeds + payment times from data/credits.json.gz (checks paidAt never decreases with id)
-#   2. BuildKeyTable.t.sol in 13 shards (forge, mainnet fork for the art contract's code): packed traits from the art
-#      contract's describe() and reference keys from the original on-chain key path (test/ref/CreditKeysRef.sol)
+#   1. extract-input.py: seeds + payment times from data/credits.json.gz (checks paidAt never decreases with id), and
+#      rarity.bin: each Credit's rarity class from Jack Butcher's official rating snapshot (data/jack-rating.json.gz)
+#   2. BuildKeyTable.t.sol in 13 shards (forge, mainnet fork for the art contract's code): 5-byte entries (traits from
+#      the art contract's describe() ++ rarity class) and reference keys from the original on-chain key path
+#      (test/ref/CreditKeysRef.sol; Rarity from rarity.bin)
 #   3. concatenates the shards; writes table.sha256 and table.keccak
 # Then run scripts/keytable/verify.sh (derivation (b) on live mainnet + all cross-checks). Needs ALCHEMY_API_KEY.
 set -euo pipefail
@@ -28,7 +30,7 @@ from Crypto.Hash import keccak
 W = 'contracts/data/keytable/work'
 parts = sorted(glob.glob(f'{W}/table-*.bin'), key=lambda p: int(p.rsplit('-', 1)[1][:-4]))
 t = b''.join(open(p, 'rb').read() for p in parts)
-assert len(t) == 122154 * 3, len(t)
+assert len(t) == 122154 * 5, len(t)
 open('contracts/data/keytable/table.bin', 'wb').write(t)
 k = b''.join(open(p, 'rb').read() for p in sorted(glob.glob(f'{W}/keys-a-*.bin'), key=lambda p: int(p.rsplit('-', 1)[1][:-4])))
 assert len(k) == 122154 * 8 * 32

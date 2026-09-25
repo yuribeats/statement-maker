@@ -11,14 +11,16 @@ import {TraitsTable} from "./TraitsTable.sol";
 /// @notice Mainnet deployment of Statement Maker. NOT RUN YET: nothing is on mainnet. See scripts/deploy-mainnet.sh
 ///         for the full command (broadcast + Etherscan verification) and the post-deploy verification steps.
 ///         Deploys, in order: the CreditKeys library (forge links it automatically, CREATE2), the sealed CreditTraits
-///         table (15 SSTORE2 data contracts from data/keytable/table.bin, refused unless its keccak256 equals the
-///         committed TABLE_KECCAK, then CreditTraits), PartyFactory (its constructor deploys CreditCards and the Party
+///         table (25 SSTORE2 data contracts from data/keytable/table.bin, refused unless its keccak256 equals the
+///         committed TABLE_KECCAK, then CreditTraits; its Rarity field is a frozen snapshot of Jack Butcher's official
+///         rating, re-fetched and re-verified right before deploy per docs/audit/PRE_MAINNET.md), PartyFactory (its constructor deploys CreditCards and the Party
 ///         implementation), and StatementMarket.
 /// env: CREDITS, STATEMENT, FEE_RECIPIENT, FLOOR_SIGNER, COLLECTION_OWNER (all required, all non-zero).
 contract DeployMainnet is Script {
     address constant MAINNET_CREDITS = 0x97630aA70AB14ed9883B41dAfccBc11349723043;
-    /// keccak256 of data/keytable/table.bin (scripts/keytable/build.sh + verify.sh; also in data/keytable/table.keccak)
-    bytes32 constant TABLE_KECCAK = 0xf75b269b00e5af32a42dde8d83b266f047cb9494efb56b00a2e31cac46416352;
+    /// keccak256 of data/keytable/table.bin (scripts/keytable/build.sh + verify.sh; also in data/keytable/table.keccak).
+    /// Built from the rating snapshot data/jack-rating.json.gz fetched 2026-09-25T03:38:24Z (methodology 3.4.0).
+    bytes32 constant TABLE_KECCAK = 0xe512b2f1c0dcf923a427e0bdb4c9f791066f3841e4ff18e214ad91c1037dfc72;
 
     function run() external {
         require(block.chainid == 1, "mainnet only");
@@ -32,7 +34,7 @@ contract DeployMainnet is Script {
         require(feeTo != address(0) && signer != address(0) && collectionOwner != address(0), "zero address");
 
         bytes memory table = vm.readFileBinary("data/keytable/table.bin");
-        require(keccak256(table) == TABLE_KECCAK && table.length == 122154 * 3, "key table differs from the committed one");
+        require(keccak256(table) == TABLE_KECCAK && table.length == 122154 * 5, "key table differs from the committed one");
 
         vm.startBroadcast();
         CreditTraits traits = TraitsTable.deploy(table);

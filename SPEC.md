@@ -34,7 +34,7 @@ Approvals: a user approves exactly one contract, the PartyFactory (`Credits.setA
     - Floor-relative: floor + X, where X is an ETH amount or a percent (host's choice). The floor source is the Statement collection floor; until Statements trade, Credits floor × 80.
     Shown on the party page. Once assembled, it pre-fills the first LIST proposal (members still vote).
   - **Eligibility filters**: Colors (plate combo), Print, Weight, Eights, marks range, rarity rank range, token-number range. Filters combine with AND.
-- Filter enforcement: our indexer turns the filters into the list of eligible Credit ids and publishes its Merkle root; deposit requires a membership proof. Anyone can check the list: every trait is recomputable from the chain (CreditArt.describe(seed, paidAt) is public). Rarity rank comes from OpenSea's OpenRarity calculation and is the one input not on-chain.
+- Filter enforcement: our indexer turns the filters into the list of eligible Credit ids and publishes its Merkle root; deposit requires a membership proof. Anyone can check the list: every trait is recomputable from the chain (CreditArt.describe(seed, paidAt) is public). Rarity rank is Jack Butcher's official Credits rating (jack.art/credits/rating), rank 1 = rarest; the site and the contracts use a frozen snapshot of it (data/jack-rating.json.gz, methodology 3.4.0, fetched 2026-09-25), the one input not read from the chain. It is reproducible from on-chain traits by his published formula (scripts/rating/verify.mjs: all 122,154 ranks reproduced exactly).
 - Param edits after deposits exist: undecided (options: allowed freely, allowed only if they do not disqualify Credits already deposited, or locked at first deposit).
 
 - Every setting is a DEFAULT that runs automatically; depositing accepts the defaults; card holders can change any of them by vote.
@@ -103,7 +103,7 @@ Every state change is a transaction: someone calls it and pays gas. Rule: once a
 | propose(type, args) | any member | per state | est. ~80–150k |
 | vote(id, yes) | any member | voting window open | est. ~50–70k |
 | execute(id, floor) | **any member** | voting window closed, YES ≥ 41 (60 below floor, 54 in deadlock), NO = 0 | est. ~60–100k |
-| assemble(order, floor) | **any card holder** (Manual: host for 1 day after FULL) | FULL | cold burn of 80, mock Statement: 4.88M–5.14M gas before refunds, 3.95M–4.16M paid (Credits.burn 1.94M of it); the real Statement mint is unknown until it ships |
+| assemble(order, floor) | **any card holder** (Manual: host for 1 day after FULL) | FULL | cold burn of 80, mock Statement: 4.88M–5.09M gas before refunds, 3.95M–4.12M paid (Credits.burn 1.94M of it); the real Statement mint is unknown until it ships |
 | raiseAsk(floorAttestation) | **any member** | LISTED, floor-relative ask | est. ~60k |
 | buy() | anyone (buyer) | LISTED | est. ~100–200k (fee + transfer) |
 | claimFor(holder) | **anyone**, pays out to the holder | SOLD | est. ~60k per holder |
@@ -126,10 +126,10 @@ Flow (as implemented; no arranger or arrangement votes):
 3. Manual: the host burns with any order of exactly the 80 within 1 day of FULL. After that any card holder burns with the Time order (the host too, only as a card holder).
 Auto-order presets (as implemented, all ascending by key, ties by token id):
 - Number (token id); Time (payment time; on the sealed collection payment times never decrease with id, so Time == token id order)
-- Rarity (score from the sealed supply's trait frequencies, rarest first), Colors, Print (most misregistered first), Weight, Eights (most first), Ink (marks ascending)
+- Rarity (Jack Butcher's official Credits rating (jack.art/credits/rating), rank 1 = rarest; tied Credits share a rank and break by token id), Colors, Print (most misregistered first), Weight, Eights (most first), Ink (marks ascending)
 - Deposit order; Random with a published seed (reproducible)
-Sequencing is computed off-chain. The burn only checks it cheaply: Deposit/Random by equality, Number/Time by strictly ascending ids, trait presets by strictly ascending keys from the sealed CreditTraits table (every Credit's traits committed once at deployment, derived from the art contract's own describe() and verified against the live contract for all 122,154 Credits). The art contract is never called at a burn.
-Gas (mainnet fork, cold, mock Statement): a burn is 4.9M–5.1M gas before refunds (3.95M–4.16M paid) for every preset, down from 7.4M–12.8M; 1.94M of it is Credits.burn itself.
+Sequencing is computed off-chain. The burn only checks it cheaply: Deposit/Random by equality, Number/Time by strictly ascending ids, trait presets by strictly ascending keys from the sealed CreditTraits table (every Credit's traits committed once at deployment, derived from the art contract's own describe() and verified against the live contract for all 122,154 Credits; Rarity from a rarity class per Credit taken from the frozen snapshot of Jack Butcher's official rating, class order == official rank order). The art contract is never called at a burn.
+Gas (mainnet fork, cold, mock Statement): a burn is 4.9M–5.1M gas before refunds (3.95M–4.12M paid) for every preset, down from 7.4M–12.8M; 1.94M of it is Credits.burn itself.
 
 ## 6. Party pages
 One page per party: 8×10 frame, member list with Credit Card balances, chat, open proposals and vote tallies, arrangement editor, activity log (deposits, votes, sales).

@@ -7,7 +7,8 @@ import {ICreditTraits} from "./interfaces/IExternal.sol";
 ///         is deployed once and linked (keeps Party under 24 KB).
 ///         Every sorted preset is a strict ascending order of uint256 keys; the low 32 bits of each key are the Credit
 ///         id, so keys are unique and ties always break by ascending id. Trait keys come from CreditTraits, a sealed
-///         table of every Credit's traits committed once at deployment (the art contract is never called at a burn).
+///         table of every Credit's traits committed once at deployment (the art contract is never called at a burn);
+///         Rarity reads the table's rarity class, taken from a frozen snapshot of Jack Butcher's official rating.
 ///         Time: the sealed collection's payment times never decrease with id (verified over all 122,154 Credits,
 ///         test/keytable), so payment-time order with id tie-break is exactly ascending id.
 ///         The same orderings are implemented in the site (server.mjs PRESETS) and must stay identical.
@@ -16,7 +17,7 @@ library CreditKeys {
         Deposit, // deposit order (verified against the stored order, no keys)
         Number, // id ascending
         Time, // payment time ascending, ties by id == ascending id on the sealed collection
-        Rarity, // rarity score descending
+        Rarity, // Jack Butcher's official Credits rating, rarest first (rarity class ascending)
         Colors, // plate combination, COLOR_ORDER
         Print, // registration, most misregistered first
         Weight, // sparse → extreme, then ink ascending
@@ -81,25 +82,23 @@ library CreditKeys {
         for (uint256 i = 1; i < n; ++i) if (k[i] <= k[i - 1]) revert Bad("order");
     }
 
-    /// @notice Sort key of one Credit from its packed traits (CreditTraits layout): marks (8 bits) | mask (4) |
-    ///         eights (4) | printRank (4) | weightRank (4), most significant first. Number/Time: the id itself.
+    /// @notice Sort key of one Credit from its packed table entry (CreditTraits layout, uint40): marks (8 bits) |
+    ///         mask (4) | eights (4) | printRank (4) | weightRank (4) | rarity class (16), most significant first.
+    ///         Number/Time: the id itself.
     function traitKey(Preset p, uint256 id, uint256 packed) internal pure returns (uint256) {
         if (id >= 2 ** ID_BITS) revert Bad("id");
         if (p == Preset.Number || p == Preset.Time) return id;
-        uint256 marks = packed >> 16;
-        uint256 mask = (packed >> 12) & 15;
-        uint256 eights = (packed >> 8) & 15;
-        uint256 pr = (packed >> 4) & 15;
-        uint256 wr = packed & 15;
+        if (p == Preset.Rarity) return ((packed & 0xFFFF) << ID_BITS) | id;
+        uint256 marks = packed >> 32;
+        uint256 mask = (packed >> 28) & 15;
+        uint256 eights = (packed >> 24) & 15;
+        uint256 pr = (packed >> 20) & 15;
+        uint256 wr = (packed >> 16) & 15;
         if (p == Preset.Colors) return (colorRank(mask) << ID_BITS) | id;
         if (p == Preset.Ink) return (marks << ID_BITS) | id;
         if (p == Preset.Eights) return ((type(uint32).max - eights) << ID_BITS) | id;
         if (p == Preset.Print) return ((5 - pr) << ID_BITS) | id;
         if (p == Preset.Weight) return (((wr << 16) | marks) << ID_BITS) | id;
-        if (p == Preset.Rarity) {
-            uint256 score = colorWeight(mask) + printWeightR(pr) + weightWeightR(wr) + eightsWeight(eights);
-            return ((type(uint64).max - score) << ID_BITS) | id;
-        }
         revert Bad("preset");
     }
 
@@ -142,61 +141,6 @@ library CreditKeys {
         if (h == keccak256("even")) return 2;
         if (h == keccak256("extreme")) return 3;
         revert("weight");
-    }
-
-    // Rarity: round(-log2(count / 122154) * 1e9) per trait value, from the sealed supply (data/rarity.json).
-    function colorWeight(uint256 mask) internal pure returns (uint256) {
-        if (mask == 1) return 3908947081;
-        if (mask == 2) return 3913745110;
-        if (mask == 3) return 3903634585;
-        if (mask == 4) return 3908060305;
-        if (mask == 5) return 3919631122;
-        if (mask == 6) return 3887463858;
-        if (mask == 7) return 3915169818;
-        if (mask == 8) return 3939426425;
-        if (mask == 9) return 3889562832;
-        if (mask == 10) return 3910011931;
-        if (mask == 11) return 3901515053;
-        if (mask == 12) return 3926259272;
-        if (mask == 13) return 3895350809;
-        if (mask == 14) return 3877188084;
-        return 3908592305; // 15
-    }
-
-    function printWeight(string memory reg) internal pure returns (uint256) {
-        return printWeightR(printRank(reg));
-    }
-
-    function printWeightR(uint256 r) internal pure returns (uint256) {
-        if (r == 0) return 195465472;
-        if (r == 1) return 4661729380;
-        if (r == 2) return 4640364522;
-        if (r == 3) return 5366472805;
-        if (r == 4) return 6072587748;
-        if (r == 5) return 6964650926;
-        revert Bad("print");
-    }
-
-    function weightWeight(string memory w) internal pure returns (uint256) {
-        return weightWeightR(weightRank(w));
-    }
-
-    function weightWeightR(uint256 r) internal pure returns (uint256) {
-        if (r == 0) return 2887813475;
-        if (r == 1) return 1831411512;
-        if (r == 2) return 801626426;
-        if (r == 3) return 6615253228;
-        revert Bad("weight");
-    }
-
-    function eightsWeight(uint256 e) internal pure returns (uint256) {
-        if (e == 0) return 448838239;
-        if (e == 1) return 2125356957;
-        if (e == 2) return 4849173708;
-        if (e == 3) return 8261716960;
-        if (e == 4) return 12197901863;
-        if (e == 5) return 16898341581;
-        revert("eights"); // no Credit in the sealed supply has more than 5
     }
 
     /// @notice Deterministic shuffle of `ids` (a copy): Fisher–Yates with j = keccak256(seed, i) mod (i + 1).

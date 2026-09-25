@@ -3,18 +3,18 @@ pragma solidity 0.8.28;
 
 import {CreditTraits} from "../src/CreditTraits.sol";
 
-/// @notice Deploys a CreditTraits table from its packed bytes (3 bytes per id, ids 1..n): one SSTORE2 data contract per
-///         8,191 ids (each about 5.4M gas, under the per-transaction cap), then CreditTraits over them.
+/// @notice Deploys a CreditTraits table from its packed bytes (5 bytes per id, ids 1..n): one SSTORE2 data contract per
+///         4,915 ids (each about 5.4M gas, under the per-transaction cap), then CreditTraits over them.
 library TraitsTable {
     function deploy(bytes memory data) internal returns (CreditTraits) {
-        require(data.length % 3 == 0 && data.length > 0, "table length");
-        uint256 n = data.length / 3;
-        uint256 per = 8191;
+        require(data.length % 5 == 0 && data.length > 0, "table length");
+        uint256 n = data.length / 5;
+        uint256 per = 4915;
         uint256 chunks = (n + per - 1) / per;
         address[] memory a = new address[](chunks);
         for (uint256 i; i < chunks; ++i) {
-            uint256 from = i * per * 3;
-            uint256 len = (i + 1 < chunks ? per : n - i * per) * 3;
+            uint256 from = i * per * 5;
+            uint256 len = (i + 1 < chunks ? per : n - i * per) * 5;
             a[i] = deployChunk(data, from, len);
         }
         return new CreditTraits(a, n);

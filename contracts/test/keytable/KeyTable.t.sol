@@ -9,18 +9,25 @@ import {TraitsTable} from "../../script/TraitsTable.sol";
 import {CreditKeysRef, RefProbe} from "../ref/CreditKeysRef.sol";
 
 /// The committed key table (data/keytable/table.bin) and the Time rule, checked against mainnet and the reference
-/// (describe()-based) key path. The full 122,154-id cross-checks run in scripts/keytable/verify.sh.
+/// (describe()-based) key path; Rarity against the committed rating classes (data/keytable/rarity.bin, from Jack
+/// Butcher's official rating snapshot). The full 122,154-id cross-checks run in scripts/keytable/verify.sh.
 contract KeyTableTest is Test {
     ICredits constant CREDITS = ICredits(0x97630aA70AB14ed9883B41dAfccBc11349723043);
     uint256 constant N = 122154;
     bytes table;
     bytes paidAt;
+    bytes rarity;
     CreditTraits traits;
 
     function setUp() public {
         table = vm.readFileBinary("data/keytable/table.bin");
         paidAt = vm.readFileBinary("data/keytable/paidat.bin");
+        rarity = vm.readFileBinary("data/keytable/rarity.bin");
         traits = TraitsTable.deploy(table);
+    }
+
+    function _class(uint256 id) internal view returns (uint256) {
+        return uint256(uint8(rarity[2 * id - 2])) << 8 | uint8(rarity[2 * id - 1]);
     }
 
     function _paid(uint256 id) internal view returns (uint256 t) {
@@ -30,10 +37,11 @@ contract KeyTableTest is Test {
 
     /// The committed files are the ones the deploy script pins, and cover exactly ids 1..122,154.
     function test_committedTable_shape() public view {
-        assertEq(table.length, N * 3);
+        assertEq(table.length, N * 5);
         assertEq(paidAt.length, N * 4);
+        assertEq(rarity.length, N * 2);
         assertEq(traits.count(), N);
-        assertEq(traits.chunkCount(), 15);
+        assertEq(traits.chunkCount(), 25);
         assertEq(keccak256(table), vm.parseBytes32(vm.trim(vm.readFile("data/keytable/table.keccak"))));
     }
 
@@ -48,9 +56,26 @@ contract KeyTableTest is Test {
         }
     }
 
+    /// Every table entry's rarity class == the committed class file, and traitsOf decodes the same fields.
+    function test_rarityClass_all() public view {
+        for (uint256 id = 1; id <= N; ++id) {
+            uint256 o = 5 * (id - 1);
+            uint256 c = uint256(uint8(table[o + 3])) << 8 | uint8(table[o + 4]);
+            if (c != _class(id)) revert(string.concat("class of id ", vm.toString(id)));
+        }
+        (,,,,, uint256 top) = traits.traitsOf(11469); // official rank 1
+        assertEq(top, 0);
+        (,,,,, uint256 c52512) = traits.traitsOf(52512);
+        assertEq(c52512, _class(52512));
+    }
+
     function _check(RefProbe ref, uint256[] memory ids) internal view {
         for (uint8 p = 1; p <= 8; ++p) {
             uint256[] memory got = traits.keys(p, ids);
+            if (p == uint8(CreditKeys.Preset.Rarity)) {
+                for (uint256 i; i < ids.length; ++i) assertEq(got[i], (_class(ids[i]) << 32) | ids[i], "Rarity key == committed class");
+                continue;
+            }
             uint256[] memory want = ref.keys(CreditKeys.Preset(p), CREDITS, ids);
             for (uint256 i; i < ids.length; ++i) {
                 if (p == uint8(CreditKeys.Preset.Time)) {
@@ -65,7 +90,8 @@ contract KeyTableTest is Test {
 
     /// Mainnet fork: 2,000 pseudo-random ids (two tests of 1,000, to stay under the default test gas limit) and all
     /// 320 house-party ids (the four exact-80 mint minutes), every preset: stored key == live reference key (the art
-    /// contract's describe() on the chain), and the committed payment times == the chain's.
+    /// contract's describe() on the chain; Rarity: the committed rating class), and the committed payment times ==
+    /// the chain's.
     function _fork() internal returns (RefProbe ref) {
         vm.createSelectFork(vm.envString("ETH_RPC_URL"), 26044000);
         traits = TraitsTable.deploy(table);
@@ -96,7 +122,7 @@ contract KeyTableTest is Test {
 
     /// FULL cross-check, opt-in (KEYTABLE_VERIFY=1; run by scripts/keytable/verify.sh after build.sh): the table's keys
     /// for all 122,154 ids x 8 presets == derivation (a) (work/keys-a.bin, which verify.sh also compares with the live
-    /// mainnet derivation (b)). Time: the table key is the id, and the reference Time keys strictly increase with id.
+    /// mainnet derivation (b); Rarity with keys computed from data/jack-rating.json.gz in JS). Time: the table key is the id, and the reference Time keys strictly increase with id.
     function test_full_tableEqualsReferenceKeys() public {
         if (!vm.envOr("KEYTABLE_VERIFY", false)) return;
         address a = address(0xA11A); // keys-a.bin served as code, read by slices (31 MB would not fit in memory)

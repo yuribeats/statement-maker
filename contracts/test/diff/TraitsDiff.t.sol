@@ -5,7 +5,8 @@ import {ForkDiff} from "./PresetsDiff.t.sol";
 import {ICreditArt} from "../../src/interfaces/IExternal.sol";
 
 /// @notice The contract's view of each Credit's traits (what CreditKeys reads: seedOf, timestampOf, paidAt % 15 + 1
-///         mask → colorRank, and art.describe()) vs the site's data/credits.json + data/traits.json + rarity score.
+///         mask → colorRank, and art.describe()) vs the site's data/credits.json + data/traits.json, and the committed
+///         table's rarity classes vs the site's official ranks (same order, same ties).
 contract TraitsDiffTest is ForkDiff {
     string json;
 
@@ -36,7 +37,6 @@ contract TraitsDiffTest is ForkDiff {
     string[] weight;
     string[] print;
     string[] tier;
-    uint256[] score;
     ICreditArt art;
 
     function _letters(uint256 mask) internal pure returns (string memory) {
@@ -65,7 +65,6 @@ contract TraitsDiffTest is ForkDiff {
         if (!_eq(r.weight, weight[i])) _fail("describe.weight", id);
         if (!_eq(r.register, print[i])) _fail("describe.register vs print", id);
         if (!_eq(r.tier, tier[i])) _fail("describe.tier", id);
-        if (probe.score(mask, r.register, r.weight, r.eights) != score[i]) _fail("rarity score", id);
     }
 
     function test_traitsParity() public {
@@ -80,11 +79,31 @@ contract TraitsDiffTest is ForkDiff {
         weight = vm.parseJsonStringArray(json, ".weight");
         print = vm.parseJsonStringArray(json, ".print");
         tier = vm.parseJsonStringArray(json, ".tier");
-        score = vm.parseJsonUintArray(json, ".score");
         art = ICreditArt(CREDITS.art());
         for (uint256 i; i < ids.length; ++i) _one(i);
         emit log_named_uint("Credits compared", ids.length);
         emit log_named_uint("field mismatches", bad);
+        assertEq(bad, 0);
+    }
+
+    /// The site's official rank (data/jack-rating.json.gz via lib/core.mjs) vs the table's rarity class, over the
+    /// fixture ids in the site's (rank, id) order: classes never decrease, and equal ranks <=> equal classes.
+    function test_rarityClassParity() public {
+        uint256[] memory order = vm.parseJsonUintArray(json, ".rankOrder");
+        uint256[] memory rank = vm.parseJsonUintArray(json, ".rankOfOrder");
+        assertEq(order.length, rank.length);
+        uint256 prev;
+        for (uint256 i; i < order.length; ++i) {
+            (,,,,, uint256 c) = traits.traitsOf(order[i]);
+            if (i > 0) {
+                if (rank[i] < rank[i - 1]) _fail("fixture not in rank order", order[i]);
+                if (c < prev) _fail("class decreases along rank order", order[i]);
+                if ((c == prev) != (rank[i] == rank[i - 1])) _fail("class tie != rank tie", order[i]);
+            }
+            prev = c;
+        }
+        emit log_named_uint("Credits compared (rarity class vs official rank)", order.length);
+        emit log_named_uint("rarity mismatches", bad);
         assertEq(bad, 0);
     }
 }

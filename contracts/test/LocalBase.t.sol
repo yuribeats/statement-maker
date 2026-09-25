@@ -43,16 +43,15 @@ abstract contract LocalBase is Test {
         _etchMutants(factory);
     }
 
-    /// The packed trait table of ids 1..n of `c`, from its own art contract, deployed as CreditTraits.
+    /// The packed trait table of ids 1..n of `c`, from its own art contract (with the stand-in rarity class: a test
+    /// collection has no official rating), deployed as CreditTraits.
     function buildTraits(ICredits c, uint256 n) internal returns (CreditTraits) {
         uint256[] memory ids = new uint256[](n);
         for (uint256 i; i < n; ++i) ids[i] = i + 1;
         uint256[] memory v = ref.packed(c, ids);
-        bytes memory t = new bytes(n * 3);
+        bytes memory t = new bytes(n * 5);
         for (uint256 i; i < n; ++i) {
-            t[3 * i] = bytes1(uint8(v[i] >> 16));
-            t[3 * i + 1] = bytes1(uint8(v[i] >> 8));
-            t[3 * i + 2] = bytes1(uint8(v[i]));
+            for (uint256 b; b < 5; ++b) t[5 * i + b] = bytes1(uint8(v[i] >> (8 * (4 - b))));
         }
         return TraitsTable.deploy(t);
     }

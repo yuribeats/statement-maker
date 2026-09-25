@@ -73,7 +73,7 @@ Mode is decided server-side by `openingUnlocked()` (`lib/core.mjs:710`): true on
   pre-check refuses non-house parties (`depositGatesOk`, `:1666`). **These gates are skipped when `DEV` is true**
   (`NODE_ENV` not `production`), which is how the public full-launch preview runs.
 - Separate launch terms/rules versions (`TERMS_LAUNCH 2026-09-24.L9`, `RULES_LAUNCH 2026-09-24.L10`; full mode
-  `TERMS_FULL .8`, `RULES_FULL .9`; `lib/core.mjs:25`, mirrored in `public/app.js:921`).
+  `TERMS_FULL .8`, `RULES_FULL .10`; `lib/core.mjs:25`, mirrored in `public/app.js:921`).
 - **Unlock:** the site switches to FULL mode when a Minute auction settles with a winner (`:710`).
 
 **FULL mode**
@@ -98,7 +98,7 @@ LOC at `b1279b3` (total / non-blank non-comment; comment lines include NatSpec).
 | `PartyFactory.sol` | 95 / 68 | Deploys clones (CREATE2 salt = host+nonce), routes deposits (only approval users give), EIP-712 floor verification, immutables incl. the traits table. No admin. | Yes |
 | `CreditCards.sol` | 126 / 99 | Shared ERC-721 for all parties; per-(party, account) `Trace208` checkpoints for snapshot votes; on-chain SVG | Yes |
 | `CreditKeys.sol` | 215 / 173 | Linked library: preset order verification against the sealed key table, rarity table, keccak Fisher–Yates; Time = ascending id | Yes |
-| `CreditTraits.sol` | 101 / 76 | Sealed per-Credit trait table (SSTORE2 chunks, 3 bytes/id), so burns never call `CreditArt.describe` (`6190a7c`) | Yes |
+| `CreditTraits.sol` | 101 / 76 | Sealed per-Credit trait table (SSTORE2 chunks, 5 bytes/id incl. the rarity class from Jack Butcher's official rating snapshot), so burns never call `CreditArt.describe` (`6190a7c`) | Yes |
 | `StatementMarket.sol` | 147 / 102 | Holder resale: fixed-price listings, expiry, `cancelAll` nonce, 1% fee, seller push with pull fallback | Yes |
 | `interfaces/IExternal.sol` | 46 / 34 | `ICredits`, `ICreditArt`, `ICreditTraits`, assumed `IStatement` | Yes (assumptions) |
 | `testnet/TestnetPartyFactory.sol` | 23 | Short clock (`timeUnit`), refuses chainid 1 | Low |
@@ -316,11 +316,11 @@ Latest re-audit report (Pashov solidity-auditor, 2 passes, memory at `d548e55`):
 
 | Operation | Gas | Source |
 |---|---|---|
-| Burn (`assemble`), paid (after refunds), cold, with MockStatement | Deposit/Number/Time 3.95–3.97M, Manual 3.98M, Random 4.04M, Print/Weight/Eights/Ink 4.10–4.12M, Colors 4.11M, Rarity 4.16M; **plus the real Statement mint, unknown** | `test/gas/Cap.t.sol`, `Breakdown.t.sol --isolate`; `lib/core.mjs:34-40` |
-| Burn before refunds (what the cap applies to) | 4.88M (Deposit) to 5.14M (Rarity), of which the mock mint is 1.51M | THREAT_MODEL R-12, PRE_MAINNET |
+| Burn (`assemble`), paid (after refunds), cold, with MockStatement | Deposit/Number/Time 3.95–3.97M, Manual 3.98M, Random 4.04M, Print/Weight/Eights/Ink 4.11–4.12M, Colors 4.12M, Rarity 4.09M; **plus the real Statement mint, unknown** | `test/gas/Cap.t.sol`, `Breakdown.t.sol --isolate`; `lib/core.mjs:34-40` |
+| Burn before refunds (what the cap applies to) | 4.88M (Deposit) to 5.09M (Weight; Rarity 5.05M), of which the mock mint is 1.51M | THREAT_MODEL R-12, PRE_MAINNET |
 | Burn with 5,000 spam proposals | < 20k more than without (M-1 fix) | unit/ReAudit |
 | `createParty` + 80 deposits in one transaction | 14.92M (1.86M under the cap) | PRE_MAINNET, `Cap.t.sol`; the site's Sepolia page therefore caps deposits at 40 per transaction (`d548e55`) |
-| Key table deployment (`CreditTraits`, mainnet) | ≈ 81.2M gas in 16 transactions (largest 5.39M) | PRE_MAINNET |
+| Key table deployment (`CreditTraits`, mainnet) | ≈ 133.7M gas in 26 transactions (largest 5.36M; 5 bytes/id since the official rating) | PRE_MAINNET |
 | Party runtime size | 24,304 B (272 B under EIP-170) | `forge build --sizes` at `e23f1e8` |
 
 ### 6.6 Coverage (`scripts/coverage.sh`: `forge coverage --ir-minimum`, `src/` only, fork suites included)
@@ -345,7 +345,7 @@ The low branch figures are the ones to read first; `--ir-minimum` source maps ca
 3. **Deadlock trigger** (H1): ACCEPTED as designed by the user; no change.
 4. **Burn candidate window** (M-1 residual): a 41-YES group can push older candidates out of the 8-entry window;
    ACCEPTED.
-5. **Burn gas vs the cap:** paid 3.95–4.16M (before refunds up to 5.14M) excluding the real Statement mint, whose cost
+5. **Burn gas vs the cap:** paid 3.95–4.12M (before refunds up to 5.09M) excluding the real Statement mint, whose cost
    is **unknown**. Re-measure with the real Statement (PRE_MAINNET).
 6. **Statement contract**: ABI and behavior unknown (drop expected ~2026-10-01 to 10-02). Adapter or factory redeploy
    likely.
@@ -414,7 +414,12 @@ bash test/halmos/run.sh slow      # 256-bit mul/div proofs that time out on ever
 # env: HALMOS, HALMOS_BUILD_DIR, HALMOS_TIMEOUT (default 300s), SHUFFLE_MAX, PERM_MAX
 ```
 
-Key table (sealed trait table vs the live art contract; every step must report 0 mismatches):
+Rating snapshot (Jack Butcher's official rating: completeness, full reproduction from on-chain traits, live sample):
+```bash
+node scripts/rating/verify.mjs
+```
+
+Key table (sealed trait table vs the live art contract and the rating snapshot; every step must report 0 mismatches):
 ```bash
 bash scripts/keytable/verify.sh
 ```

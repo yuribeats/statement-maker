@@ -23,9 +23,6 @@ contract DiffProbe {
     function colorRank(uint256 mask) external pure returns (uint256) { return CreditKeys.colorRank(mask); }
     function printRank(string memory r) external pure returns (uint256) { return CreditKeys.printRank(r); }
     function weightRank(string memory w) external pure returns (uint256) { return CreditKeys.weightRank(w); }
-    function score(uint256 mask, string memory reg, string memory w, uint256 e) external pure returns (uint256) {
-        return CreditKeys.colorWeight(mask) + CreditKeys.printWeight(reg) + CreditKeys.weightWeight(w) + CreditKeys.eightsWeight(e);
-    }
 }
 
 abstract contract ForkDiff is Test {
@@ -33,18 +30,27 @@ abstract contract ForkDiff is Test {
     uint256 constant FORK_BLOCK = 26044000; // as contracts/test/Base.t.sol
     DiffProbe probe;
     CreditTraits traits; // the committed mainnet key table: what Party verifies
+    bytes rarity; // data/keytable/rarity.bin: per id, uint16 class from Jack Butcher's official rating snapshot
+
+    /// Reference Rarity key: the official rating is off-chain, so the reference is the committed class file
+    /// (scripts/keytable/extract-input.py from data/jack-rating.json.gz), not the describe() path.
+    function _rarityKey(uint256 id) internal view returns (uint256) {
+        return (uint256(uint8(rarity[2 * id - 2])) << 8 | uint8(rarity[2 * id - 1])) << 32 | id;
+    }
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_RPC_URL"), FORK_BLOCK);
         probe = new DiffProbe();
         traits = TraitsTable.deploy(vm.readFileBinary("data/keytable/table.bin"));
+        rarity = vm.readFileBinary("data/keytable/rarity.bin");
     }
 }
 
 /// @notice Site (server.mjs PRESETS, via scripts/diff/gen-presets.mjs) vs contract (CreditKeys) on real Credits.
 ///         Each site order must be strictly increasing BOTH in the committed table's keys (CreditTraits, what Party
-///         verifies) and in the reference describe()-based keys (CreditKeysRef): site order == table order == old
-///         on-chain order. Random must equal CreditKeys.shuffle(deposit order, seed).
+///         verifies) and in the reference keys (describe()-based CreditKeysRef; for Rarity the committed official
+///         rating classes): site order == table order == reference order. Random must equal
+///         CreditKeys.shuffle(deposit order, seed).
 contract PresetsDiffTest is ForkDiff {
     string json;
     uint256 n;
@@ -84,7 +90,15 @@ contract PresetsDiffTest is ForkDiff {
 
     function _violations(CreditKeys.Preset p, string memory name, bool log) internal returns (uint256 bad) {
         uint256[] memory pool = vm.parseJsonUintArray(json, ".pool");
-        uint256[] memory k = useTable ? traits.keys(uint8(p), pool) : probe.keys(p, CREDITS, pool);
+        uint256[] memory k;
+        if (useTable) {
+            k = traits.keys(uint8(p), pool);
+        } else if (p == CreditKeys.Preset.Rarity) {
+            k = new uint256[](pool.length);
+            for (uint256 i; i < pool.length; ++i) k[i] = _rarityKey(pool[i]);
+        } else {
+            k = probe.keys(p, CREDITS, pool);
+        }
         for (uint256 i; i < pool.length; ++i) keyOf[pool[i]] = k[i];
         uint256[] memory orders = vm.parseJsonUintArray(json, string.concat(".", name));
         assertEq(orders.length, n * 80, "fixture length");

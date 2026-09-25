@@ -85,12 +85,10 @@ contract DeploySepolia is Script {
         (, bytes memory r) = address(c).staticcall(abi.encodeWithSignature("supply()"));
         uint256 n = abi.decode(r, (uint256));
         ICreditArt art = ICreditArt(c.art());
-        t = new bytes(n * 3);
+        t = new bytes(n * 5);
         for (uint256 id = 1; id <= n; ++id) {
-            uint256 v = CreditKeysRef.packed(c, art, id);
-            t[3 * id - 3] = bytes1(uint8(v >> 16));
-            t[3 * id - 2] = bytes1(uint8(v >> 8));
-            t[3 * id - 1] = bytes1(uint8(v));
+            uint256 v = CreditKeysRef.packed(c, art, id); // test collection: stand-in rarity class (no official rating)
+            for (uint256 b; b < 5; ++b) t[5 * id - 5 + b] = bytes1(uint8(v >> (8 * (4 - b))));
         }
     }
 

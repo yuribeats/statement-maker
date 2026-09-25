@@ -37,12 +37,25 @@ contract StubCredits {
 
 /// GENERATOR + derivation (a). Opt-in: KEYTABLE_BUILD=1 FROM=<first id> TO=<last id>, on a mainnet fork (for the art
 /// contract's code only; seeds and payment times come from input.bin). For each id it writes
-///   work/table-<FROM>.bin : the packed 3-byte CreditTraits entry (from describe(), CreditKeysRef.packed)
-///   work/keys-a-<FROM>.bin: the reference keys (CreditKeysRef.key) for Number, Time, Rarity, Colors, Print, Weight,
-///                           Eights, Ink, 32 bytes each, per id
+///   work/table-<FROM>.bin : the packed 5-byte CreditTraits entry: 3 trait bytes from describe()
+///                           (CreditKeysRef.traits24) ++ the 2-byte rarity class from data/keytable/rarity.bin (Jack
+///                           Butcher's official rating, extract-input.py)
+///   work/keys-a-<FROM>.bin: the reference keys for Number, Time, Rarity, Colors, Print, Weight, Eights, Ink, 32 bytes
+///                           each, per id: CreditKeysRef.key (describe() path) for every preset but Rarity, and
+///                           (class << 32) | id for Rarity
 /// scripts/keytable/build.sh shards this, concatenates the parts into data/keytable/table.bin, and runs the checks.
 contract BuildKeyTableTest is Test {
     address constant ART = 0xFbE816B82547B483C7DFfC5b14C75eC84f8c1985; // Credits.art() on mainnet
+    address constant RARITY = address(0xAA41); // rarity.bin served as code: uint16 big-endian class per id
+
+    function _class(uint256 id) internal view returns (uint256 c) {
+        address r = RARITY;
+        assembly {
+            mstore(0, 0)
+            extcodecopy(r, 30, mul(sub(id, 1), 2), 2)
+            c := mload(0)
+        }
+    }
 
     function test_build() public {
         if (!vm.envOr("KEYTABLE_BUILD", false)) return;
@@ -50,20 +63,22 @@ contract BuildKeyTableTest is Test {
         uint256 to = vm.envUint("TO");
         vm.createSelectFork(vm.envString("ETH_RPC_URL"), 26044000);
         vm.etch(address(0xDA7A), vm.readFileBinary("data/keytable/work/input.bin"));
+        vm.etch(RARITY, vm.readFileBinary("data/keytable/rarity.bin"));
         StubCredits c = new StubCredits(ART);
         ICredits ic = ICredits(address(c));
         ICreditArt art = ICreditArt(ART);
-        bytes memory table = new bytes((to - from + 1) * 3);
+        bytes memory table = new bytes((to - from + 1) * 5);
         bytes memory keys = new bytes((to - from + 1) * 8 * 32);
         uint8[8] memory ps = [uint8(1), 2, 3, 4, 5, 6, 7, 8];
         for (uint256 id = from; id <= to; ++id) {
             uint256 k = id - from;
-            uint256 v = CreditKeysRef.packed(ic, art, id);
-            table[3 * k] = bytes1(uint8(v >> 16));
-            table[3 * k + 1] = bytes1(uint8(v >> 8));
-            table[3 * k + 2] = bytes1(uint8(v));
+            uint256 cls = _class(id);
+            uint256 v = (CreditKeysRef.traits24(ic, art, id) << 16) | cls;
+            for (uint256 b; b < 5; ++b) table[5 * k + b] = bytes1(uint8(v >> (8 * (4 - b))));
             for (uint256 j; j < 8; ++j) {
-                uint256 key = CreditKeysRef.key(CreditKeys.Preset(ps[j]), ic, art, id);
+                uint256 key = ps[j] == uint8(CreditKeys.Preset.Rarity)
+                    ? (cls << 32) | id
+                    : CreditKeysRef.key(CreditKeys.Preset(ps[j]), ic, art, id);
                 uint256 o = (k * 8 + j) * 32;
                 assembly { mstore(add(add(keys, 32), o), key) }
             }

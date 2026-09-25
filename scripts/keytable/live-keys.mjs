@@ -1,9 +1,13 @@
 // Derivation (b): the reference keys of every Credit, computed ON LIVE MAINNET by eth_call — the original key path
 // (test/ref/CreditKeysRef.sol, compiled into RefProbe) runs against the real Credits and the real art contract,
-// injected with a state override at an unused address. Nothing comes from local data.
+// injected with a state override at an unused address. Nothing comes from local data, except Rarity: Jack Butcher's
+// official rating is off-chain, so its keys are computed here, in JS, from data/jack-rating.json.gz (class = index of
+// the Credit's rank among the distinct ranks, key = class << 32 | id): an independent derivation of the class file
+// (contracts/data/keytable/rarity.bin, written by extract-input.py in Python) that keys-a.bin was built from.
 // Writes contracts/data/keytable/work/keys-b.bin (same layout as keys-a.bin: per id, presets 1..8, 32 bytes each)
 // and compares it byte for byte with keys-a.bin (derivation (a), forge). Usage: node scripts/keytable/live-keys.mjs
 import fs from 'node:fs';
+import zlib from 'node:zlib';
 import { createPublicClient, http, encodeFunctionData, decodeFunctionResult, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 
@@ -18,8 +22,19 @@ const client = createPublicClient({ chain: mainnet, transport: http(`https://eth
 const block = await client.getBlockNumber();
 
 const out = Buffer.alloc(N * 8 * 32);
+const RARITY = 3;
+{
+  const R = JSON.parse(zlib.gunzipSync(fs.readFileSync(new URL('../../data/jack-rating.json.gz', import.meta.url))));
+  if (R.N !== N || R.rank.length !== N) throw new Error('rating snapshot size');
+  const distinct = [...new Set(R.rank)].sort((a, b) => a - b);
+  const cls = new Map(distinct.map((r, i) => [r, i]));
+  for (let id = 1; id <= N; id++) {
+    const k = (BigInt(cls.get(R.rank[id - 1])) << 32n) | BigInt(id);
+    out.write(k.toString(16).padStart(64, '0'), ((id - 1) * 8 + (RARITY - 1)) * 32, 'hex');
+  }
+}
 const jobs = [];
-for (let from = 1; from <= N; from += BATCH) for (let p = 1; p <= 8; p++) jobs.push([from, Math.min(from + BATCH - 1, N), p]);
+for (let from = 1; from <= N; from += BATCH) for (let p = 1; p <= 8; p++) if (p !== RARITY) jobs.push([from, Math.min(from + BATCH - 1, N), p]);
 let done = 0;
 async function run([from, to, p]) {
   const ids = []; for (let i = from; i <= to; i++) ids.push(BigInt(i));

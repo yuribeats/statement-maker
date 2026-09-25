@@ -201,27 +201,18 @@ contract CreditKeysHalmos is Test {
         _keySetup(a, b, ta, tb, x, y); _checkKeyOrder(CreditKeys.Preset.Weight, a, b);
     }
 
-    /// Rarity: key() returns ((type(uint64).max - score) << 32) | id (src/CreditKeys.sol:77-80). Enumerating two ids'
-    /// traits jointly is 2160^2 paths, so the proof is split:
-    /// (a) every reachable score (15 masks x 6 prints x 4 weights x 6 eights, via the library's own tables) is < 2^64,
-    ///     so the subtraction never underflows and the primary fits in 224 bits;
-    /// (b) primary = 2^64-1 - score is strictly decreasing in score, so by check_key_packing the key order is
-    ///     (score descending, id ascending).
-    function check_rarity_score_bound(uint256 mask, uint8 reg, uint8 w, uint256 eights) public view {
-        vm.assume(mask >= 1 && mask <= 15 && reg < 6 && w < 4 && eights <= 5);
-        uint256 score = CreditKeys.colorWeight(mask) + CreditKeys.printWeight(ma.regName(reg))
-            + CreditKeys.weightWeight(ma.weightName(w)) + CreditKeys.eightsWeight(eights);
-        assert(score < 2 ** 64);
-        assert(score <= 3939426425 + 6964650926 + 6615253228 + 16898341581); // max of each table
-    }
-
-    function check_rarity_primary_order(uint256 sa, uint256 sb) public pure {
-        vm.assume(sa < 2 ** 64 && sb < 2 ** 64);
-        uint256 pa = type(uint64).max - sa;
-        uint256 pb = type(uint64).max - sb;
-        assert(pa < 2 ** 224 && pb < 2 ** 224);
-        assert((pa < pb) == (sa > sb));
-        assert((pa == pb) == (sa == sb));
+    /// Rarity: traitKey() returns (class << 32) | id, class = the low 16 bits of the table entry (src/CreditKeys.sol
+    /// traitKey). For ANY two entries: keys differ for distinct ids, and key order == (class, id) order, so the
+    /// burn order is rarest class first with ties by ascending id. The upper 24 trait bits never leak into the key.
+    function check_rarity_traitKey(uint256 a, uint256 b, uint40 pa, uint40 pb) public pure {
+        vm.assume(a < 2 ** 32 && b < 2 ** 32 && a != b);
+        uint256 ka = CreditKeys.traitKey(CreditKeys.Preset.Rarity, a, pa);
+        uint256 kb = CreditKeys.traitKey(CreditKeys.Preset.Rarity, b, pb);
+        uint256 ca = uint256(pa) & 0xFFFF;
+        uint256 cb = uint256(pb) & 0xFFFF;
+        assert(ka == (ca << 32) | a);
+        assert(ka != kb);
+        assert((ka < kb) == (ca < cb || (ca == cb && a < b)));
     }
 
     // ---------------------------------------------------------------- 5. rank tables
