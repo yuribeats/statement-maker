@@ -12,16 +12,38 @@ A pool anyone can deposit into, in any amount, down to one Credit. Every 80 Cred
 
 No host, no price votes, no buyer needed.
 
-## Flow
+## Two flows
 
-1. Deposit. A member deposits N Credits into the open pool (first come, first served by slot). The pool records each Credit's rating against the depositor.
+The deposit screen offers both. Same Credits approval (the PartyFactory), same Credit Card receipt (one ERC-721 per deposited Credit; everything follows the card).
+
+| | A. Deposit to an existing pool (current) | B. Deposit to a rolling pool (new) |
+|---|---|---|
+| Who opens it | A host, with params and filters | Nobody; the next pool is always open |
+| Which Credits | Must pass the party's filters | Any Credit |
+| Arrangement | Host's preset or Manual | Fixed default preset |
+| Outcome | Statement is sold for ETH | Statement is surrendered for Balance |
+| Price | Voted (41/80, zero NO; 60 below floor) | None |
+| Payout | 80 equal shares of sale ETH, minus 1% | Balance = your Credits' ratings, minus 1% |
+| Timing | Waits for a vote and a buyer | Immediate once the pool fills and burns |
+| Leaving early | Redeem card while OPEN | Withdraw card while unfilled |
+| Spec | SPEC.md §2–4b | This brief |
+
+### Flow A — existing pool (unchanged)
+
+1. Pick a party → deposit Credits that pass its filters → receive Credit Cards.
+2. Party fills → host's arrangement → burn → Statement in the vault.
+3. Members vote a price → buyer pays on our site → card holders claim 1/80 of net ETH each.
+
+### Flow B — rolling pool
+
+1. Deposit. A member deposits N Credits into the open pool (first come, first served by slot) and receives one Credit Card per Credit. The card records the Credit's rating; its holder gets that Balance.
 2. Fill. At 80 Credits the pool closes; a new one opens immediately. Overflow from a deposit goes into the new pool.
 3. Burn. Anyone can trigger the burn of a full pool (keeper or member). Arrangement = fixed default preset; layout does not change the rating and the Statement is locked next.
 4. Surrender. The pool surrenders the Statement for Balance (= the Statement's rating).
-5. Payout. Each depositor is credited Balance = sum of their Credits' ratings, minus the 1% fee. Members claim (pull), so each pays their own gas when they choose.
+5. Payout. Each card holder is credited Balance = sum of their Credits' ratings, minus the 1% fee. Members claim (pull), so each pays their own gas when they choose.
 6. Artwork. Per Jack (DM 2026-10-05): any address can claim a Balance NFT, and a contract can call the claim. The artwork is separate from receiving Balance. The pool's claim step can mint each depositor's artwork in the same transaction (skip if they already have one). The pool itself does not claim one.
 
-## Rules
+## Rules (Flow B)
 
 - Payout is by rating, not equal shares. Statement rating = sum of its Credits' ratings, so the split is exact.
 - Fee: 1%, taken in Balance at surrender.
