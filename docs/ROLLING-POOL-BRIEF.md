@@ -57,7 +57,8 @@ Each wallet stores one CMYK mix. Receiving blends by amount; sending leaves the 
 
 ## Cost (estimates at 1.07 gwei, ETH $2,701, 2026-10-05)
 
-- Burn of 80 Credits: up to ~14.6M gas (measured, open + deposit 80).
+- Deposits: each depositor pays gas for their own deposit (measured: opening a party + depositing all 80 in one tx ≈ 14.6M gas max).
+- Burn + surrender: one tx by whoever triggers it; cost unknown until Jack's Statement/Balance contracts exist. Option: reimburse the trigger from the pool, shared by rating.
 - Surrender: unknown until Jack's contract exists.
 - Claim per member: ~55k gas for Balance (~$0.16); artwork claim extra, cost unknown until his contract exists.
 - Push-paying all 80 in one tx: ~9.6M gas (~$28); rejected in favour of pull claims.
