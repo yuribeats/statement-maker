@@ -19,6 +19,7 @@ No host, no price votes, no buyer needed.
 3. Burn. Anyone can trigger the burn of a full pool (keeper or member). Arrangement = fixed default preset; layout does not change the rating and the Statement is locked next.
 4. Surrender. The pool surrenders the Statement for Balance (= the Statement's rating).
 5. Payout. Each depositor is credited Balance = sum of their Credits' ratings, minus the 1% fee. Members claim (pull), so each pays their own gas when they choose.
+6. Artwork. Per Jack (DM 2026-10-05): any address can claim a Balance NFT, and a contract can call the claim. The artwork is separate from receiving Balance. The pool's claim step can mint each depositor's artwork in the same transaction (skip if they already have one). The pool itself does not claim one.
 
 ## Rules
 
@@ -36,16 +37,17 @@ Each wallet stores one CMYK mix. Receiving blends by amount; sending leaves the 
 
 - Burn of 80 Credits: up to ~14.6M gas (measured, open + deposit 80).
 - Surrender: unknown until Jack's contract exists.
-- Claim per member: ~120k gas first time (~$0.35), ~55k after.
+- Claim per member: ~55k gas for Balance (~$0.16); artwork claim extra, cost unknown until his contract exists.
 - Push-paying all 80 in one tx: ~9.6M gas (~$28); rejected in favour of pull claims.
 
 ## Open questions for Jack
 
 1. Can a contract call surrender?
 2. Where does the locked Statement live: the surrendering wallet or the Balance contract?
-3. Can a contract receive Balance, and does it get a soulbound artwork?
+3. ~~Does a contract get a soulbound artwork?~~ Answered: the artwork is claimed, not automatic; any address can claim, contracts can call it. Still open: can the claim mint to an address other than the caller?
 4. Is each Credit's rating readable on-chain (needed to split by rating)? The post says ratings are fixed; confirm.
-5. Proposal: `surrenderTo(recipients, amounts)` paying depositors directly, each tinted with their own Credits' colors and recorded on the locked Statement. Preserves provenance; removes the pool as a middleman for Balance and the artwork.
+5. He said he holds 1.25% of eventual Balance supply. His 378 Credits (2026-09-26) = 164,354 of a 53,716,910 maximum = 0.31%. 1.25% = exactly 1/80. Is there an artist share minted on every surrender? If so, depositors net ~97.8% of rating after our 1%.
+6. Proposal: `surrenderTo(recipients, amounts)` paying depositors directly, each tinted with their own Credits' colors and recorded on the locked Statement. Preserves provenance; removes the pool as a middleman for Balance and the artwork.
 
 ## Risks
 
